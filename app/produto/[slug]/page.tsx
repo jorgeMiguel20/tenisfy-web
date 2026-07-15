@@ -47,6 +47,13 @@ export async function generateMetadata({
   }
 }
 
+type GroupedOffer = {
+  store: string
+  sizes: string[]
+  price: number
+  affiliate_url: string
+}
+
 export default async function ProdutoPage({
   params,
 }: {
@@ -71,8 +78,32 @@ export default async function ProdutoPage({
     notFound()
   }
 
-  const offers = (product.product_offers as any[])
-    .filter((o) => o.in_stock)
+  const rawOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+
+  // Agrupa por loja: junta os tamanhos numa lista, mantém o preço mais baixo dessa loja
+  const grouped: Record<string, GroupedOffer> = {}
+  for (const offer of rawOffers) {
+    const storeName = offer.stores?.name ?? 'Loja'
+    if (!grouped[storeName]) {
+      grouped[storeName] = {
+        store: storeName,
+        sizes: [],
+        price: offer.price,
+        affiliate_url: offer.affiliate_url,
+      }
+    }
+    grouped[storeName].sizes.push(offer.size)
+    if (offer.price < grouped[storeName].price) {
+      grouped[storeName].price = offer.price
+      grouped[storeName].affiliate_url = offer.affiliate_url
+    }
+  }
+
+  const groupedOffers = Object.values(grouped)
+    .map((g) => ({
+      ...g,
+      sizes: g.sizes.sort((a, b) => parseFloat(a) - parseFloat(b)),
+    }))
     .sort((a, b) => a.price - b.price)
 
   return (
@@ -88,7 +119,7 @@ export default async function ProdutoPage({
         {product.model_name}
       </h1>
 
-      {offers.length === 0 ? (
+      {groupedOffers.length === 0 ? (
         <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
       ) : (
         <div className="mt-8 border border-gray-100 rounded-2xl overflow-hidden">
@@ -96,16 +127,16 @@ export default async function ProdutoPage({
             <thead>
               <tr className="border-b border-gray-100 text-left bg-gray-50">
                 <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
-                <th className="p-4 text-sm font-medium text-gray-500">Tamanho</th>
+                <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
                 <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
                 <th className="p-4"></th>
               </tr>
             </thead>
             <tbody>
-              {offers.map((offer) => (
-                <tr key={offer.id} className="border-b border-gray-50 last:border-0">
-                  <td className="p-4">{offer.stores?.name}</td>
-                  <td className="p-4">{offer.size}</td>
+              {groupedOffers.map((offer) => (
+                <tr key={offer.store} className="border-b border-gray-50 last:border-0">
+                  <td className="p-4">{offer.store}</td>
+                  <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
                   <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
                   <td className="p-4">
                     <a
