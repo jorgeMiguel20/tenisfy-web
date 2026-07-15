@@ -2,12 +2,49 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do projeto
 
 export async function generateStaticParams() {
   const { data: products } = await supabase.from('products').select('slug')
   return (products ?? []).map((p) => ({ slug: p.slug }))
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('*, brands (*), product_offers (price, in_stock)')
+    .eq('slug', slug)
+    .single()
+
+  if (!product) {
+    return { title: 'Produto não encontrado | Tenisfy' }
+  }
+
+  const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+  const lowestPrice = inStockOffers.length > 0
+    ? Math.min(...inStockOffers.map((o: any) => o.price))
+    : null
+
+  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
+  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${inStockOffers.length} lojas portuguesas. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: product.image_url ? [product.image_url] : [],
+    },
+  }
 }
 
 export default async function ProdutoPage({
