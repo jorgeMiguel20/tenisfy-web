@@ -18,9 +18,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
 
+  // Procuramos o produto e as suas ofertas, incluindo a relação com as lojas (stores)
   const { data: product } = await supabase
     .from('products')
-    .select('*, brands (*), product_offers (price, in_stock)')
+    .select(`
+      *, 
+      brands (*), 
+      product_offers (
+        price, 
+        in_stock,
+        stores (name)
+      )
+    `)
     .eq('slug', slug)
     .single()
 
@@ -28,13 +37,31 @@ export async function generateMetadata({
     return { title: 'Produto não encontrado | Tenisfy' }
   }
 
-  const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+  const rawOffers = (product.product_offers as any[]) ?? []
+  const inStockOffers = rawOffers.filter((o) => o.in_stock)
+
+  // 1. Descobrimos o menor preço real de entre todas as ofertas em stock
   const lowestPrice = inStockOffers.length > 0
     ? Math.min(...inStockOffers.map((o: any) => o.price))
     : null
 
-  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
-  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${inStockOffers.length} lojas portuguesas. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
+  // 2. Extraímos os nomes únicos das lojas em stock para fazer a contagem fidedigna
+  const distinctStores = new Set(
+    inStockOffers
+      .map((o: any) => o.stores?.name)
+      .filter((name): name is string => !!name)
+  )
+  const totalLojas = distinctStores.size
+
+  const brandName = product.brands?.name ?? ''
+  const modelName = product.model_name ?? ''
+
+  const title = `${brandName} ${modelName}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
+  
+  // Criamos uma descrição inteligente e adaptada ao singular/plural do número de lojas reais
+  const description = totalLojas > 0
+    ? `Compara o preço do ${brandName} ${modelName} em ${totalLojas} ${totalLojas === 1 ? 'loja portuguesa' : 'lojas portuguesas'}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
+    : `Compara o preço do ${brandName} ${modelName} nas melhores lojas portuguesas de ténis e sneakers. Encontra o teu tamanho ao melhor preço no Tenisfy.`
 
   return {
     title,

@@ -98,7 +98,7 @@ export default function PrivacidadePage() {
 
             <a href="mailto:jorgesantos_09@hotmail.com" className="text-orange-600 hover:underline">
 
-              o-teu-email@exemplo.com
+              jorgesantos_09@hotmail.com
 
             </a>
 
