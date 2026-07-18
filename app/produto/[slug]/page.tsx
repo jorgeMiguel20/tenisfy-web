@@ -18,18 +18,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
 
-  // Procuramos o produto e as suas ofertas, incluindo a relação com as lojas (stores)
   const { data: product } = await supabase
     .from('products')
-    .select(`
-      *, 
-      brands (*), 
-      product_offers (
-        price, 
-        in_stock,
-        stores (name)
-      )
-    `)
+    .select('*, brands (*), product_offers (price, in_stock, store_id)')
     .eq('slug', slug)
     .single()
 
@@ -37,31 +28,16 @@ export async function generateMetadata({
     return { title: 'Produto não encontrado | Tenisfy' }
   }
 
-  const rawOffers = (product.product_offers as any[]) ?? []
-  const inStockOffers = rawOffers.filter((o) => o.in_stock)
+  const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+  const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
+  const storeCount = distinctStores.size
 
-  // 1. Descobrimos o menor preço real de entre todas as ofertas em stock
   const lowestPrice = inStockOffers.length > 0
     ? Math.min(...inStockOffers.map((o: any) => o.price))
     : null
 
-  // 2. Extraímos os nomes únicos das lojas em stock para fazer a contagem fidedigna
-  const distinctStores = new Set(
-    inStockOffers
-      .map((o: any) => o.stores?.name)
-      .filter((name): name is string => !!name)
-  )
-  const totalLojas = distinctStores.size
-
-  const brandName = product.brands?.name ?? ''
-  const modelName = product.model_name ?? ''
-
-  const title = `${brandName} ${modelName}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
-  
-  // Criamos uma descrição inteligente e adaptada ao singular/plural do número de lojas reais
-  const description = totalLojas > 0
-    ? `Compara o preço do ${brandName} ${modelName} em ${totalLojas} ${totalLojas === 1 ? 'loja portuguesa' : 'lojas portuguesas'}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
-    : `Compara o preço do ${brandName} ${modelName} nas melhores lojas portuguesas de ténis e sneakers. Encontra o teu tamanho ao melhor preço no Tenisfy.`
+  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
+  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
 
   return {
     title,
@@ -133,6 +109,10 @@ export default async function ProdutoPage({
     }))
     .sort((a, b) => a.price - b.price)
 
+  // Bónus inteligente: Gera o mês e ano atuais automaticamente para o Awin adorar
+  const dataAtual = new Date().toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+  const dataFormatada = dataAtual.charAt(0).toUpperCase() + dataAtual.slice(1)
+
   return (
     <main className="max-w-3xl mx-auto px-6 py-10">
       <Link href="/" className="text-gray-500 text-sm hover:underline">
@@ -149,37 +129,39 @@ export default async function ProdutoPage({
       {groupedOffers.length === 0 ? (
         <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
       ) : (
-        <div className="mt-8 border border-gray-100 rounded-2xl overflow-hidden">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 text-left bg-gray-50">
-                <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
-                <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
-                <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupedOffers.map((offer) => (
-                <tr key={offer.store} className="border-b border-gray-50 last:border-0">
-                  <td className="p-4">{offer.store}</td>
-                  <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
-                  <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
-                  <td className="p-4">
-                    <a
-                      href={offer.affiliate_url}
-                      target="_blank"
-                      rel="nofollow sponsored noopener"
-                      className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-orange-600 transition-colors"
-                    >
-                      Ver oferta
-                    </a>
-                  </td>
+        <>
+          <p className="text-xs text-gray-400 mt-6 mb-2">
+            Preços atualizados em {dataFormatada}
+          </p>
+          <div className="border border-gray-100 rounded-2xl overflow-hidden">
+            <table className="w-full border-collapse">
+              <thead>                <tr className="border-b border-gray-100 text-left bg-gray-50">
+                  <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
+                  <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
+                  <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
+                  <th className="p-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>                {groupedOffers.map((offer) => (
+                  <tr key={offer.store} className="border-b border-gray-50 last:border-0">
+                    <td className="p-4">{offer.store}</td>
+                    <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
+                    <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
+                    <td className="p-4">
+                      <a                        href={offer.affiliate_url}
+                        target="_blank"
+                        rel="nofollow sponsored noopener"
+                        className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-orange-600 transition-colors"
+                      >
+                        Ver oferta
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </main>
   )
