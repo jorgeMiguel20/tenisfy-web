@@ -14,6 +14,9 @@ export default function Footer() {
           </div>
 
           <nav className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm text-gray-500">
+            <Link href="/sobre" className="hover:text-gray-900 hover:underline">
+              Sobre
+            </Link>
             <Link href="/privacidade" className="hover:text-gray-900 hover:underline">
               Política de Privacidade
             </Link>
