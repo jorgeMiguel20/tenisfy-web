@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do projeto
@@ -31,7 +32,6 @@ export async function generateMetadata({
   const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
   const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
   const storeCount = distinctStores.size
-
   const lowestPrice = inStockOffers.length > 0
     ? Math.min(...inStockOffers.map((o: any) => o.price))
     : null
@@ -83,7 +83,6 @@ export default async function ProdutoPage({
 
   const rawOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
 
-  // Agrupa por loja: junta os tamanhos numa lista, mantém o preço mais baixo dessa loja
   const grouped: Record<string, GroupedOffer> = {}
   for (const offer of rawOffers) {
     const storeName = offer.stores?.name ?? 'Loja'
@@ -109,60 +108,76 @@ export default async function ProdutoPage({
     }))
     .sort((a, b) => a.price - b.price)
 
-  // Bónus inteligente: Gera o mês e ano atuais automaticamente para o Awin adorar
-  const dataAtual = new Date().toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
-  const dataFormatada = dataAtual.charAt(0).toUpperCase() + dataAtual.slice(1)
+  const updatedLabel = new Date().toLocaleDateString('pt-PT', {
+    month: 'long',
+    year: 'numeric',
+  })
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-10">
+    <main className="max-w-5xl mx-auto px-6 py-10">
       <Link href="/" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar
       </Link>
 
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-4">
-        {product.brands?.name}
-      </p>
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-1">
-        {product.model_name}
-      </h1>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+        <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={`${product.brands?.name} ${product.model_name}`}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-gray-300 text-sm">Sem imagem disponível</span>
+            </div>
+          )}
+        </div>
 
-      {groupedOffers.length === 0 ? (
-        <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
-      ) : (
-        <>
-          <p className="text-xs text-gray-400 mt-6 mb-2">
-            Preços atualizados em {dataFormatada}
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            {product.brands?.name}
           </p>
-          <div className="border border-gray-100 rounded-2xl overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead>                <tr className="border-b border-gray-100 text-left bg-gray-50">
-                  <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
-                  <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
-                  <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
-                  <th className="p-4"></th>
-                </tr>
-              </thead>
-              <tbody>                {groupedOffers.map((offer) => (
-                  <tr key={offer.store} className="border-b border-gray-50 last:border-0">
-                    <td className="p-4">{offer.store}</td>
-                    <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
-                    <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
-                    <td className="p-4">
-                      <a                        href={offer.affiliate_url}
-                        target="_blank"
-                        rel="nofollow sponsored noopener"
-                        className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-orange-600 transition-colors"
-                      >
-                        Ver oferta
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-1">
+            {product.model_name}
+          </h1>
+
+          {groupedOffers.length === 0 ? (
+            <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
+          ) : (
+            <>
+              <p className="text-xs text-gray-400 mt-6 mb-2">
+                Preços atualizados em {updatedLabel}
+              </p>
+              <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left bg-gray-50">
+                      <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
+                      <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
+                      <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
+                      <th className="p-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedOffers.map((offer) => (
+                      <tr key={offer.store} className="border-b border-gray-50 last:border-0">
+                        <td className="p-4">{offer.store}</td>
+                        <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
+                        <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
+                        <td className="p-4"><a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-orange-600 transition-colors">Ver oferta</a></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </main>
   )
 }
