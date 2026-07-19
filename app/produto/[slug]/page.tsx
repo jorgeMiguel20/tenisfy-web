@@ -108,28 +108,35 @@ export default async function ProdutoPage({
     }))
     .sort((a, b) => a.price - b.price)
 
+  const cheapest = groupedOffers[0]
+  const mostExpensive = groupedOffers[groupedOffers.length - 1]
+  const savings = groupedOffers.length > 1 ? mostExpensive.price - cheapest.price : 0
+
   const updatedLabel = new Date().toLocaleDateString('pt-PT', {
     month: 'long',
     year: 'numeric',
   })
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10">
-      <Link href="/" className="text-gray-500 text-sm hover:underline">
-        &larr; Voltar
-      </Link>
+    <main className="max-w-5xl mx-auto px-6 py-10 relative overflow-hidden">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center">
+        <div className="h-72 w-[36rem] rounded-full bg-orange-100/40 blur-3xl" />
+      </div>
+
+      <nav className="text-sm text-gray-500 mb-2">
+        <Link href="/" className="hover:underline">Tenisfy</Link>
+        <span className="mx-1.5">/</span>
+        <Link href={`/?marca=${product.brands?.name}`} className="hover:underline">{product.brands?.name}</Link>
+        <span className="mx-1.5">/</span>
+        <span className="text-gray-400">{product.model_name}</span>
+      </nav>
+
+      <Link href="/" className="text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
         <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
           {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={`${product.brands?.name} ${product.model_name}`}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-              priority
-            />
+            <Image src={product.image_url} alt={`${product.brands?.name} ${product.model_name}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-gray-300 text-sm">Sem imagem disponível</span>
@@ -138,20 +145,19 @@ export default async function ProdutoPage({
         </div>
 
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-            {product.brands?.name}
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-1">
-            {product.model_name}
-          </h1>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-1">{product.model_name}</h1>
 
           {groupedOffers.length === 0 ? (
             <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
           ) : (
             <>
-              <p className="text-xs text-gray-400 mt-6 mb-2">
-                Preços atualizados em {updatedLabel}
-              </p>
+              {savings > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {savings.toFixed(2)}€ escolhendo {cheapest.store}</div>
+              )}
+
+              <p className="text-sm text-gray-500 mt-4 mb-2 font-medium">Preços atualizados em {updatedLabel}</p>
+
               <div className="border border-gray-100 rounded-2xl overflow-hidden">
                 <table className="w-full border-collapse">
                   <thead>
@@ -168,7 +174,7 @@ export default async function ProdutoPage({
                         <td className="p-4">{offer.store}</td>
                         <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
                         <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
-                        <td className="p-4"><a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-orange-600 transition-colors">Ver oferta</a></td>
+                        <td className="p-4"><a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-gray-700 transition-colors">Ver oferta</a></td>
                       </tr>
                     ))}
                   </tbody>
