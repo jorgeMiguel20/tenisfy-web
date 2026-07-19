@@ -15,8 +15,7 @@ export default async function Home() {
   if (error) {
     return (
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Tenisfy</h1>
-        <p className="text-red-600 mt-2">Erro ao carregar produtos: {error.message}</p>
+        <p className="text-red-600">Erro ao carregar produtos: {error.message}</p>
       </main>
     )
   }
@@ -32,12 +31,24 @@ export default async function Home() {
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Tenisfy</h1>
-        <p className="text-gray-500 mt-1">
-          Compara preços de ténis nas melhores lojas portuguesas
+      <section className="relative overflow-hidden text-center pt-6 sm:pt-8 pb-8 sm:pb-12">
+        {/* Gradiente decorativo subtil atrás do texto */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center"
+        >
+          <div className="h-72 w-[36rem] rounded-full bg-orange-100/50 blur-3xl" />
+        </div>
+
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+          Encontra o par certo.
+          <br />
+          Ao preço <span className="text-orange-600">certo</span>.
+        </h1>
+        <p className="mt-4 text-gray-900/60 text-lg max-w-xl mx-auto">
+          Compara preços, stock e tamanhos nas melhores lojas.
         </p>
-      </header>
+      </section>
 
       <ProductGrid products={productsWithPrice as any} />
     </main>

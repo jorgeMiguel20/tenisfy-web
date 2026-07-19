@@ -9,7 +9,7 @@ export default function ProductCard({ product }: { product: ProductWithPrice }) 
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group block rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5"
+      className="group block rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-gray-200 hover:shadow-lg hover:-translate-y-1"
     >
       <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
         {product.image_url && (
@@ -27,7 +27,7 @@ export default function ProductCard({ product }: { product: ProductWithPrice }) 
       <p className="font-semibold text-gray-900 mt-0.5 mb-2">{product.model_name}</p>
       {lowestPrice ? (
         <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-orange-600">
+          <span className="text-xl font-extrabold text-orange-600">
             {lowestPrice.toFixed(2)}€
           </span>
           {storeCount > 1 && (
