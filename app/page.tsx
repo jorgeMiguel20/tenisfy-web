@@ -32,7 +32,6 @@ export default async function Home() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-10">
       <section className="relative overflow-hidden text-center pt-6 sm:pt-8 pb-8 sm:pb-12">
-        {/* Gradiente decorativo subtil atrás do texto */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center"
