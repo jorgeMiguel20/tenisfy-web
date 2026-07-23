@@ -4,8 +4,45 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Comparar produtos | Tenisfy',
+function parseSlugs(produtos?: string): string[] {
+  return (produtos ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ produtos?: string }>
+}): Promise<Metadata> {
+  const { produtos } = await searchParams
+  const slugs = parseSlugs(produtos)
+
+  if (slugs.length === 0) {
+    return { title: 'Comparar produtos | Tenisfy' }
+  }
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('slug, model_name')
+    .in('slug', slugs)
+
+  const ordered = slugs
+    .map((slug) => (products ?? []).find((p) => p.slug === slug))
+    .filter(Boolean) as { slug: string; model_name: string }[]
+
+  if (ordered.length === 0) {
+    return { title: 'Comparar produtos | Tenisfy' }
+  }
+
+  const names = ordered.map((p) => p.model_name).join(' vs ')
+
+  return {
+    title: `A comparar: ${names} | Tenisfy`,
+    description: `Compara preços entre ${names} nas melhores lojas portuguesas. Encontra o melhor preço no Tenisfy.`,
+  }
 }
 
 type GroupedOffer = {
@@ -48,12 +85,7 @@ export default async function CompararPage({
   searchParams: Promise<{ produtos?: string }>
 }) {
   const { produtos } = await searchParams
-
-  const slugs = (produtos ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 3)
+  const slugs = parseSlugs(produtos)
 
   if (slugs.length === 0) {
     return (
