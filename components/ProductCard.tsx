@@ -70,8 +70,10 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             <span className="text-xl font-extrabold text-orange-600">
               {lowestPrice.toFixed(2)}€
             </span>
-            {storeCount > 1 && (
-              <span className="text-xs text-gray-400">· {storeCount} lojas</span>
+            {storeCount > 0 && (
+              <span className="text-xs text-gray-400">
+                · {storeCount} {storeCount === 1 ? 'loja' : 'lojas'}
+              </span>
             )}
           </div>
         </div>

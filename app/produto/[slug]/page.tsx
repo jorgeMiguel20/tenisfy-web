@@ -254,7 +254,7 @@ export default async function ProdutoPage({
 
         <span className="mx-1.5">/</span>
 
-        <Link href={`/?marca=${product.brands?.name}`} className="hover:underline">{product.brands?.name}</Link>
+        <span>{product.brands?.name}</span>
 
         <span className="mx-1.5">/</span>
 
