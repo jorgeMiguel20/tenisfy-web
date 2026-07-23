@@ -340,11 +340,29 @@ export default async function ProdutoPage({
 
                   <tbody>
 
-                    {groupedOffers.map((offer) => (
+                    {groupedOffers.map((offer, index) => (
 
                       <tr key={offer.store} className="border-b border-gray-50 last:border-0">
 
-                        <td className="p-4">{offer.store}</td>
+                        <td className="p-4">
+
+                          <div className="flex items-center gap-2">
+
+                            <span>{offer.store}</span>
+
+                            {index === 0 && groupedOffers.length > 1 && (
+
+                              <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+
+                                Melhor preço
+
+                              </span>
+
+                            )}
+
+                          </div>
+
+                        </td>
 
                         <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
 

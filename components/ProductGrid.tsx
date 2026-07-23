@@ -25,10 +25,29 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   const [imageSearchLoading, setImageSearchLoading] = useState(false)
   const [imageSearchResults, setImageSearchResults] = useState<ImageSearchResult[] | null>(null)
   const [imageSearchError, setImageSearchError] = useState<string | null>(null)
+
+  const [compareSlugs, setCompareSlugs] = useState<string[]>([])
+  const [compareLimitWarning, setCompareLimitWarning] = useState(false)
+
+  function toggleCompare(product: ProductWithPrice) {
+    setCompareSlugs((prev) => {
+      if (prev.includes(product.slug)) {
+        setCompareLimitWarning(false)
+        return prev.filter((slug) => slug !== product.slug)
+      }
+      if (prev.length >= 3) {
+        setCompareLimitWarning(true)
+        return prev
+      }
+      setCompareLimitWarning(false)
+      return [...prev, product.slug]
+    })
+  }
 
   const brandCounts = useMemo(() => {
     const counts: Record<string, number> = { Todos: products.length }
@@ -135,6 +154,18 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     <div>
       <div className="flex items-center gap-3 max-w-lg mx-auto mb-10">
         <div className="relative flex-1">
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
+          </svg>
+
           <input
             ref={inputRef}
             type="text"
@@ -147,7 +178,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="O que procuras hoje?"
-            className="w-full border border-gray-200 rounded-full px-5 py-3 text-sm text-center placeholder:text-center focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full border border-gray-200 rounded-full pl-10 pr-5 py-3 text-sm text-center placeholder:text-center focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
 
           {showSuggestions && suggestions.length > 0 && (
@@ -207,6 +238,23 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
         />
       </div>
 
+      {imageSearchLoading && (
+        <p className="text-center text-sm text-gray-500 mb-6">A analisar o modelo com IA...</p>
+      )}
+
+      <div className="flex justify-center mb-8">
+        <button
+          type="button"
+          onClick={() => gridRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-colors"
+        >
+          Ver todos
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
       {imageSearchError && (
         <p className="text-center text-sm text-red-600 mb-6">{imageSearchError}</p>
       )}
@@ -247,7 +295,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       )}
 
       {!imageSearchResults && (
-        <>
+        <div ref={gridRef}>
           <div className="flex flex-wrap justify-center gap-2 mb-8">
             {brands.map((brand) => (
               <button
@@ -269,11 +317,47 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isSelected={compareSlugs.includes(product.slug)}
+                  onToggleCompare={toggleCompare}
+                />
               ))}
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {compareLimitWarning && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-full shadow-lg">
+          Só podes comparar até 3 produtos de cada vez.
+        </div>
+      )}
+
+      {compareSlugs.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-full shadow-xl">
+          <span className="text-sm font-medium">
+            {compareSlugs.length} produto{compareSlugs.length > 1 ? 's' : ''} selecionado{compareSlugs.length > 1 ? 's' : ''}
+          </span>
+          <Link
+            href={`/comparar?produtos=${compareSlugs.join(',')}`}
+            className="bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-4 py-1.5 rounded-full"
+          >
+            Comparar
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setCompareSlugs([])
+              setCompareLimitWarning(false)
+            }}
+            aria-label="Limpar seleção"
+            className="text-gray-400 hover:text-white transition-colors text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
       )}
     </div>
   )
