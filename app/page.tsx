@@ -8,13 +8,13 @@ export default async function Home() {
     .select(`
       *,
       brands (*),
-      product_offers (price, in_stock, store_id)
+      product_offers (price, in_stock, store_id, size)
     `)
     .eq('is_active', true)
 
   if (error) {
     return (
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      <main className="max-w-7xl mx-auto px-6 py-10">
         <p className="text-red-600">Erro ao carregar produtos: {error.message}</p>
       </main>
     )
@@ -26,11 +26,12 @@ export default async function Home() {
       ? Math.min(...inStockOffers.map((o: any) => o.price))
       : null
     const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
-    return { ...p, lowest_price, store_count: distinctStores.size }
+    const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
+    return { ...p, lowest_price, store_count: distinctStores.size, sizes }
   })
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10">
+    <main className="max-w-7xl mx-auto px-6 py-10">
       <section className="relative overflow-hidden text-center pt-6 sm:pt-8 pb-8 sm:pb-12">
         <div
           aria-hidden="true"

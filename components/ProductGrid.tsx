@@ -17,9 +17,82 @@ type ImageSearchResult = {
   similarity: number
 }
 
+type SortOrder = 'default' | 'price-asc' | 'price-desc'
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'default', label: 'Relevância' },
+  { value: 'price-asc', label: 'Preço: mais baixo' },
+  { value: 'price-desc', label: 'Preço: mais alto' },
+]
+
+const GENDER_LABELS: Record<string, string> = {
+  homem: 'Homem',
+  mulher: 'Mulher',
+  crianca: 'Criança',
+  unissexo: 'Unissexo',
+}
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function sidebarItemClass(active: boolean) {
+  return `flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${
+    active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
+  }`
+}
+
+type PillOption = { value: string; display: string; count?: number }
+
+function SidebarFilterGroup({
+  label,
+  options,
+  selected,
+  onSelect,
+}: {
+  label: string
+  options: PillOption[]
+  selected: string
+  onSelect: (value: string) => void
+}) {
+  if (options.length <= 1) return null
+
+  return (
+    <div className="mb-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        {label}
+      </p>
+      <div className="flex flex-col gap-0.5">
+        {options.map((option) => {
+          const active = selected === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onSelect(option.value)}
+              className={sidebarItemClass(active)}
+            >
+              <span>{option.display}</span>
+              {option.count !== undefined && (
+                <span className={active ? 'text-gray-300' : 'text-gray-400'}>
+                  ({option.count})
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductGrid({ products }: { products: ProductWithPrice[] }) {
   const router = useRouter()
   const [selectedBrand, setSelectedBrand] = useState<string>('Todos')
+  const [selectedGender, setSelectedGender] = useState<string>('Todos')
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todos')
+  const [selectedSize, setSelectedSize] = useState<string>('Todos')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('default')
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -49,21 +122,64 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     })
   }
 
-  const brandCounts = useMemo(() => {
-    const counts: Record<string, number> = { Todos: products.length }
+  const brandOptions = useMemo(() => {
+    const counts: Record<string, number> = {}
     for (const p of products) {
-      const brandName = p.brands?.name
-      if (!brandName) continue
-      counts[brandName] = (counts[brandName] ?? 0) + 1
+      const name = p.brands?.name
+      if (!name) continue
+      counts[name] = (counts[name] ?? 0) + 1
     }
-    return counts
-  }, [products])
-
-  const brands = useMemo(() => {
     const uniqueBrands = Array.from(
       new Set(products.map((p) => p.brands?.name).filter(Boolean))
     ) as string[]
-    return ['Todos', ...uniqueBrands]
+    return [
+      { value: 'Todos', display: 'Todos', count: products.length },
+      ...uniqueBrands.map((name) => ({ value: name, display: name, count: counts[name] })),
+    ]
+  }, [products])
+
+  const genderOptions = useMemo(() => {
+    const order = ['homem', 'mulher', 'crianca', 'unissexo']
+    const counts: Record<string, number> = {}
+    for (const p of products) {
+      if (!p.gender) continue
+      counts[p.gender] = (counts[p.gender] ?? 0) + 1
+    }
+    const values = [
+      ...order.filter((g) => counts[g]),
+      ...Object.keys(counts).filter((g) => !order.includes(g)),
+    ]
+    return [
+      { value: 'Todos', display: 'Todos', count: products.length },
+      ...values.map((g) => ({ value: g, display: GENDER_LABELS[g] ?? capitalize(g), count: counts[g] })),
+    ]
+  }, [products])
+
+  const categoryOptions = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const p of products) {
+      if (!p.category) continue
+      counts[p.category] = (counts[p.category] ?? 0) + 1
+    }
+    const values = Object.keys(counts).sort()
+    return [
+      { value: 'Todos', display: 'Todos', count: products.length },
+      ...values.map((c) => ({ value: c, display: capitalize(c), count: counts[c] })),
+    ]
+  }, [products])
+
+  const sizeOptions = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const p of products) {
+      for (const size of p.sizes) {
+        counts[size] = (counts[size] ?? 0) + 1
+      }
+    }
+    const values = Object.keys(counts).sort((a, b) => parseFloat(a) - parseFloat(b))
+    return [
+      { value: 'Todos', display: 'Todos', count: products.length },
+      ...values.map((s) => ({ value: s, display: s, count: counts[s] })),
+    ]
   }, [products])
 
   const suggestions = useMemo(() => {
@@ -83,6 +199,15 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     if (selectedBrand !== 'Todos') {
       result = result.filter((p) => p.brands?.name === selectedBrand)
     }
+    if (selectedGender !== 'Todos') {
+      result = result.filter((p) => p.gender === selectedGender)
+    }
+    if (selectedCategory !== 'Todos') {
+      result = result.filter((p) => p.category === selectedCategory)
+    }
+    if (selectedSize !== 'Todos') {
+      result = result.filter((p) => p.sizes.includes(selectedSize))
+    }
     if (search.trim() !== '') {
       const query = search.toLowerCase()
       result = result.filter(
@@ -91,8 +216,58 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           p.brands?.name?.toLowerCase().includes(query)
       )
     }
+    if (sortOrder !== 'default') {
+      result = [...result].sort((a, b) => {
+        if (a.lowest_price === null) return 1
+        if (b.lowest_price === null) return -1
+        return sortOrder === 'price-asc'
+          ? a.lowest_price - b.lowest_price
+          : b.lowest_price - a.lowest_price
+      })
+    }
     return result
-  }, [products, selectedBrand, search])
+  }, [products, selectedBrand, selectedGender, selectedCategory, selectedSize, search, sortOrder])
+
+  const activeChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = []
+
+    if (selectedBrand !== 'Todos') {
+      chips.push({ key: 'brand', label: selectedBrand, onRemove: () => setSelectedBrand('Todos') })
+    }
+    if (selectedGender !== 'Todos') {
+      chips.push({
+        key: 'gender',
+        label: GENDER_LABELS[selectedGender] ?? capitalize(selectedGender),
+        onRemove: () => setSelectedGender('Todos'),
+      })
+    }
+    if (selectedCategory !== 'Todos') {
+      chips.push({
+        key: 'category',
+        label: capitalize(selectedCategory),
+        onRemove: () => setSelectedCategory('Todos'),
+      })
+    }
+    if (selectedSize !== 'Todos') {
+      chips.push({ key: 'size', label: `Tamanho ${selectedSize}`, onRemove: () => setSelectedSize('Todos') })
+    }
+    if (sortOrder !== 'default') {
+      const sortLabel = SORT_OPTIONS.find((o) => o.value === sortOrder)?.label ?? ''
+      chips.push({ key: 'sort', label: sortLabel, onRemove: () => setSortOrder('default') })
+    }
+
+    return chips
+  }, [selectedBrand, selectedGender, selectedCategory, selectedSize, sortOrder])
+
+  const hasActiveFilters = activeChips.length > 0
+
+  function clearFilters() {
+    setSelectedBrand('Todos')
+    setSelectedGender('Todos')
+    setSelectedCategory('Todos')
+    setSelectedSize('Todos')
+    setSortOrder('default')
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (suggestions.length === 0) return
@@ -152,7 +327,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
 
   return (
     <div>
-      <div className="flex items-center gap-3 max-w-lg mx-auto mb-10">
+      <div className="flex items-center gap-3 max-w-lg mx-auto mb-6">
         <div className="relative flex-1">
           <svg
             aria-hidden="true"
@@ -259,7 +434,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
         <p className="text-center text-sm text-red-600 mb-6">{imageSearchError}</p>
       )}
 
-      {imageSearchResults && (
+      {imageSearchResults ? (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500">
@@ -292,40 +467,89 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
             ))}
           </div>
         </div>
-      )}
+      ) : (
+        <div ref={gridRef} className="lg:flex lg:items-start lg:gap-10">
+          <aside className="mb-8 lg:mb-0 lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
+            <h2 className="text-sm font-semibold text-gray-900 mb-4 lg:hidden">Filtros</h2>
 
-      {!imageSearchResults && (
-        <div ref={gridRef}>
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {brands.map((brand) => (
+            <SidebarFilterGroup
+              label="Marca"
+              options={brandOptions}
+              selected={selectedBrand}
+              onSelect={setSelectedBrand}
+            />
+            <SidebarFilterGroup
+              label="Género"
+              options={genderOptions}
+              selected={selectedGender}
+              onSelect={setSelectedGender}
+            />
+            <SidebarFilterGroup
+              label="Categoria"
+              options={categoryOptions}
+              selected={selectedCategory}
+              onSelect={setSelectedCategory}
+            />
+            <SidebarFilterGroup
+              label="Tamanho"
+              options={sizeOptions}
+              selected={selectedSize}
+              onSelect={setSelectedSize}
+            />
+            <SidebarFilterGroup
+              label="Ordenar"
+              options={SORT_OPTIONS.map((o) => ({ value: o.value, display: o.label }))}
+              selected={sortOrder}
+              onSelect={(value) => setSortOrder(value as SortOrder)}
+            />
+
+            {hasActiveFilters && (
               <button
-                key={brand}
-                onClick={() => setSelectedBrand(brand)}
-                className={`px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedBrand === brand
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                type="button"
+                onClick={clearFilters}
+                className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
               >
-                {brand} ({brandCounts[brand] ?? 0})
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Limpar
               </button>
-            ))}
-          </div>
+            )}
+          </aside>
 
-          {filteredProducts.length === 0 ? (
-            <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  isSelected={compareSlugs.includes(product.slug)}
-                  onToggleCompare={toggleCompare}
-                />
-              ))}
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            {activeChips.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {activeChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={chip.onRemove}
+                    aria-label={`Remover filtro ${chip.label}`}
+                    className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
+                  >
+                    {chip.label}
+                    <span aria-hidden="true" className="text-gray-300">×</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {filteredProducts.length === 0 ? (
+              <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isSelected={compareSlugs.includes(product.slug)}
+                    onToggleCompare={toggleCompare}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

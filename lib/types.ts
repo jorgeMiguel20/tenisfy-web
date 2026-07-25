@@ -22,4 +22,5 @@ export type ProductWithPrice = Product & {
   brands: Brand
   lowest_price: number | null
   store_count: number | null
+  sizes: string[]
 }
