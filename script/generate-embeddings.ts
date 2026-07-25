@@ -1,4 +1,7 @@
 // script/generate-embeddings.ts
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
+
 import { createClient } from '@supabase/supabase-js'
 import { AutoProcessor, CLIPVisionModelWithProjection, RawImage, env } from '@xenova/transformers'
 
