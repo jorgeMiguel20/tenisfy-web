@@ -2,9 +2,11 @@
 'use client'
 
 import { useMemo, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
+import SortDropdown from './SortDropdown'
+import FilterDrawer from './FilterDrawer'
 import type { ProductWithPrice } from '@/lib/types'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 
@@ -17,12 +19,13 @@ type ImageSearchResult = {
   similarity: number
 }
 
-type SortOrder = 'default' | 'price-asc' | 'price-desc'
+type SortOrder = 'default' | 'newest' | 'price-asc' | 'price-desc'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: 'default', label: 'Relevância' },
-  { value: 'price-asc', label: 'Preço: mais baixo' },
-  { value: 'price-desc', label: 'Preço: mais alto' },
+  { value: 'default', label: 'Em destaque' },
+  { value: 'newest', label: 'Mais Recentes' },
+  { value: 'price-asc', label: 'Preço: mais baixo ↓' },
+  { value: 'price-desc', label: 'Preço: mais alto ↑' },
 ]
 
 const GENDER_LABELS: Record<string, string> = {
@@ -42,6 +45,14 @@ function sidebarItemClass(active: boolean) {
   }`
 }
 
+function FilterIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
+    </svg>
+  )
+}
+
 type PillOption = { value: string; display: string; count?: number }
 
 function SidebarFilterGroup({
@@ -49,45 +60,74 @@ function SidebarFilterGroup({
   options,
   selected,
   onSelect,
+  collapsible = false,
 }: {
   label: string
   options: PillOption[]
   selected: string
   onSelect: (value: string) => void
+  collapsible?: boolean
 }) {
+  const [open, setOpen] = useState(false)
+
   if (options.length <= 1) return null
 
+  const showOptions = !collapsible || open
+
   return (
-    <div className="mb-6">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-        {label}
-      </p>
-      <div className="flex flex-col gap-0.5">
-        {options.map((option) => {
-          const active = selected === option.value
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onSelect(option.value)}
-              className={sidebarItemClass(active)}
-            >
-              <span>{option.display}</span>
-              {option.count !== undefined && (
-                <span className={active ? 'text-gray-300' : 'text-gray-400'}>
-                  ({option.count})
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+    <div className={collapsible ? 'mb-4 border-b border-gray-100 pb-4' : 'mb-6'}>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between mb-2"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</p>
+          <svg
+            className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      ) : (
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+          {label}
+        </p>
+      )}
+
+      {showOptions && (
+        <div className="flex flex-col gap-0.5">
+          {options.map((option) => {
+            const active = selected === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onSelect(option.value)}
+                className={sidebarItemClass(active)}
+              >
+                <span>{option.display}</span>
+                {option.count !== undefined && (
+                  <span className={active ? 'text-gray-300' : 'text-gray-400'}>
+                    ({option.count})
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function ProductGrid({ products }: { products: ProductWithPrice[] }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedBrand, setSelectedBrand] = useState<string>('Todos')
   const [selectedGender, setSelectedGender] = useState<string>('Todos')
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos')
@@ -96,9 +136,9 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
 
   const [imageSearchLoading, setImageSearchLoading] = useState(false)
   const [imageSearchResults, setImageSearchResults] = useState<ImageSearchResult[] | null>(null)
@@ -106,6 +146,18 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
 
   const [compareSlugs, setCompareSlugs] = useState<string[]>([])
   const [compareLimitWarning, setCompareLimitWarning] = useState(false)
+
+  // Sincroniza selectedGender com o parâmetro ?genero= da URL (links "Homens/Mulheres/Crianças"
+  // do header) sempre que ele mudar, sem precisar de um useEffect (padrão recomendado pelo React
+  // para ajustar estado com base numa prop/valor externo que muda).
+  const genderParam = searchParams.get('genero')
+  const [syncedGenderParam, setSyncedGenderParam] = useState<string | null>(null)
+  if (genderParam !== syncedGenderParam) {
+    setSyncedGenderParam(genderParam)
+    if (genderParam && ['homem', 'mulher', 'crianca', 'unissexo'].includes(genderParam)) {
+      setSelectedGender(genderParam)
+    }
+  }
 
   function toggleCompare(product: ProductWithPrice) {
     setCompareSlugs((prev) => {
@@ -216,7 +268,11 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           p.brands?.name?.toLowerCase().includes(query)
       )
     }
-    if (sortOrder !== 'default') {
+    if (sortOrder === 'newest') {
+      result = [...result].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+    } else if (sortOrder === 'price-asc' || sortOrder === 'price-desc') {
       result = [...result].sort((a, b) => {
         if (a.lowest_price === null) return 1
         if (b.lowest_price === null) return -1
@@ -325,6 +381,41 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setImageSearchError(null)
   }
 
+  function renderFilterGroups(collapsible: boolean) {
+    return (
+      <>
+        <SidebarFilterGroup
+          label="Marca"
+          options={brandOptions}
+          selected={selectedBrand}
+          onSelect={setSelectedBrand}
+          collapsible={collapsible}
+        />
+        <SidebarFilterGroup
+          label="Género"
+          options={genderOptions}
+          selected={selectedGender}
+          onSelect={setSelectedGender}
+          collapsible={collapsible}
+        />
+        <SidebarFilterGroup
+          label="Categoria"
+          options={categoryOptions}
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+          collapsible={collapsible}
+        />
+        <SidebarFilterGroup
+          label="Tamanho"
+          options={sizeOptions}
+          selected={selectedSize}
+          onSelect={setSelectedSize}
+          collapsible={collapsible}
+        />
+      </>
+    )
+  }
+
   return (
     <div>
       <div className="flex items-center gap-3 max-w-lg mx-auto mb-6">
@@ -417,19 +508,6 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
         <p className="text-center text-sm text-gray-500 mb-6">A analisar o modelo com IA...</p>
       )}
 
-      <div className="flex justify-center mb-8">
-        <button
-          type="button"
-          onClick={() => gridRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition-colors"
-        >
-          Ver todos
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-      </div>
-
       {imageSearchError && (
         <p className="text-center text-sm text-red-600 mb-6">{imageSearchError}</p>
       )}
@@ -468,40 +546,9 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           </div>
         </div>
       ) : (
-        <div ref={gridRef} className="lg:flex lg:items-start lg:gap-10">
-          <aside className="mb-8 lg:mb-0 lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4 lg:hidden">Filtros</h2>
-
-            <SidebarFilterGroup
-              label="Marca"
-              options={brandOptions}
-              selected={selectedBrand}
-              onSelect={setSelectedBrand}
-            />
-            <SidebarFilterGroup
-              label="Género"
-              options={genderOptions}
-              selected={selectedGender}
-              onSelect={setSelectedGender}
-            />
-            <SidebarFilterGroup
-              label="Categoria"
-              options={categoryOptions}
-              selected={selectedCategory}
-              onSelect={setSelectedCategory}
-            />
-            <SidebarFilterGroup
-              label="Tamanho"
-              options={sizeOptions}
-              selected={selectedSize}
-              onSelect={setSelectedSize}
-            />
-            <SidebarFilterGroup
-              label="Ordenar"
-              options={SORT_OPTIONS.map((o) => ({ value: o.value, display: o.label }))}
-              selected={sortOrder}
-              onSelect={(value) => setSortOrder(value as SortOrder)}
-            />
+        <div className="lg:flex lg:items-start lg:gap-10">
+          <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
+            {renderFilterGroups(true)}
 
             {hasActiveFilters && (
               <button
@@ -518,6 +565,38 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           </aside>
 
           <div className="flex-1 min-w-0">
+            {/* Barra de controlos - desktop */}
+            <div className="hidden lg:flex items-center justify-end gap-3 mb-6">
+              <SortDropdown
+                options={SORT_OPTIONS}
+                selected={sortOrder}
+                onSelect={(value) => setSortOrder(value as SortOrder)}
+              />
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
+              >
+                <FilterIcon className="h-4 w-4" />
+                Filtra
+              </button>
+            </div>
+
+            {/* Barra de controlos - mobile */}
+            <div className="flex lg:hidden items-center justify-between mb-6">
+              <p className="text-sm text-gray-500">
+                {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
+              </p>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
+              >
+                <FilterIcon className="h-4 w-4" />
+                Filtrar &amp; Ordenar
+              </button>
+            </div>
+
             {activeChips.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
                 {activeChips.map((chip) => (
@@ -583,6 +662,29 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           </button>
         </div>
       )}
+
+      <FilterDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        {renderFilterGroups(false)}
+        <SidebarFilterGroup
+          label="Ordenar"
+          options={SORT_OPTIONS.map((o) => ({ value: o.value, display: o.label }))}
+          selected={sortOrder}
+          onSelect={(value) => setSortOrder(value as SortOrder)}
+        />
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Limpar filtros
+          </button>
+        )}
+      </FilterDrawer>
     </div>
   )
 }

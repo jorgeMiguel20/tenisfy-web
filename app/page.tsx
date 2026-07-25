@@ -1,4 +1,5 @@
 // app/page.tsx
+import { Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 
@@ -50,7 +51,9 @@ export default async function Home() {
         </p>
       </section>
 
-      <ProductGrid products={productsWithPrice as any} />
+      <Suspense fallback={null}>
+        <ProductGrid products={productsWithPrice as any} />
+      </Suspense>
     </main>
   )
 }
