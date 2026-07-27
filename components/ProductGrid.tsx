@@ -23,9 +23,9 @@ type SortOrder = 'default' | 'price-asc' | 'price-desc' | 'newest'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'default', label: 'Relevância' },
+  { value: 'newest', label: 'Mais recentes' },
   { value: 'price-asc', label: 'Preço menor' },
   { value: 'price-desc', label: 'Preço maior' },
-  { value: 'newest', label: 'Mais recente' },
 ]
 
 const GENDER_LABELS: Record<string, string> = {
@@ -75,6 +75,20 @@ function Checkbox({ active }: { active: boolean }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       )}
+    </span>
+  )
+}
+
+// Indicador redondo (radio) para a secção "Ordenar por" do drawer, para se
+// distinguir visualmente das checkboxes quadradas dos filtros de multi-seleção.
+function RadioDot({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+        active ? 'border-white' : 'border-gray-300'
+      }`}
+    >
+      {active && <span className="h-2 w-2 rounded-full bg-white" />}
     </span>
   )
 }
@@ -670,22 +684,14 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
               <p className="text-sm text-gray-500 shrink-0">
                 {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
               </p>
-              <div className="flex items-center gap-2">
-                <SortDropdown
-                  options={SORT_OPTIONS}
-                  selected={sortOrder}
-                  onSelect={(value) => setSortOrder(value as SortOrder)}
-                  compact
-                />
-                <button
-                  type="button"
-                  onClick={openDrawer}
-                  className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
-                >
-                  <FilterIcon className="h-4 w-4" />
-                  Filtrar
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={openDrawer}
+                className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
+              >
+                <FilterIcon className="h-4 w-4" />
+                Filtrar
+              </button>
             </div>
 
             {activeChips.length > 0 && (
@@ -776,11 +782,9 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           </div>
         }
       >
-        {renderFilterGroups('drawer')}
-
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-            Ordenar
+            Ordenar por
           </p>
           <div className="flex flex-col gap-0.5">
             {SORT_OPTIONS.map((option) => {
@@ -789,15 +793,20 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
                 <button
                   key={option.value}
                   type="button"
+                  role="radio"
+                  aria-checked={active}
                   onClick={() => setDraftSortOrder(option.value)}
                   className={sidebarItemClass(active)}
                 >
-                  {option.label}
+                  <RadioDot active={active} />
+                  <span>{option.label}</span>
                 </button>
               )
             })}
           </div>
         </div>
+
+        {renderFilterGroups('drawer')}
       </FilterDrawer>
     </div>
   )
