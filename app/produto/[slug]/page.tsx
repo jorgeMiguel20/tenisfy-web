@@ -270,7 +270,7 @@ export default async function ProdutoPage({
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
 
-        <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
+        <div className="h-[55vh] md:h-auto md:aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
 
           {product.image_url ? (
 

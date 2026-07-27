@@ -9,10 +9,12 @@ export default function SortDropdown({
   options,
   selected,
   onSelect,
+  compact = false,
 }: {
   options: SortOption[]
   selected: string
   onSelect: (value: string) => void
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -36,7 +38,13 @@ export default function SortDropdown({
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
       >
-        Ordenar por: <span className="text-gray-900">{selectedLabel}</span>
+        {compact ? (
+          'Ordenar'
+        ) : (
+          <>
+            Ordenar por: <span className="text-gray-900">{selectedLabel}</span>
+          </>
+        )}
         <svg
           className={`h-4 w-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
           viewBox="0 0 24 24"
