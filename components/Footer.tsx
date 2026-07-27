@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <p className="font-semibold text-gray-900">Tenisfy</p>
             <p className="text-sm text-gray-500 mt-1">
-              Compara preços de ténis nas melhores lojas portuguesas
+              Compara preços de ténis nas melhores lojas
             </p>
           </div>
 

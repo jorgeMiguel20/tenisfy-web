@@ -19,13 +19,13 @@ type ImageSearchResult = {
   similarity: number
 }
 
-type SortOrder = 'default' | 'newest' | 'price-asc' | 'price-desc'
+type SortOrder = 'default' | 'price-asc' | 'price-desc' | 'newest'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: 'default', label: 'Em destaque' },
-  { value: 'newest', label: 'Mais Recentes' },
-  { value: 'price-asc', label: 'Preço: mais baixo ↓' },
-  { value: 'price-desc', label: 'Preço: mais alto ↑' },
+  { value: 'default', label: 'Relevância' },
+  { value: 'price-asc', label: 'Preço menor' },
+  { value: 'price-desc', label: 'Preço maior' },
+  { value: 'newest', label: 'Mais recente' },
 ]
 
 const GENDER_LABELS: Record<string, string> = {
@@ -35,12 +35,20 @@ const GENDER_LABELS: Record<string, string> = {
   unissexo: 'Unissexo',
 }
 
+const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Bege', 'Multicolor']
+
+const VALID_GENDERS = ['homem', 'mulher', 'crianca', 'unissexo']
+
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function toggleValue(list: string[], value: string) {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+}
+
 function sidebarItemClass(active: boolean) {
-  return `flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${
+  return `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${
     active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
   }`
 }
@@ -53,24 +61,43 @@ function FilterIcon({ className }: { className?: string }) {
   )
 }
 
-type PillOption = { value: string; display: string; count?: number }
+type PillOption = { value: string; display: string }
 
+function Checkbox({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+        active ? 'border-white' : 'border-gray-300'
+      }`}
+    >
+      {active && (
+        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+    </span>
+  )
+}
+
+// Grupo de filtro de seleção múltipla (Marca, Género, Categoria, Tamanho, Cor).
+// Quando collapsible=true (sidebar), começa fechado e é preciso clicar no
+// título para ver as opções. Quando collapsible=false (drawer), está sempre aberto.
 function SidebarFilterGroup({
   label,
   options,
   selected,
-  onSelect,
+  onToggle,
   collapsible = false,
 }: {
   label: string
   options: PillOption[]
-  selected: string
-  onSelect: (value: string) => void
+  selected: string[]
+  onToggle: (value: string) => void
   collapsible?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
-  if (options.length <= 1) return null
+  if (options.length === 0) return null
 
   const showOptions = !collapsible || open
 
@@ -102,20 +129,18 @@ function SidebarFilterGroup({
       {showOptions && (
         <div className="flex flex-col gap-0.5">
           {options.map((option) => {
-            const active = selected === option.value
+            const active = selected.includes(option.value)
             return (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => onSelect(option.value)}
+                role="checkbox"
+                aria-checked={active}
+                onClick={() => onToggle(option.value)}
                 className={sidebarItemClass(active)}
               >
+                <Checkbox active={active} />
                 <span>{option.display}</span>
-                {option.count !== undefined && (
-                  <span className={active ? 'text-gray-300' : 'text-gray-400'}>
-                    ({option.count})
-                  </span>
-                )}
               </button>
             )
           })}
@@ -128,11 +153,23 @@ function SidebarFilterGroup({
 export default function ProductGrid({ products }: { products: ProductWithPrice[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [selectedBrand, setSelectedBrand] = useState<string>('Todos')
-  const [selectedGender, setSelectedGender] = useState<string>('Todos')
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos')
-  const [selectedSize, setSelectedSize] = useState<string>('Todos')
+
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([])
+  const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [sortOrder, setSortOrder] = useState<SortOrder>('default')
+
+  // Estado "rascunho" do painel deslizante (drawer): só é aplicado à grelha
+  // quando se clica em "Aplicar filtros". Fechar sem aplicar descarta as alterações.
+  const [draftBrands, setDraftBrands] = useState<string[]>([])
+  const [draftGenders, setDraftGenders] = useState<string[]>([])
+  const [draftCategories, setDraftCategories] = useState<string[]>([])
+  const [draftSizes, setDraftSizes] = useState<string[]>([])
+  const [draftColors, setDraftColors] = useState<string[]>([])
+  const [draftSortOrder, setDraftSortOrder] = useState<SortOrder>('default')
+
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -147,15 +184,17 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [compareSlugs, setCompareSlugs] = useState<string[]>([])
   const [compareLimitWarning, setCompareLimitWarning] = useState(false)
 
-  // Sincroniza selectedGender com o parâmetro ?genero= da URL (links "Homens/Mulheres/Crianças"
-  // do header) sempre que ele mudar, sem precisar de um useEffect (padrão recomendado pelo React
-  // para ajustar estado com base numa prop/valor externo que muda).
+  // Sincroniza selectedGenders com o parâmetro ?genero= da URL (links do header:
+  // "Homem" -> homem+unissexo, "Mulher" -> mulher+unissexo, "Crianças" -> crianca)
+  // sempre que ele mudar. Ajustado durante o render (não num useEffect), que é o
+  // padrão recomendado pelo React para reagir a um valor externo que muda.
   const genderParam = searchParams.get('genero')
   const [syncedGenderParam, setSyncedGenderParam] = useState<string | null>(null)
   if (genderParam !== syncedGenderParam) {
     setSyncedGenderParam(genderParam)
-    if (genderParam && ['homem', 'mulher', 'crianca', 'unissexo'].includes(genderParam)) {
-      setSelectedGender(genderParam)
+    if (genderParam) {
+      const genders = genderParam.split(',').filter((g) => VALID_GENDERS.includes(g))
+      if (genders.length > 0) setSelectedGenders(genders)
     }
   }
 
@@ -175,63 +214,38 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   }
 
   const brandOptions = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const p of products) {
-      const name = p.brands?.name
-      if (!name) continue
-      counts[name] = (counts[name] ?? 0) + 1
-    }
     const uniqueBrands = Array.from(
       new Set(products.map((p) => p.brands?.name).filter(Boolean))
     ) as string[]
-    return [
-      { value: 'Todos', display: 'Todos', count: products.length },
-      ...uniqueBrands.map((name) => ({ value: name, display: name, count: counts[name] })),
-    ]
+    return uniqueBrands.map((name) => ({ value: name, display: name }))
   }, [products])
 
   const genderOptions = useMemo(() => {
-    const order = ['homem', 'mulher', 'crianca', 'unissexo']
-    const counts: Record<string, number> = {}
-    for (const p of products) {
-      if (!p.gender) continue
-      counts[p.gender] = (counts[p.gender] ?? 0) + 1
-    }
+    const present = new Set(products.map((p) => p.gender).filter(Boolean))
     const values = [
-      ...order.filter((g) => counts[g]),
-      ...Object.keys(counts).filter((g) => !order.includes(g)),
-    ]
-    return [
-      { value: 'Todos', display: 'Todos', count: products.length },
-      ...values.map((g) => ({ value: g, display: GENDER_LABELS[g] ?? capitalize(g), count: counts[g] })),
-    ]
+      ...VALID_GENDERS.filter((g) => present.has(g)),
+      ...Array.from(present).filter((g) => g && !VALID_GENDERS.includes(g)),
+    ] as string[]
+    return values.map((g) => ({ value: g, display: GENDER_LABELS[g] ?? capitalize(g) }))
   }, [products])
 
   const categoryOptions = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const p of products) {
-      if (!p.category) continue
-      counts[p.category] = (counts[p.category] ?? 0) + 1
-    }
-    const values = Object.keys(counts).sort()
-    return [
-      { value: 'Todos', display: 'Todos', count: products.length },
-      ...values.map((c) => ({ value: c, display: capitalize(c), count: counts[c] })),
-    ]
+    const unique = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[]
+    return unique.sort().map((c) => ({ value: c, display: capitalize(c) }))
   }, [products])
 
   const sizeOptions = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const p of products) {
-      for (const size of p.sizes) {
-        counts[size] = (counts[size] ?? 0) + 1
-      }
-    }
-    const values = Object.keys(counts).sort((a, b) => parseFloat(a) - parseFloat(b))
-    return [
-      { value: 'Todos', display: 'Todos', count: products.length },
-      ...values.map((s) => ({ value: s, display: s, count: counts[s] })),
-    ]
+    const unique = Array.from(new Set(products.flatMap((p) => p.sizes)))
+    return unique.sort((a, b) => parseFloat(a) - parseFloat(b)).map((s) => ({ value: s, display: s }))
+  }, [products])
+
+  const colorOptions = useMemo(() => {
+    const present = new Set(products.map((p) => p.color).filter(Boolean))
+    const values = [
+      ...COLOR_ORDER.filter((c) => present.has(c)),
+      ...Array.from(present).filter((c) => c && !COLOR_ORDER.includes(c)),
+    ] as string[]
+    return values.map((c) => ({ value: c, display: c }))
   }, [products])
 
   const suggestions = useMemo(() => {
@@ -248,17 +262,20 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
 
   const filteredProducts = useMemo(() => {
     let result = products
-    if (selectedBrand !== 'Todos') {
-      result = result.filter((p) => p.brands?.name === selectedBrand)
+    if (selectedBrands.length > 0) {
+      result = result.filter((p) => p.brands?.name && selectedBrands.includes(p.brands.name))
     }
-    if (selectedGender !== 'Todos') {
-      result = result.filter((p) => p.gender === selectedGender)
+    if (selectedGenders.length > 0) {
+      result = result.filter((p) => p.gender && selectedGenders.includes(p.gender))
     }
-    if (selectedCategory !== 'Todos') {
-      result = result.filter((p) => p.category === selectedCategory)
+    if (selectedCategories.length > 0) {
+      result = result.filter((p) => p.category && selectedCategories.includes(p.category))
     }
-    if (selectedSize !== 'Todos') {
-      result = result.filter((p) => p.sizes.includes(selectedSize))
+    if (selectedSizes.length > 0) {
+      result = result.filter((p) => p.sizes.some((s) => selectedSizes.includes(s)))
+    }
+    if (selectedColors.length > 0) {
+      result = result.filter((p) => p.color && selectedColors.includes(p.color))
     }
     if (search.trim() !== '') {
       const query = search.toLowerCase()
@@ -282,30 +299,45 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       })
     }
     return result
-  }, [products, selectedBrand, selectedGender, selectedCategory, selectedSize, search, sortOrder])
+  }, [products, selectedBrands, selectedGenders, selectedCategories, selectedSizes, selectedColors, search, sortOrder])
 
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = []
 
-    if (selectedBrand !== 'Todos') {
-      chips.push({ key: 'brand', label: selectedBrand, onRemove: () => setSelectedBrand('Todos') })
-    }
-    if (selectedGender !== 'Todos') {
+    for (const brand of selectedBrands) {
       chips.push({
-        key: 'gender',
-        label: GENDER_LABELS[selectedGender] ?? capitalize(selectedGender),
-        onRemove: () => setSelectedGender('Todos'),
+        key: `brand-${brand}`,
+        label: brand,
+        onRemove: () => setSelectedBrands((prev) => prev.filter((v) => v !== brand)),
       })
     }
-    if (selectedCategory !== 'Todos') {
+    for (const gender of selectedGenders) {
       chips.push({
-        key: 'category',
-        label: capitalize(selectedCategory),
-        onRemove: () => setSelectedCategory('Todos'),
+        key: `gender-${gender}`,
+        label: GENDER_LABELS[gender] ?? capitalize(gender),
+        onRemove: () => setSelectedGenders((prev) => prev.filter((v) => v !== gender)),
       })
     }
-    if (selectedSize !== 'Todos') {
-      chips.push({ key: 'size', label: `Tamanho ${selectedSize}`, onRemove: () => setSelectedSize('Todos') })
+    for (const category of selectedCategories) {
+      chips.push({
+        key: `category-${category}`,
+        label: capitalize(category),
+        onRemove: () => setSelectedCategories((prev) => prev.filter((v) => v !== category)),
+      })
+    }
+    for (const size of selectedSizes) {
+      chips.push({
+        key: `size-${size}`,
+        label: `Tamanho ${size}`,
+        onRemove: () => setSelectedSizes((prev) => prev.filter((v) => v !== size)),
+      })
+    }
+    for (const color of selectedColors) {
+      chips.push({
+        key: `color-${color}`,
+        label: color,
+        onRemove: () => setSelectedColors((prev) => prev.filter((v) => v !== color)),
+      })
     }
     if (sortOrder !== 'default') {
       const sortLabel = SORT_OPTIONS.find((o) => o.value === sortOrder)?.label ?? ''
@@ -313,16 +345,46 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     }
 
     return chips
-  }, [selectedBrand, selectedGender, selectedCategory, selectedSize, sortOrder])
+  }, [selectedBrands, selectedGenders, selectedCategories, selectedSizes, selectedColors, sortOrder])
 
   const hasActiveFilters = activeChips.length > 0
 
   function clearFilters() {
-    setSelectedBrand('Todos')
-    setSelectedGender('Todos')
-    setSelectedCategory('Todos')
-    setSelectedSize('Todos')
+    setSelectedBrands([])
+    setSelectedGenders([])
+    setSelectedCategories([])
+    setSelectedSizes([])
+    setSelectedColors([])
     setSortOrder('default')
+  }
+
+  function openDrawer() {
+    setDraftBrands(selectedBrands)
+    setDraftGenders(selectedGenders)
+    setDraftCategories(selectedCategories)
+    setDraftSizes(selectedSizes)
+    setDraftColors(selectedColors)
+    setDraftSortOrder(sortOrder)
+    setDrawerOpen(true)
+  }
+
+  function applyDraftFilters() {
+    setSelectedBrands(draftBrands)
+    setSelectedGenders(draftGenders)
+    setSelectedCategories(draftCategories)
+    setSelectedSizes(draftSizes)
+    setSelectedColors(draftColors)
+    setSortOrder(draftSortOrder)
+    setDrawerOpen(false)
+  }
+
+  function clearDraftFilters() {
+    setDraftBrands([])
+    setDraftGenders([])
+    setDraftCategories([])
+    setDraftSizes([])
+    setDraftColors([])
+    setDraftSortOrder('default')
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -381,36 +443,57 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setImageSearchError(null)
   }
 
-  function renderFilterGroups(collapsible: boolean) {
+  // mode "sidebar": recolhível, aplica em tempo real.
+  // mode "drawer": sempre aberto, opera sobre o estado rascunho (só aplica ao clicar em "Aplicar filtros").
+  function renderFilterGroups(mode: 'sidebar' | 'drawer') {
+    const isSidebar = mode === 'sidebar'
+    const brands = isSidebar ? selectedBrands : draftBrands
+    const setBrands = isSidebar ? setSelectedBrands : setDraftBrands
+    const genders = isSidebar ? selectedGenders : draftGenders
+    const setGenders = isSidebar ? setSelectedGenders : setDraftGenders
+    const categories = isSidebar ? selectedCategories : draftCategories
+    const setCategories = isSidebar ? setSelectedCategories : setDraftCategories
+    const sizes = isSidebar ? selectedSizes : draftSizes
+    const setSizes = isSidebar ? setSelectedSizes : setDraftSizes
+    const colors = isSidebar ? selectedColors : draftColors
+    const setColors = isSidebar ? setSelectedColors : setDraftColors
+
     return (
       <>
         <SidebarFilterGroup
           label="Marca"
           options={brandOptions}
-          selected={selectedBrand}
-          onSelect={setSelectedBrand}
-          collapsible={collapsible}
+          selected={brands}
+          onToggle={(v) => setBrands((prev) => toggleValue(prev, v))}
+          collapsible={isSidebar}
         />
         <SidebarFilterGroup
           label="Género"
           options={genderOptions}
-          selected={selectedGender}
-          onSelect={setSelectedGender}
-          collapsible={collapsible}
+          selected={genders}
+          onToggle={(v) => setGenders((prev) => toggleValue(prev, v))}
+          collapsible={isSidebar}
         />
         <SidebarFilterGroup
           label="Categoria"
           options={categoryOptions}
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
-          collapsible={collapsible}
+          selected={categories}
+          onToggle={(v) => setCategories((prev) => toggleValue(prev, v))}
+          collapsible={isSidebar}
         />
         <SidebarFilterGroup
           label="Tamanho"
           options={sizeOptions}
-          selected={selectedSize}
-          onSelect={setSelectedSize}
-          collapsible={collapsible}
+          selected={sizes}
+          onToggle={(v) => setSizes((prev) => toggleValue(prev, v))}
+          collapsible={isSidebar}
+        />
+        <SidebarFilterGroup
+          label="Cor"
+          options={colorOptions}
+          selected={colors}
+          onToggle={(v) => setColors((prev) => toggleValue(prev, v))}
+          collapsible={isSidebar}
         />
       </>
     )
@@ -548,7 +631,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       ) : (
         <div className="lg:flex lg:items-start lg:gap-10">
           <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
-            {renderFilterGroups(true)}
+            {renderFilterGroups('sidebar')}
 
             {hasActiveFilters && (
               <button
@@ -574,7 +657,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
               />
               <button
                 type="button"
-                onClick={() => setDrawerOpen(true)}
+                onClick={openDrawer}
                 className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
               >
                 <FilterIcon className="h-4 w-4" />
@@ -589,7 +672,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
               </p>
               <button
                 type="button"
-                onClick={() => setDrawerOpen(true)}
+                onClick={openDrawer}
                 className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
               >
                 <FilterIcon className="h-4 w-4" />
@@ -663,27 +746,50 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
         </div>
       )}
 
-      <FilterDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        {renderFilterGroups(false)}
-        <SidebarFilterGroup
-          label="Ordenar"
-          options={SORT_OPTIONS.map((o) => ({ value: o.value, display: o.label }))}
-          selected={sortOrder}
-          onSelect={(value) => setSortOrder(value as SortOrder)}
-        />
+      <FilterDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        footer={
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={clearDraftFilters}
+              className="flex-1 text-sm font-medium text-red-600 hover:text-red-700 transition-colors py-2.5"
+            >
+              Limpar filtros
+            </button>
+            <button
+              type="button"
+              onClick={applyDraftFilters}
+              className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2.5 rounded-full transition-colors"
+            >
+              Aplicar filtros
+            </button>
+          </div>
+        }
+      >
+        {renderFilterGroups('drawer')}
 
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Limpar filtros
-          </button>
-        )}
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            Ordenar
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {SORT_OPTIONS.map((option) => {
+              const active = draftSortOrder === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDraftSortOrder(option.value)}
+                  className={sidebarItemClass(active)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </FilterDrawer>
     </div>
   )

@@ -41,7 +41,7 @@ export async function generateMetadata({
 
   return {
     title: `A comparar: ${names} | Tenisfy`,
-    description: `Compara preços entre ${names} nas melhores lojas portuguesas. Encontra o melhor preço no Tenisfy.`,
+    description: `Compara preços entre ${names} nas melhores lojas. Encontra o melhor preço no Tenisfy.`,
   }
 }
 

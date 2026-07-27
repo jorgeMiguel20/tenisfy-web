@@ -13,6 +13,7 @@ export type Product = {
   slug: string
   category: string | null
   gender: string | null
+  color: string | null
   description: string | null
   image_url: string | null
   is_active: boolean

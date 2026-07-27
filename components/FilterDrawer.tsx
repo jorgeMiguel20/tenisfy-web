@@ -6,10 +6,12 @@ import { useEffect } from 'react'
 export default function FilterDrawer({
   open,
   onClose,
+  footer,
   children,
 }: {
   open: boolean
   onClose: () => void
+  footer?: React.ReactNode
   children: React.ReactNode
 }) {
   useEffect(() => {
@@ -30,8 +32,8 @@ export default function FilterDrawer({
         aria-hidden="true"
       />
 
-      <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto bg-white rounded-t-3xl shadow-2xl sm:max-w-md sm:mx-auto sm:left-0 sm:right-0 animate-slide-up">
-        <div className="sticky top-0 bg-white flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="absolute inset-x-0 bottom-0 max-h-[85vh] bg-white rounded-t-3xl shadow-2xl sm:max-w-md sm:mx-auto sm:left-0 sm:right-0 animate-slide-up flex flex-col">
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Filtrar &amp; Ordenar</h2>
           <button
             type="button"
@@ -45,7 +47,9 @@ export default function FilterDrawer({
           </button>
         </div>
 
-        <div className="p-5">{children}</div>
+        <div className="p-5 overflow-y-auto">{children}</div>
+
+        {footer && <div className="shrink-0 border-t border-gray-100 p-4">{footer}</div>}
       </div>
     </div>
   )

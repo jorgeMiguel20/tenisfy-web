@@ -318,7 +318,8 @@ export default async function ProdutoPage({
 
 
 
-              <div className="border border-gray-100 rounded-2xl overflow-hidden">
+              {/* Desktop/tablet: tabela (a partir de md) */}
+              <div className="border border-gray-100 rounded-2xl overflow-hidden hidden md:block">
 
                 <table className="w-full border-collapse">
 
@@ -378,6 +379,40 @@ export default async function ProdutoPage({
 
                 </table>
 
+              </div>
+
+              {/* Mobile: cards verticais empilhados, sem scroll horizontal (abaixo de md) */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {groupedOffers.map((offer, index) => (
+                  <div
+                    key={offer.store}
+                    className="rounded-2xl border border-gray-100 p-4 flex flex-col items-center text-center gap-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900">{offer.store}</span>
+                      {index === 0 && groupedOffers.length > 1 && (
+                        <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                          Melhor preço
+                        </span>
+                      )}
+                    </div>
+
+                    {offer.sizes.length > 0 && (
+                      <p className="text-sm text-gray-500">Tamanhos: {offer.sizes.join(', ')}</p>
+                    )}
+
+                    <p className="text-2xl font-bold text-orange-600">{offer.price.toFixed(2)}€</p>
+
+                    <a
+                      href={offer.affiliate_url}
+                      target="_blank"
+                      rel="nofollow sponsored noopener"
+                      className="w-full bg-gray-900 text-white px-4 py-2.5 rounded-full text-sm font-medium text-center hover:bg-gray-700 transition-colors"
+                    >
+                      Ver oferta
+                    </a>
+                  </div>
+                ))}
               </div>
 
             </>
