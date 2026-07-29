@@ -112,6 +112,8 @@ type GroupedOffer = {
 
   affiliate_url: string
 
+  shipping_info: string | null
+
 }
 
 
@@ -144,7 +146,7 @@ export default async function ProdutoPage({
 
         id, size, price, currency, affiliate_url, in_stock,
 
-        stores (name)
+        stores (name, shipping_info)
 
       )
 
@@ -185,6 +187,8 @@ export default async function ProdutoPage({
         price: offer.price,
 
         affiliate_url: offer.affiliate_url,
+
+        shipping_info: offer.stores?.shipping_info ?? null,
 
       }
 
@@ -233,6 +237,18 @@ export default async function ProdutoPage({
     year: 'numeric',
 
   })
+
+  const specs = [
+    { label: 'Material', value: product.material },
+    { label: 'Sola', value: product.sole_type },
+    { label: 'Fecho', value: product.closure_type },
+    { label: 'Ajuste', value: product.fit },
+    { label: 'Cor', value: product.color },
+    { label: 'Código do artigo', value: product.article_code },
+    { label: 'Peso', value: product.weight },
+    { label: 'Declive', value: product.drop_height },
+    { label: 'Sustentabilidade', value: product.sustainability },
+  ].filter((spec) => spec.value)
 
 
 
@@ -367,7 +383,14 @@ export default async function ProdutoPage({
 
                         <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
 
-                        <td className="p-4 font-bold text-orange-600">{offer.price.toFixed(2)}€</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-orange-600">{offer.price.toFixed(2)}€</span>
+                            {offer.shipping_info && (
+                              <span className="text-xs text-gray-400">{offer.shipping_info}</span>
+                            )}
+                          </div>
+                        </td>
 
                         <td className="p-4"><a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-gray-700 transition-colors">Ver oferta</a></td>
 
@@ -401,7 +424,12 @@ export default async function ProdutoPage({
                       <p className="text-sm text-gray-500">Tamanhos: {offer.sizes.join(', ')}</p>
                     )}
 
-                    <p className="text-2xl font-bold text-orange-600">{offer.price.toFixed(2)}€</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-2xl font-bold text-orange-600">{offer.price.toFixed(2)}€</p>
+                      {offer.shipping_info && (
+                        <span className="text-xs text-gray-400">{offer.shipping_info}</span>
+                      )}
+                    </div>
 
                     <a
                       href={offer.affiliate_url}
@@ -423,8 +451,26 @@ export default async function ProdutoPage({
 
       </div>
 
+      {specs.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalhes do produto</h2>
+          <div className="border border-gray-100 rounded-2xl overflow-hidden">
+            <table className="w-full border-collapse">
+              <tbody>
+                {specs.map((spec, index) => (
+                  <tr key={spec.label} className={index !== specs.length - 1 ? 'border-b border-gray-50' : ''}>
+                    <td className="p-4 text-sm font-medium text-gray-500 bg-gray-50 w-1/3">{spec.label}</td>
+                    <td className="p-4 text-gray-900">{spec.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </main>
 
   )
 
-} 
+}
