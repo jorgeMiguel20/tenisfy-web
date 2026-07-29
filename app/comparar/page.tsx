@@ -1,4 +1,5 @@
 // app/comparar/page.tsx
+import { Fragment } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -10,6 +11,10 @@ function parseSlugs(produtos?: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 3)
+}
+
+function formatPrice(value: number): string {
+  return Number.isInteger(value) ? `${value}€` : `${value.toFixed(2)}€`
 }
 
 export async function generateMetadata({
@@ -63,6 +68,14 @@ function groupOffers(offers: any[]): GroupedOffer[] {
 
   return Object.values(grouped).sort((a, b) => a.price - b.price)
 }
+
+const SPEC_DEFS = [
+  { key: 'material', label: 'Material' },
+  { key: 'sole_type', label: 'Sola' },
+  { key: 'closure_type', label: 'Fecho' },
+  { key: 'color', label: 'Cor' },
+  { key: 'article_code', label: 'Ref' },
+] as const
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
@@ -125,8 +138,16 @@ export default async function CompararPage({
     ordered.length === 1
       ? 'grid-cols-1 max-w-sm mx-auto'
       : ordered.length === 2
-        ? 'sm:grid-cols-2'
-        : 'sm:grid-cols-2 lg:grid-cols-3'
+        ? 'md:grid-cols-2'
+        : 'md:grid-cols-2 lg:grid-cols-3'
+
+  // Specs cujo valor difere entre os produtos apresentados (para destacar)
+  const differingLabels = new Set(
+    SPEC_DEFS.filter(({ key }) => {
+      const values = ordered.map((p) => p[key]).filter(Boolean)
+      return new Set(values).size > 1
+    }).map(({ label }) => label)
+  )
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-10">
@@ -143,9 +164,28 @@ export default async function CompararPage({
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
 
+          const specs = SPEC_DEFS.map(({ key, label }) => ({ label, value: product[key] })).filter(
+            (spec) => spec.value
+          )
+
+          const remainingSlugs = slugs.filter((s) => s !== product.slug)
+          const removeHref =
+            remainingSlugs.length > 0 ? `/comparar?produtos=${remainingSlugs.join(',')}` : '/comparar'
+
           return (
-            <div key={product.id} className="rounded-2xl border border-gray-100 bg-white p-6">
-              <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden relative">
+            <div
+              key={product.id}
+              className="relative flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6"
+            >
+              <Link
+                href={removeHref}
+                aria-label={`Remover ${product.model_name} da comparação`}
+                className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-400 shadow-sm hover:border-gray-300 hover:text-gray-700 transition-colors"
+              >
+                <span aria-hidden="true">&times;</span>
+              </Link>
+
+              <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden relative">
                 {product.image_url ? (
                   <Image
                     src={product.image_url}
@@ -161,46 +201,71 @@ export default async function CompararPage({
                 )}
               </div>
 
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                {product.brands?.name}
-              </p>
-              <h2 className="font-semibold text-gray-900 mt-0.5">{product.model_name}</h2>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  {product.brands?.name}
+                </p>
+                <h2 className="font-semibold text-gray-900 mt-0.5">{product.model_name}</h2>
+              </div>
 
               {lowestPrice ? (
-                <p className="text-2xl font-extrabold text-orange-600 mt-2">
-                  {lowestPrice.toFixed(2)}€
-                </p>
+                <p className="text-2xl font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
               ) : (
-                <p className="text-gray-400 text-sm mt-2">Sem oferta disponível</p>
+                <p className="text-gray-400 text-sm">Sem oferta disponível</p>
               )}
 
-              {offers.length > 0 && (
-                <div className="mt-4 border border-gray-100 rounded-xl overflow-hidden">
-                  <table className="w-full border-collapse text-sm">
-                    <tbody>
-                      {offers.map((offer, index) => (
-                        <tr key={offer.store} className="border-b border-gray-50 last:border-0">
-                          <td className="p-3">
-                            {offer.store}
-                            {index === 0 && offers.length > 1 && (
-                              <span className="ml-1.5 inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                                Melhor preço
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3 text-right font-semibold text-gray-900">
-                            {offer.price.toFixed(2)}€
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {specs.length > 0 && (
+                <div className="space-y-1.5 text-sm">
+                  {specs.map((spec) => {
+                    const isDifferent = differingLabels.has(spec.label)
+                    return (
+                      <p
+                        key={spec.label}
+                        className={isDifferent ? '-mx-2 rounded-md bg-orange-50 px-2 py-1' : ''}
+                      >
+                        <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
+                          {spec.label}:
+                        </span>{' '}
+                        <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
+                          {spec.value}
+                        </span>
+                      </p>
+                    )
+                  })}
                 </div>
               )}
 
+              {offers.length > 0 && (
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="grid grid-cols-[1fr_auto_auto] items-center text-sm">
+                    {offers.map((offer, index) => {
+                      const isLast = index === offers.length - 1
+                      const cellBorder = isLast ? '' : 'border-b border-gray-50'
+                      return (
+                        <Fragment key={offer.store}>
+                          <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
+                          <div className={`p-3 text-center ${cellBorder}`}>
+                            {index === 0 && offers.length > 1 && (
+                              <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                Melhor preço
+                              </span>
+                            )}
+                          </div>
+                          <div className={`p-3 text-right font-semibold text-gray-900 ${cellBorder}`}>
+                            {formatPrice(offer.price)}
+                          </div>
+                        </Fragment>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1" />
+
               <Link
                 href={`/produto/${product.slug}`}
-                className="block text-center mt-4 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors"
+                className="flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
               >
                 Ver detalhes e comprar
               </Link>
