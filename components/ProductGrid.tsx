@@ -9,6 +9,7 @@ import SortDropdown from './SortDropdown'
 import FilterDrawer from './FilterDrawer'
 import type { ProductWithPrice } from '@/lib/types'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
+import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 
 type ImageSearchResult = {
   id: string
@@ -28,16 +29,13 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'price-desc', label: 'Preço maior' },
 ]
 
-const GENDER_LABELS: Record<string, string> = {
+const GENDER_LABELS: Record<GenderGroupValue, string> = {
   homem: 'Homem',
   mulher: 'Mulher',
   crianca: 'Criança',
-  unissexo: 'Unissexo',
 }
 
 const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Bege', 'Multicolor']
-
-const VALID_GENDERS = ['homem', 'mulher', 'crianca', 'unissexo']
 
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -198,17 +196,17 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [compareSlugs, setCompareSlugs] = useState<string[]>([])
   const [compareLimitWarning, setCompareLimitWarning] = useState(false)
 
-  // Sincroniza selectedGenders com o parâmetro ?genero= da URL (links do header:
-  // "Homem" -> homem+unissexo, "Mulher" -> mulher+unissexo, "Crianças" -> crianca)
-  // sempre que ele mudar. Ajustado durante o render (não num useEffect), que é o
-  // padrão recomendado pelo React para reagir a um valor externo que muda.
+  // Sincroniza selectedGenders com o parâmetro ?genero= da URL (links do
+  // header, ex: "Homem" -> ?genero=homem). O grupo já inclui Unissexo por
+  // regra centralizada em lib/genderGroups.ts. Ajustado durante o render
+  // (não num useEffect), que é o padrão recomendado pelo React para reagir
+  // a um valor externo que muda.
   const genderParam = searchParams.get('genero')
   const [syncedGenderParam, setSyncedGenderParam] = useState<string | null>(null)
   if (genderParam !== syncedGenderParam) {
     setSyncedGenderParam(genderParam)
-    if (genderParam) {
-      const genders = genderParam.split(',').filter((g) => VALID_GENDERS.includes(g))
-      if (genders.length > 0) setSelectedGenders(genders)
+    if (genderParam && GENDER_GROUP_VALUES.includes(genderParam as GenderGroupValue)) {
+      setSelectedGenders([genderParam])
     }
   }
 
@@ -248,12 +246,9 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   }, [products])
 
   const genderOptions = useMemo(() => {
-    const present = new Set(products.map((p) => p.gender).filter(Boolean))
-    const values = [
-      ...VALID_GENDERS.filter((g) => present.has(g)),
-      ...Array.from(present).filter((g) => g && !VALID_GENDERS.includes(g)),
-    ] as string[]
-    return values.map((g) => ({ value: g, display: GENDER_LABELS[g] ?? capitalize(g) }))
+    return GENDER_GROUP_VALUES.filter((value) =>
+      products.some((p) => p.gender && GENDER_GROUPS[value].includes(p.gender))
+    ).map((value) => ({ value, display: GENDER_LABELS[value] }))
   }, [products])
 
   const categoryOptions = useMemo(() => {
@@ -267,12 +262,8 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   }, [products])
 
   const colorOptions = useMemo(() => {
-    const present = new Set(products.map((p) => p.color).filter(Boolean))
-    const values = [
-      ...COLOR_ORDER.filter((c) => present.has(c)),
-      ...Array.from(present).filter((c) => c && !COLOR_ORDER.includes(c)),
-    ] as string[]
-    return values.map((c) => ({ value: c, display: c }))
+    const present = new Set(products.flatMap((p) => p.base_colors ?? []))
+    return COLOR_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c, display: c }))
   }, [products])
 
   const suggestions = useMemo(() => {
@@ -293,7 +284,11 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       result = result.filter((p) => p.brands?.name && selectedBrands.includes(p.brands.name))
     }
     if (selectedGenders.length > 0) {
-      result = result.filter((p) => p.gender && selectedGenders.includes(p.gender))
+      result = result.filter(
+        (p) =>
+          p.gender &&
+          selectedGenders.some((v) => GENDER_GROUPS[v as GenderGroupValue]?.includes(p.gender!))
+      )
     }
     if (selectedCategories.length > 0) {
       result = result.filter((p) => p.category && selectedCategories.includes(p.category))
@@ -302,7 +297,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       result = result.filter((p) => p.sizes.some((s) => selectedSizes.includes(s)))
     }
     if (selectedColors.length > 0) {
-      result = result.filter((p) => p.color && selectedColors.includes(p.color))
+      result = result.filter((p) => p.base_colors?.some((c) => selectedColors.includes(c)))
     }
     if (search.trim() !== '') {
       const query = search.toLowerCase()
@@ -341,7 +336,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     for (const gender of selectedGenders) {
       chips.push({
         key: `gender-${gender}`,
-        label: GENDER_LABELS[gender] ?? capitalize(gender),
+        label: GENDER_LABELS[gender as GenderGroupValue] ?? capitalize(gender),
         onRemove: () => setSelectedGenders((prev) => prev.filter((v) => v !== gender)),
       })
     }
@@ -795,7 +790,10 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           </div>
         }
       >
-        <div className="mb-6">
+        {/* Em desktop (lg+) a ordenação já está disponível no SortDropdown fora do
+            drawer, por isso esconde-se aqui para não duplicar; no mobile/tablet é
+            a única forma de ordenar, por isso mantém-se visível. */}
+        <div className="mb-6 lg:hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
             Ordenar por
           </p>
