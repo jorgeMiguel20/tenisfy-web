@@ -212,6 +212,19 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     }
   }
 
+  // Sincroniza compareSlugs com o parâmetro ?comparar= da URL: usado quando se
+  // volta ao catálogo a partir de um placeholder "+ Adicionar produto" na
+  // página /comparar, para não perder os produtos já selecionados.
+  const compareParam = searchParams.get('comparar')
+  const [syncedCompareParam, setSyncedCompareParam] = useState<string | null>(null)
+  if (compareParam !== syncedCompareParam) {
+    setSyncedCompareParam(compareParam)
+    if (compareParam) {
+      const slugs = compareParam.split(',').filter(Boolean).slice(0, 3)
+      if (slugs.length > 0) setCompareSlugs(slugs)
+    }
+  }
+
   function toggleCompare(product: ProductWithPrice) {
     setCompareSlugs((prev) => {
       if (prev.includes(product.slug)) {

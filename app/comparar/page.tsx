@@ -77,6 +77,20 @@ const SPEC_DEFS = [
   { key: 'article_code', label: 'Ref' },
 ] as const
 
+function ComparePlaceholder({ existingSlugs }: { existingSlugs: string[] }) {
+  const href = existingSlugs.length > 0 ? `/?comparar=${existingSlugs.join(',')}` : '/'
+
+  return (
+    <Link
+      href={href}
+      className="flex min-h-[280px] h-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
+    >
+      <span className="text-2xl leading-none">+</span>
+      <span className="text-sm font-semibold">Adicionar produto para comparar</span>
+    </Link>
+  )
+}
+
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <main className="max-w-4xl mx-auto px-6 py-16 text-center">
@@ -134,12 +148,11 @@ export default async function CompararPage({
     )
   }
 
-  const gridCols =
-    ordered.length === 1
-      ? 'grid-cols-1 max-w-sm mx-auto'
-      : ordered.length === 2
-        ? 'md:grid-cols-2'
-        : 'md:grid-cols-2 lg:grid-cols-3'
+  // Com menos de 3 produtos reais, preenche os lugares em falta com
+  // placeholders "+ Adicionar produto" (grid mantém-se sempre a 3 colunas)
+  // e contém a página numa largura mais estreita, centrada.
+  const placeholderCount = Math.max(0, 3 - ordered.length)
+  const containerMaxWidth = ordered.length < 3 ? 'max-w-4xl' : 'max-w-5xl'
 
   // Specs cujo valor difere entre os produtos apresentados (para destacar)
   const differingLabels = new Set(
@@ -150,7 +163,7 @@ export default async function CompararPage({
   )
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10">
+    <main className={`${containerMaxWidth} mx-auto px-6 py-10`}>
       <Link href="/" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar ao catálogo
       </Link>
@@ -159,7 +172,7 @@ export default async function CompararPage({
         Comparar produtos
       </h1>
 
-      <div className={`grid gap-6 ${gridCols}`}>
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {ordered.map((product) => {
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
@@ -237,7 +250,10 @@ export default async function CompararPage({
 
               {offers.length > 0 && (
                 <div className="border border-gray-100 rounded-xl overflow-hidden">
-                  <div className="grid grid-cols-[1fr_auto_auto] items-center text-sm">
+                  {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
+                      apertado (minmax(0,...)); a coluna do preço fica sempre
+                      "auto" pura, sem encolher, para nunca cortar o valor. */}
+                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
                     {offers.map((offer, index) => {
                       const isLast = index === offers.length - 1
                       const cellBorder = isLast ? '' : 'border-b border-gray-50'
@@ -246,12 +262,12 @@ export default async function CompararPage({
                           <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
                           <div className={`p-3 text-center ${cellBorder}`}>
                             {index === 0 && offers.length > 1 && (
-                              <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                              <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                                 Melhor preço
                               </span>
                             )}
                           </div>
-                          <div className={`p-3 text-right font-semibold text-gray-900 ${cellBorder}`}>
+                          <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
                             {formatPrice(offer.price)}
                           </div>
                         </Fragment>
@@ -272,6 +288,10 @@ export default async function CompararPage({
             </div>
           )
         })}
+
+        {Array.from({ length: placeholderCount }).map((_, i) => (
+          <ComparePlaceholder key={`placeholder-${i}`} existingSlugs={slugs} />
+        ))}
       </div>
     </main>
   )

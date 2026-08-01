@@ -10,6 +10,8 @@ import Image from 'next/image'
 
 import type { Metadata } from 'next'
 
+import FavoriteButton from '@/components/FavoriteButton'
+
 
 
 export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do projeto
@@ -114,6 +116,54 @@ type GroupedOffer = {
 
   shipping_info: string | null
 
+  shipping_base_fee: number | null
+
+  shipping_free_threshold: number | null
+
+}
+
+function formatPrice(value: number): string {
+  return Number.isInteger(value) ? `${value}€` : `${value.toFixed(2)}€`
+}
+
+type ShippingDisplay = { type: 'badge' | 'text'; text: string }
+
+function getShippingDisplay(offer: GroupedOffer): ShippingDisplay | null {
+  const { shipping_free_threshold: threshold, shipping_base_fee: fee, shipping_info, store } = offer
+
+  if (threshold == null) {
+    return shipping_info ? { type: 'text', text: shipping_info } : null
+  }
+
+  if (offer.price >= threshold) {
+    return { type: 'badge', text: 'Portes Grátis' }
+  }
+
+  // Nike: abaixo do limiar o envio depende do estatuto de membro, que não temos — mantém o texto estático em vez de calcular
+  if (store === 'Nike Oficial') {
+    return shipping_info ? { type: 'text', text: shipping_info } : null
+  }
+
+  if (fee != null) {
+    return { type: 'text', text: `+${formatPrice(fee)} envio (grátis acima de ${formatPrice(threshold)})` }
+  }
+
+  return { type: 'text', text: `Grátis acima de ${formatPrice(threshold)}` }
+}
+
+function ShippingLine({ offer, className }: { offer: GroupedOffer; className?: string }) {
+  const shipping = getShippingDisplay(offer)
+  if (!shipping) return null
+
+  if (shipping.type === 'badge') {
+    return (
+      <span className={`inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full w-fit ${className ?? ''}`}>
+        {shipping.text}
+      </span>
+    )
+  }
+
+  return <span className={`text-xs text-gray-400 ${className ?? ''}`}>{shipping.text}</span>
 }
 
 
@@ -146,7 +196,7 @@ export default async function ProdutoPage({
 
         id, size, price, currency, affiliate_url, in_stock,
 
-        stores (name, shipping_info)
+        stores (name, shipping_info, shipping_base_fee, shipping_free_threshold)
 
       )
 
@@ -189,6 +239,10 @@ export default async function ProdutoPage({
         affiliate_url: offer.affiliate_url,
 
         shipping_info: offer.stores?.shipping_info ?? null,
+
+        shipping_base_fee: offer.stores?.shipping_base_fee ?? null,
+
+        shipping_free_threshold: offer.stores?.shipping_free_threshold ?? null,
 
       }
 
@@ -310,7 +364,11 @@ export default async function ProdutoPage({
 
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
 
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-1">{product.model_name}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">{product.model_name}</h1>
+
+            <FavoriteButton slug={product.slug} className="shrink-0" />
+          </div>
 
 
 
@@ -383,12 +441,10 @@ export default async function ProdutoPage({
 
                         <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
 
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-orange-600">{offer.price.toFixed(2)}€</span>
-                            {offer.shipping_info && (
-                              <span className="text-xs text-gray-400">{offer.shipping_info}</span>
-                            )}
+                        <td className="p-4 align-middle">
+                          <div className="flex flex-col justify-center min-h-[52px]">
+                            <span className="text-lg font-bold text-orange-600">{offer.price.toFixed(2)}€</span>
+                            <ShippingLine offer={offer} className="mt-1" />
                           </div>
                         </td>
 
@@ -424,11 +480,9 @@ export default async function ProdutoPage({
                       <p className="text-sm text-gray-500">Tamanhos: {offer.sizes.join(', ')}</p>
                     )}
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
                       <p className="text-2xl font-bold text-orange-600">{offer.price.toFixed(2)}€</p>
-                      {offer.shipping_info && (
-                        <span className="text-xs text-gray-400">{offer.shipping_info}</span>
-                      )}
+                      <ShippingLine offer={offer} />
                     </div>
 
                     <a
@@ -442,6 +496,12 @@ export default async function ProdutoPage({
                   </div>
                 ))}
               </div>
+
+              {groupedOffers.some((offer) => getShippingDisplay(offer)) && (
+                <p className="text-xs text-gray-400 mt-3">
+                  As taxas de envio são estimadas (Portugal continental). Confirma sempre na loja antes de finalizar a compra.
+                </p>
+              )}
 
             </>
 

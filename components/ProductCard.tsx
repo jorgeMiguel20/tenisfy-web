@@ -1,6 +1,7 @@
 // components/ProductCard.tsx
 import Link from 'next/link'
 import type { ProductWithPrice } from '@/lib/types'
+import FavoriteButton from './FavoriteButton'
 
 type ProductCardProps = {
   product: ProductWithPrice
@@ -17,6 +18,8 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
       href={`/produto/${product.slug}`}
       className="group relative block rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-gray-200 hover:shadow-lg hover:-translate-y-1"
     >
+      <FavoriteButton slug={product.slug} className="absolute top-3 left-3 z-10" />
+
       {onToggleCompare && (
         <button
           type="button"

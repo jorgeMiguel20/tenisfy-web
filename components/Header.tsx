@@ -1,5 +1,6 @@
 // components/Header.tsx
 import Link from 'next/link'
+import FavoritesNavLink from './FavoritesNavLink'
 
 const NAV_LINKS = [
   { label: 'Homem', genders: ['homem', 'unissexo'] },
@@ -30,6 +31,8 @@ export default function Header() {
             </Link>
           ))}
         </nav>
+
+        <FavoritesNavLink />
       </div>
     </header>
   )
