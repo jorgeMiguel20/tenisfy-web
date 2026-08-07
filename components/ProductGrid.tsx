@@ -121,7 +121,7 @@ function SidebarFilterGroup({
           onClick={() => setOpen((o) => !o)}
           className="w-full flex items-center justify-between mb-2"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{label}</p>
           <svg
             className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
             viewBox="0 0 24 24"
@@ -133,7 +133,7 @@ function SidebarFilterGroup({
           </svg>
         </button>
       ) : (
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
           {label}
         </p>
       )}
@@ -580,25 +580,34 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
         </div>
 
         {/* Botão da câmara, fora e ao lado do input */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={imageSearchLoading}
-          aria-label="Pesquisar por foto"
-          className="flex-shrink-0 w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-orange-600 hover:border-orange-300 transition-colors disabled:opacity-50"
-        >
-          {imageSearchLoading ? (
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <circle cx="12" cy="13" r="3" />
-            </svg>
-          )}
-        </button>
+        <div className="relative group flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={imageSearchLoading}
+            aria-label="Pesquisar por foto"
+            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-orange-600 hover:border-orange-300 transition-colors disabled:opacity-50"
+          >
+            {imageSearchLoading ? (
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            )}
+          </button>
+
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            Pesquisar por foto
+          </span>
+        </div>
 
         <input
           ref={fileInputRef}
@@ -677,14 +686,6 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
                 selected={sortOrder}
                 onSelect={(value) => setSortOrder(value as SortOrder)}
               />
-              <button
-                type="button"
-                onClick={openDrawer}
-                className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
-              >
-                <FilterIcon className="h-4 w-4" />
-                Filtrar
-              </button>
             </div>
 
             {/* Barra de controlos - mobile */}
@@ -794,7 +795,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
             drawer, por isso esconde-se aqui para não duplicar; no mobile/tablet é
             a única forma de ordenar, por isso mantém-se visível. */}
         <div className="mb-6 lg:hidden">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
             Ordenar por
           </p>
           <div className="flex flex-col gap-0.5">
