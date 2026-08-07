@@ -539,6 +539,8 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
 
           <input
             ref={inputRef}
+            id="catalog-search"
+            name="catalog-search"
             type="text"
             value={search}
             onChange={(e) => {
