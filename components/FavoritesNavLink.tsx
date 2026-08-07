@@ -12,7 +12,7 @@ export default function FavoritesNavLink() {
     <Link
       href="/favoritos"
       aria-label="Favoritos"
-      className="ml-auto flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors"
+      className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors"
     >
       {/* Mobile: só o ícone (a barra não tem largura para "Favoritos" + contador
           ao lado de Homem/Mulher/Crianças sem forçar scroll horizontal).

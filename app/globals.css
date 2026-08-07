@@ -50,3 +50,83 @@ body {
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+
+/* Slider de intervalo de preço: dois <input type="range"> sobrepostos no
+   mesmo espaço (ver components/ProductGrid.tsx). pointer-events fica a none
+   no input inteiro e a auto só na pega, para o clique/toque num ponto
+   qualquer da faixa não "saltar" a pega errada. */
+.price-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.price-range-input::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  background: transparent;
+  height: 4px;
+}
+
+.price-range-input::-moz-range-track {
+  background: transparent;
+  height: 4px;
+  border: none;
+}
+
+.price-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.price-range-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.price-range-input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #ea580c;
+  outline-offset: 2px;
+}
+
+.price-range-input:focus-visible::-moz-range-thumb {
+  outline: 2px solid #ea580c;
+  outline-offset: 2px;
+}
+
+/* Alvo de toque maior em ecrãs táteis (WCAG 2.5.8 pede pelo menos 24x24px;
+   aqui usamos 28px para dar mais margem ao arrastar no telemóvel). */
+@media (pointer: coarse) {
+  .price-range-input::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+    margin-top: -12px;
+  }
+
+  .price-range-input::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+}

@@ -10,6 +10,8 @@ import FilterDrawer from './FilterDrawer'
 import type { ProductWithPrice } from '@/lib/types'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
+import { useCompare } from '@/lib/compare'
+import { searchProducts } from '@/lib/searchProducts'
 
 type ImageSearchResult = {
   id: string
@@ -43,6 +45,58 @@ function capitalize(value: string) {
 
 function toggleValue(list: string[], value: string) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+}
+
+type AttributeFilters = {
+  brands: string[]
+  genders: string[]
+  categories: string[]
+  sizes: string[]
+  colors: string[]
+  search: string
+}
+
+// Aplica todos os filtros exceto o de preço. Usada tanto para calcular a
+// grelha final (+ filtro de preço) como para calcular os limites (mín/máx)
+// do slider de preço a partir do mesmo conjunto de produtos "sobreviventes".
+function applyAttributeFilters(products: ProductWithPrice[], filters: AttributeFilters) {
+  let result = products
+  if (filters.brands.length > 0) {
+    result = result.filter((p) => p.brands?.name && filters.brands.includes(p.brands.name))
+  }
+  if (filters.genders.length > 0) {
+    result = result.filter(
+      (p) =>
+        p.gender &&
+        filters.genders.some((v) => GENDER_GROUPS[v as GenderGroupValue]?.includes(p.gender!))
+    )
+  }
+  if (filters.categories.length > 0) {
+    result = result.filter((p) => p.category && filters.categories.includes(p.category))
+  }
+  if (filters.sizes.length > 0) {
+    result = result.filter((p) => p.sizes.some((s) => filters.sizes.includes(s)))
+  }
+  if (filters.colors.length > 0) {
+    result = result.filter((p) => p.base_colors?.some((c) => filters.colors.includes(c)))
+  }
+  if (filters.search.trim() !== '') {
+    const query = filters.search.toLowerCase()
+    result = result.filter(
+      (p) =>
+        p.model_name.toLowerCase().includes(query) ||
+        p.brands?.name?.toLowerCase().includes(query)
+    )
+  }
+  return result
+}
+
+function priceBoundsFromProducts(products: ProductWithPrice[]) {
+  const prices = products
+    .map((p) => p.lowest_price)
+    .filter((p): p is number => p !== null && p !== undefined)
+  if (prices.length === 0) return { min: 0, max: 0 }
+  return { min: Math.floor(Math.min(...prices)), max: Math.ceil(Math.max(...prices)) }
 }
 
 function sidebarItemClass(active: boolean) {
@@ -162,6 +216,205 @@ function SidebarFilterGroup({
   )
 }
 
+// Slider de intervalo com duas pegas (dois <input type="range"> sobrepostos,
+// truque comum para simular um "dual range" nativo) + dois campos numéricos
+// sincronizados. Os campos guardam texto próprio (minText/maxText) em vez de
+// refletirem `value` diretamente, para o utilizador poder apagar o campo e
+// escrever um novo número sem ser interrompido a cada tecla; o valor só é
+// aplicado (commit) ao sair do campo ou premir Enter.
+function PriceRangeSlider({
+  min,
+  max,
+  value,
+  onChange,
+  idPrefix,
+}: {
+  min: number
+  max: number
+  value: [number, number]
+  onChange: (value: [number, number]) => void
+  idPrefix: string
+}) {
+  const [minText, setMinText] = useState(String(value[0]))
+  const [maxText, setMaxText] = useState(String(value[1]))
+  const [syncedValue, setSyncedValue] = useState(value)
+
+  if (syncedValue[0] !== value[0] || syncedValue[1] !== value[1]) {
+    setSyncedValue(value)
+    setMinText(String(value[0]))
+    setMaxText(String(value[1]))
+  }
+
+  function commitMin(raw: string) {
+    const parsed = Math.round(Number(raw))
+    if (Number.isNaN(parsed)) {
+      setMinText(String(value[0]))
+      return
+    }
+    const clamped = Math.min(Math.max(parsed, min), value[1])
+    setMinText(String(clamped))
+    onChange([clamped, value[1]])
+  }
+
+  function commitMax(raw: string) {
+    const parsed = Math.round(Number(raw))
+    if (Number.isNaN(parsed)) {
+      setMaxText(String(value[1]))
+      return
+    }
+    const clamped = Math.max(Math.min(parsed, max), value[0])
+    setMaxText(String(clamped))
+    onChange([value[0], clamped])
+  }
+
+  const range = Math.max(max - min, 1)
+  const leftPct = ((value[0] - min) / range) * 100
+  const rightPct = ((value[1] - min) / range) * 100
+  const minThumbOnTop = value[0] > min + (max - min) / 2
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <label htmlFor={`${idPrefix}-price-min`} className="sr-only">
+            Preço mínimo
+          </label>
+          <input
+            id={`${idPrefix}-price-min`}
+            type="number"
+            inputMode="numeric"
+            min={min}
+            max={value[1]}
+            value={minText}
+            onChange={(e) => setMinText(e.target.value)}
+            onBlur={(e) => commitMin(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+            }}
+            className="w-full border border-gray-200 rounded-lg pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+            €
+          </span>
+        </div>
+        <span className="text-gray-300 text-sm shrink-0">–</span>
+        <div className="relative flex-1">
+          <label htmlFor={`${idPrefix}-price-max`} className="sr-only">
+            Preço máximo
+          </label>
+          <input
+            id={`${idPrefix}-price-max`}
+            type="number"
+            inputMode="numeric"
+            min={value[0]}
+            max={max}
+            value={maxText}
+            onChange={(e) => setMaxText(e.target.value)}
+            onBlur={(e) => commitMax(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
+            }}
+            className="w-full border border-gray-200 rounded-lg pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+            €
+          </span>
+        </div>
+      </div>
+
+      <div className="relative h-7">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-full bg-gray-200" />
+        <div
+          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full bg-gray-900"
+          style={{ left: `${leftPct}%`, width: `${Math.max(rightPct - leftPct, 0)}%` }}
+        />
+        <input
+          type="range"
+          className="price-range-input"
+          min={min}
+          max={max}
+          value={value[0]}
+          onChange={(e) => {
+            const next = Math.min(Number(e.target.value), value[1])
+            onChange([next, value[1]])
+          }}
+          aria-label="Preço mínimo"
+          style={{ zIndex: minThumbOnTop ? 5 : 3 }}
+        />
+        <input
+          type="range"
+          className="price-range-input"
+          min={min}
+          max={max}
+          value={value[1]}
+          onChange={(e) => {
+            const next = Math.max(Number(e.target.value), value[0])
+            onChange([value[0], next])
+          }}
+          aria-label="Preço máximo"
+          style={{ zIndex: minThumbOnTop ? 3 : 5 }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Mesma "casca" colapsável do SidebarFilterGroup, mas para o slider de preço
+// em vez de uma lista de checkboxes. Some se não houver variação de preço
+// (0 ou 1 produtos no conjunto atual) já que não haveria nada para filtrar.
+function PriceFilterGroup({
+  label,
+  min,
+  max,
+  value,
+  onChange,
+  collapsible = false,
+  idPrefix,
+}: {
+  label: string
+  min: number
+  max: number
+  value: [number, number]
+  onChange: (value: [number, number]) => void
+  collapsible?: boolean
+  idPrefix: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  if (min >= max) return null
+
+  const showOptions = !collapsible || open
+
+  return (
+    <div className={collapsible ? 'mb-4 border-b border-gray-100 pb-4' : 'mb-6'}>
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between mb-2"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{label}</p>
+          <svg
+            className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      ) : (
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">{label}</p>
+      )}
+
+      {showOptions && (
+        <PriceRangeSlider min={min} max={max} value={value} onChange={onChange} idPrefix={idPrefix} />
+      )}
+    </div>
+  )
+}
+
 export default function ProductGrid({ products }: { products: ProductWithPrice[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -173,6 +426,11 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [sortOrder, setSortOrder] = useState<SortOrder>('default')
 
+  // null = ainda não foi ajustado manualmente, "segue" sempre os limites
+  // (mín/máx) calculados a partir dos produtos que sobram dos outros
+  // filtros. Ao ajustar manualmente passa a guardar o intervalo escolhido.
+  const [selectedPriceRange, setSelectedPriceRange] = useState<[number, number] | null>(null)
+
   // Estado "rascunho" do painel deslizante (drawer): só é aplicado à grelha
   // quando se clica em "Aplicar filtros". Fechar sem aplicar descarta as alterações.
   const [draftBrands, setDraftBrands] = useState<string[]>([])
@@ -181,6 +439,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [draftSizes, setDraftSizes] = useState<string[]>([])
   const [draftColors, setDraftColors] = useState<string[]>([])
   const [draftSortOrder, setDraftSortOrder] = useState<SortOrder>('default')
+  const [draftPriceRange, setDraftPriceRange] = useState<[number, number] | null>(null)
 
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -193,7 +452,10 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
   const [imageSearchResults, setImageSearchResults] = useState<ImageSearchResult[] | null>(null)
   const [imageSearchError, setImageSearchError] = useState<string | null>(null)
 
-  const [compareSlugs, setCompareSlugs] = useState<string[]>([])
+  // Seleção de comparação partilhada com o cabeçalho (lib/compare.ts,
+  // localStorage): tanto a barra flutuante abaixo como o link "Comparar" no
+  // cabeçalho leem a mesma fonte, para nunca desincronizarem.
+  const { compareSlugs, toggleCompare: toggleCompareSlug, setCompare, clearCompare } = useCompare()
   const [compareLimitWarning, setCompareLimitWarning] = useState(false)
 
   // Sincroniza selectedGenders com o parâmetro ?genero= da URL (links do
@@ -219,23 +481,80 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setSyncedCompareParam(compareParam)
     if (compareParam) {
       const slugs = compareParam.split(',').filter(Boolean).slice(0, 3)
-      if (slugs.length > 0) setCompareSlugs(slugs)
+      if (slugs.length > 0) setCompare(slugs)
     }
   }
 
+  const sidebarPriceBounds = useMemo(
+    () =>
+      priceBoundsFromProducts(
+        applyAttributeFilters(products, {
+          brands: selectedBrands,
+          genders: selectedGenders,
+          categories: selectedCategories,
+          sizes: selectedSizes,
+          colors: selectedColors,
+          search,
+        })
+      ),
+    [products, selectedBrands, selectedGenders, selectedCategories, selectedSizes, selectedColors, search]
+  )
+
+  const drawerPriceBounds = useMemo(
+    () =>
+      priceBoundsFromProducts(
+        applyAttributeFilters(products, {
+          brands: draftBrands,
+          genders: draftGenders,
+          categories: draftCategories,
+          sizes: draftSizes,
+          colors: draftColors,
+          search,
+        })
+      ),
+    [products, draftBrands, draftGenders, draftCategories, draftSizes, draftColors, search]
+  )
+
+  // Sempre que os limites mudam (porque outro filtro - Marca, Género, etc. -
+  // mudou o conjunto de produtos), o intervalo de preço escolhido volta a
+  // seguir o intervalo completo. Isto só dispara quando os LIMITES mudam, não
+  // quando o próprio slider é arrastado, por isso não interfere ao usar o
+  // filtro de preço isoladamente. Ajustado durante o render, tal como a
+  // sincronização de género/comparar acima.
+  const [syncedSidebarBounds, setSyncedSidebarBounds] = useState(sidebarPriceBounds)
+  if (
+    syncedSidebarBounds.min !== sidebarPriceBounds.min ||
+    syncedSidebarBounds.max !== sidebarPriceBounds.max
+  ) {
+    setSyncedSidebarBounds(sidebarPriceBounds)
+    setSelectedPriceRange([sidebarPriceBounds.min, sidebarPriceBounds.max])
+  }
+
+  const [syncedDrawerBounds, setSyncedDrawerBounds] = useState(drawerPriceBounds)
+  if (
+    syncedDrawerBounds.min !== drawerPriceBounds.min ||
+    syncedDrawerBounds.max !== drawerPriceBounds.max
+  ) {
+    setSyncedDrawerBounds(drawerPriceBounds)
+    setDraftPriceRange([drawerPriceBounds.min, drawerPriceBounds.max])
+  }
+
+  const effectiveSelectedPriceRange = useMemo<[number, number]>(
+    () => selectedPriceRange ?? [sidebarPriceBounds.min, sidebarPriceBounds.max],
+    [selectedPriceRange, sidebarPriceBounds]
+  )
+  const effectiveDraftPriceRange = useMemo<[number, number]>(
+    () => draftPriceRange ?? [drawerPriceBounds.min, drawerPriceBounds.max],
+    [draftPriceRange, drawerPriceBounds]
+  )
+
+  const isPriceFilterActive =
+    effectiveSelectedPriceRange[0] > sidebarPriceBounds.min ||
+    effectiveSelectedPriceRange[1] < sidebarPriceBounds.max
+
   function toggleCompare(product: ProductWithPrice) {
-    setCompareSlugs((prev) => {
-      if (prev.includes(product.slug)) {
-        setCompareLimitWarning(false)
-        return prev.filter((slug) => slug !== product.slug)
-      }
-      if (prev.length >= 3) {
-        setCompareLimitWarning(true)
-        return prev
-      }
-      setCompareLimitWarning(false)
-      return [...prev, product.slug]
-    })
+    const ok = toggleCompareSlug(product.slug)
+    setCompareLimitWarning(!ok)
   }
 
   const brandOptions = useMemo(() => {
@@ -266,45 +585,21 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     return COLOR_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c, display: c }))
   }, [products])
 
-  const suggestions = useMemo(() => {
-    if (search.trim().length < 2) return []
-    const query = search.toLowerCase()
-    return products
-      .filter(
-        (p) =>
-          p.model_name.toLowerCase().includes(query) ||
-          p.brands?.name?.toLowerCase().includes(query)
-      )
-      .slice(0, 5)
-  }, [products, search])
+  const suggestions = useMemo(() => searchProducts(products, search, 5), [products, search])
 
   const filteredProducts = useMemo(() => {
-    let result = products
-    if (selectedBrands.length > 0) {
-      result = result.filter((p) => p.brands?.name && selectedBrands.includes(p.brands.name))
-    }
-    if (selectedGenders.length > 0) {
+    let result = applyAttributeFilters(products, {
+      brands: selectedBrands,
+      genders: selectedGenders,
+      categories: selectedCategories,
+      sizes: selectedSizes,
+      colors: selectedColors,
+      search,
+    })
+    if (isPriceFilterActive) {
+      const [priceMin, priceMax] = effectiveSelectedPriceRange
       result = result.filter(
-        (p) =>
-          p.gender &&
-          selectedGenders.some((v) => GENDER_GROUPS[v as GenderGroupValue]?.includes(p.gender!))
-      )
-    }
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => p.category && selectedCategories.includes(p.category))
-    }
-    if (selectedSizes.length > 0) {
-      result = result.filter((p) => p.sizes.some((s) => selectedSizes.includes(s)))
-    }
-    if (selectedColors.length > 0) {
-      result = result.filter((p) => p.base_colors?.some((c) => selectedColors.includes(c)))
-    }
-    if (search.trim() !== '') {
-      const query = search.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.model_name.toLowerCase().includes(query) ||
-          p.brands?.name?.toLowerCase().includes(query)
+        (p) => p.lowest_price !== null && p.lowest_price >= priceMin && p.lowest_price <= priceMax
       )
     }
     if (sortOrder === 'newest') {
@@ -321,7 +616,18 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       })
     }
     return result
-  }, [products, selectedBrands, selectedGenders, selectedCategories, selectedSizes, selectedColors, search, sortOrder])
+  }, [
+    products,
+    selectedBrands,
+    selectedGenders,
+    selectedCategories,
+    selectedSizes,
+    selectedColors,
+    search,
+    sortOrder,
+    isPriceFilterActive,
+    effectiveSelectedPriceRange,
+  ])
 
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = []
@@ -365,9 +671,27 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       const sortLabel = SORT_OPTIONS.find((o) => o.value === sortOrder)?.label ?? ''
       chips.push({ key: 'sort', label: sortLabel, onRemove: () => setSortOrder('default') })
     }
+    if (isPriceFilterActive) {
+      const [priceMin, priceMax] = effectiveSelectedPriceRange
+      chips.push({
+        key: 'price',
+        label: `${priceMin}€ - ${priceMax}€`,
+        onRemove: () => setSelectedPriceRange([sidebarPriceBounds.min, sidebarPriceBounds.max]),
+      })
+    }
 
     return chips
-  }, [selectedBrands, selectedGenders, selectedCategories, selectedSizes, selectedColors, sortOrder])
+  }, [
+    selectedBrands,
+    selectedGenders,
+    selectedCategories,
+    selectedSizes,
+    selectedColors,
+    sortOrder,
+    isPriceFilterActive,
+    effectiveSelectedPriceRange,
+    sidebarPriceBounds,
+  ])
 
   const hasActiveFilters = activeChips.length > 0
 
@@ -378,6 +702,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setSelectedSizes([])
     setSelectedColors([])
     setSortOrder('default')
+    setSelectedPriceRange(null)
   }
 
   function openDrawer() {
@@ -387,6 +712,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setDraftSizes(selectedSizes)
     setDraftColors(selectedColors)
     setDraftSortOrder(sortOrder)
+    setDraftPriceRange(selectedPriceRange)
     setDrawerOpen(true)
   }
 
@@ -397,6 +723,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setSelectedSizes(draftSizes)
     setSelectedColors(draftColors)
     setSortOrder(draftSortOrder)
+    setSelectedPriceRange(draftPriceRange)
     setDrawerOpen(false)
   }
 
@@ -407,6 +734,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     setDraftSizes([])
     setDraftColors([])
     setDraftSortOrder('default')
+    setDraftPriceRange(null)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -479,6 +807,9 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
     const setSizes = isSidebar ? setSelectedSizes : setDraftSizes
     const colors = isSidebar ? selectedColors : draftColors
     const setColors = isSidebar ? setSelectedColors : setDraftColors
+    const priceRange = isSidebar ? effectiveSelectedPriceRange : effectiveDraftPriceRange
+    const setPriceRange = isSidebar ? setSelectedPriceRange : setDraftPriceRange
+    const priceBounds = isSidebar ? sidebarPriceBounds : drawerPriceBounds
 
     return (
       <>
@@ -516,6 +847,15 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           selected={colors}
           onToggle={(v) => setColors((prev) => toggleValue(prev, v))}
           collapsible={isSidebar}
+        />
+        <PriceFilterGroup
+          label="Preço"
+          min={priceBounds.min}
+          max={priceBounds.max}
+          value={priceRange}
+          onChange={setPriceRange}
+          collapsible={isSidebar}
+          idPrefix={mode}
         />
       </>
     )
@@ -605,7 +945,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
 
           <span
             role="tooltip"
-            className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+            className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
           >
             Pesquisar por foto
           </span>
@@ -760,7 +1100,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           <button
             type="button"
             onClick={() => {
-              setCompareSlugs([])
+              clearCompare()
               setCompareLimitWarning(false)
             }}
             aria-label="Limpar seleção"

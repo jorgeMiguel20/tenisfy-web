@@ -4,6 +4,10 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import ComparePicker from '@/components/ComparePicker'
+import RemoveCompareButton from '@/components/RemoveCompareButton'
+import CompareSelectionSync from '@/components/CompareSelectionSync'
+import type { ProductWithPrice } from '@/lib/types'
 
 function parseSlugs(produtos?: string): string[] {
   return (produtos ?? '')
@@ -77,20 +81,6 @@ const SPEC_DEFS = [
   { key: 'article_code', label: 'Ref' },
 ] as const
 
-function ComparePlaceholder({ existingSlugs }: { existingSlugs: string[] }) {
-  const href = existingSlugs.length > 0 ? `/?comparar=${existingSlugs.join(',')}` : '/'
-
-  return (
-    <Link
-      href={href}
-      className="flex min-h-[280px] h-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
-    >
-      <span className="text-2xl leading-none">+</span>
-      <span className="text-sm font-semibold">Adicionar produto para comparar</span>
-    </Link>
-  )
-}
-
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <main className="max-w-4xl mx-auto px-6 py-16 text-center">
@@ -114,38 +104,32 @@ export default async function CompararPage({
   const { produtos } = await searchParams
   const slugs = parseSlugs(produtos)
 
-  if (slugs.length === 0) {
-    return (
-      <EmptyState
-        title="Nada para comparar ainda"
-        description='Escolhe até 3 produtos no catálogo usando o botão "Comparar".'
-      />
-    )
-  }
+  let ordered: any[] = []
+  if (slugs.length > 0) {
+    const { data: products } = await supabase
+      .from('products')
+      .select(`
+        *,
+        brands (*),
+        product_offers (
+          id, price, in_stock,
+          stores (name)
+        )
+      `)
+      .in('slug', slugs)
 
-  const { data: products } = await supabase
-    .from('products')
-    .select(`
-      *,
-      brands (*),
-      product_offers (
-        id, price, in_stock,
-        stores (name)
+    ordered = slugs
+      .map((slug) => (products ?? []).find((p) => p.slug === slug))
+      .filter(Boolean) as any[]
+
+    if (ordered.length === 0) {
+      return (
+        <EmptyState
+          title="Produtos não encontrados"
+          description="Os produtos que tentaste comparar já não estão disponíveis."
+        />
       )
-    `)
-    .in('slug', slugs)
-
-  const ordered = slugs
-    .map((slug) => (products ?? []).find((p) => p.slug === slug))
-    .filter(Boolean) as any[]
-
-  if (ordered.length === 0) {
-    return (
-      <EmptyState
-        title="Produtos não encontrados"
-        description="Os produtos que tentaste comparar já não estão disponíveis."
-      />
-    )
+    }
   }
 
   // Com menos de 3 produtos reais, preenche os lugares em falta com
@@ -153,6 +137,31 @@ export default async function CompararPage({
   // e contém a página numa largura mais estreita, centrada.
   const placeholderCount = Math.max(0, 3 - ordered.length)
   const containerMaxWidth = ordered.length < 3 ? 'max-w-4xl' : 'max-w-5xl'
+
+  // Catálogo completo para o seletor "+ Adicionar produto" (mesma pesquisa
+  // client-side da homepage, ver lib/searchProducts.ts) - só é preciso
+  // quando sobra pelo menos um lugar por preencher.
+  let pickerProducts: ProductWithPrice[] = []
+  if (placeholderCount > 0) {
+    const { data: allProducts } = await supabase
+      .from('products')
+      .select(`
+        *,
+        brands (*),
+        product_offers (price, in_stock, store_id, size)
+      `)
+      .eq('is_active', true)
+
+    pickerProducts = (allProducts ?? []).map((p) => {
+      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock)
+      const lowest_price = inStockOffers.length > 0
+        ? Math.min(...inStockOffers.map((o: any) => o.price))
+        : null
+      const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
+      const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
+      return { ...p, lowest_price, store_count: distinctStores.size, sizes }
+    })
+  }
 
   // Specs cujo valor difere entre os produtos apresentados (para destacar)
   const differingLabels = new Set(
@@ -164,15 +173,26 @@ export default async function CompararPage({
 
   return (
     <main className={`${containerMaxWidth} mx-auto px-6 py-10`}>
+      {/* Só sincroniza a seleção partilhada quando o URL traz um ?produtos=
+          explícito - visitar /comparar "em branco" não deve apagar uma
+          seleção já feita algures (ex.: header, barra flutuante). */}
+      {slugs.length > 0 && <CompareSelectionSync slugs={ordered.map((p) => p.slug)} />}
+
       <Link href="/" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar ao catálogo
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-4 mb-8">
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-4 mb-2">
         Comparar produtos
       </h1>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      {placeholderCount > 0 && (
+        <p className="text-sm text-gray-500 mb-8">
+          Escolhe até 3 produtos no catálogo para comparar.
+        </p>
+      )}
+
+      <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${placeholderCount === 0 ? 'mt-8' : ''}`}>
         {ordered.map((product) => {
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
@@ -182,21 +202,13 @@ export default async function CompararPage({
           )
 
           const remainingSlugs = slugs.filter((s) => s !== product.slug)
-          const removeHref =
-            remainingSlugs.length > 0 ? `/comparar?produtos=${remainingSlugs.join(',')}` : '/comparar'
 
           return (
             <div
               key={product.id}
               className="relative flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6"
             >
-              <Link
-                href={removeHref}
-                aria-label={`Remover ${product.model_name} da comparação`}
-                className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-400 shadow-sm hover:border-gray-300 hover:text-gray-700 transition-colors"
-              >
-                <span aria-hidden="true">&times;</span>
-              </Link>
+              <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
 
               <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden relative">
                 {product.image_url ? (
@@ -290,7 +302,7 @@ export default async function CompararPage({
         })}
 
         {Array.from({ length: placeholderCount }).map((_, i) => (
-          <ComparePlaceholder key={`placeholder-${i}`} existingSlugs={slugs} />
+          <ComparePicker key={`placeholder-${i}`} allProducts={pickerProducts} currentSlugs={slugs} />
         ))}
       </div>
     </main>
