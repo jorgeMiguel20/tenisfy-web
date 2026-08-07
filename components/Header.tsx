@@ -18,7 +18,7 @@ export default function Header() {
             género selecionado, mesmo se já estivermos na homepage. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 shrink-0">
-          Tenisfy
+          Parjusto
         </a>
 
         <nav className="flex items-center gap-2.5 sm:gap-6">

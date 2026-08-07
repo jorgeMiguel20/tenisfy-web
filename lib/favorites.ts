@@ -3,8 +3,8 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 
-const STORAGE_KEY = 'tenisfy_favorites'
-const CHANGE_EVENT = 'tenisfy-favorites-changed'
+const STORAGE_KEY = 'app_favorites'
+const CHANGE_EVENT = 'app-favorites-changed'
 
 let cachedRaw: string | null = null
 let cachedFavorites: string[] = []

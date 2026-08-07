@@ -1,19 +1,19 @@
 // app/sobre/page.tsx
 export const metadata = {
-  title: 'Sobre o Tenisfy',
+  title: 'Sobre o Parjusto',
 }
 
 export default function SobrePage() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900">Sobre o Tenisfy</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Sobre o Parjusto</h1>
 
       <div className="mt-8 space-y-6 text-gray-700 leading-relaxed">
         <p>
-          O Tenisfy nasceu de uma ideia simples: comprar ténis em Portugal
+          O Parjusto nasceu de uma ideia simples: comprar ténis em Portugal
           significa saltar de site em site à procura do melhor preço, sem
           nunca ter a certeza se encontraste mesmo a oferta mais vantajosa.
-          Criámos o Tenisfy para resolver exatamente isso — comparar preços
+          Criámos o Parjusto para resolver exatamente isso — comparar preços
           de ténis das principais lojas portuguesas, num só sítio.
         </p>
 
@@ -25,7 +25,7 @@ export default function SobrePage() {
         </p>
 
         <p>
-          O Tenisfy está em desenvolvimento contínuo. Estamos a adicionar
+          O Parjusto está em desenvolvimento contínuo. Estamos a adicionar
           novos modelos e lojas regularmente, com o objetivo de nos tornarmos
           a referência para quem procura o melhor preço em ténis de marca em
           Portugal.

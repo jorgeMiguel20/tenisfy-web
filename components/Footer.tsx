@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div>
-            <p className="font-semibold text-gray-900">Tenisfy</p>
+            <p className="font-semibold text-gray-900">Parjusto</p>
             <p className="text-sm text-gray-500 mt-1">
               Compara preços de ténis nas melhores lojas
             </p>
@@ -30,7 +30,7 @@ export default function Footer() {
         </div>
 
         <p className="text-xs text-gray-400 mt-6">
-          © {new Date().getFullYear()} Tenisfy. Todos os direitos reservados.
+          © {new Date().getFullYear()} Parjusto. Todos os direitos reservados.
         </p>
       </div>
     </footer>

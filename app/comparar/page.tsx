@@ -26,7 +26,7 @@ export async function generateMetadata({
   const slugs = parseSlugs(produtos)
 
   if (slugs.length === 0) {
-    return { title: 'Comparar produtos | Tenisfy' }
+    return { title: 'Comparar produtos | Parjusto' }
   }
 
   const { data: products } = await supabase
@@ -39,14 +39,14 @@ export async function generateMetadata({
     .filter(Boolean) as { slug: string; model_name: string }[]
 
   if (ordered.length === 0) {
-    return { title: 'Comparar produtos | Tenisfy' }
+    return { title: 'Comparar produtos | Parjusto' }
   }
 
   const names = ordered.map((p) => p.model_name).join(' vs ')
 
   return {
-    title: `A comparar: ${names} | Tenisfy`,
-    description: `Compara preços entre ${names} nas melhores lojas. Encontra o melhor preço no Tenisfy.`,
+    title: `A comparar: ${names} | Parjusto`,
+    description: `Compara preços entre ${names} nas melhores lojas. Encontra o melhor preço no Parjusto.`,
   }
 }
 

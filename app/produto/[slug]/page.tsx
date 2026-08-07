@@ -56,7 +56,7 @@ export async function generateMetadata({
 
   if (!product) {
 
-    return { title: 'Produto não encontrado | Tenisfy' }
+    return { title: 'Produto não encontrado | Parjusto' }
 
   }
 
@@ -76,9 +76,9 @@ export async function generateMetadata({
 
 
 
-  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Tenisfy`
+  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Parjusto`
 
-  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Tenisfy.`
+  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Parjusto.`
 
 
 
@@ -320,7 +320,7 @@ export default async function ProdutoPage({
 
       <nav className="text-sm text-gray-500 mb-2">
 
-        <Link href="/" className="hover:underline">Tenisfy</Link>
+        <Link href="/" className="hover:underline">Parjusto</Link>
 
         <span className="mx-1.5">/</span>
 

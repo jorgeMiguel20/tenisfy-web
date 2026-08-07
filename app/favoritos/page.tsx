@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import FavoritesGrid from '@/components/FavoritesGrid'
 
 export const metadata: Metadata = {
-  title: 'Os meus favoritos | Tenisfy',
+  title: 'Os meus favoritos | Parjusto',
   description: 'Os produtos que guardaste como favoritos neste dispositivo.',
 }
 

@@ -1,6 +1,6 @@
 // app/termos/page.tsx
 export const metadata = {
-  title: 'Termos de Utilização | Tenisfy',
+  title: 'Termos de Utilização | Parjusto',
 }
 
 export default function TermosPage() {
@@ -13,7 +13,7 @@ export default function TermosPage() {
         <section>
           <h2 className="font-semibold text-gray-900 mb-2">1. Sobre o serviço</h2>
           <p>
-            O Tenisfy é um serviço gratuito de comparação de preços. Apresentamos
+            O Parjusto é um serviço gratuito de comparação de preços. Apresentamos
             informação recolhida de lojas parceiras a título informativo. Não
             vendemos produtos nem processamos pagamentos diretamente.
           </p>
@@ -32,7 +32,7 @@ export default function TermosPage() {
         <section>
           <h2 className="font-semibold text-gray-900 mb-2">3. Responsabilidade</h2>
           <p>
-            O Tenisfy não é responsável por transações, entregas, devoluções, ou
+            O Parjusto não é responsável por transações, entregas, devoluções, ou
             disputas entre o utilizador e a loja parceira. Essas relações são
             exclusivamente entre o utilizador e a loja onde a compra é efetuada.
           </p>

@@ -1,6 +1,6 @@
 // app/divulgacao-afiliados/page.tsx
 export const metadata = {
-  title: 'Divulgação de Afiliados | Tenisfy',
+  title: 'Divulgação de Afiliados | Parjusto',
 }
 
 export default function DivulgacaoAfiliadosPage() {
@@ -11,9 +11,9 @@ export default function DivulgacaoAfiliadosPage() {
 
       <div className="mt-8 space-y-6 text-gray-700 leading-relaxed">
         <p>
-          O Tenisfy participa em programas de marketing de afiliados. Isto
+          O Parjusto participa em programas de marketing de afiliados. Isto
           significa que, quando clicas num link "Ver oferta" e realizas uma
-          compra na loja parceira, o Tenisfy pode receber uma comissão — sem
+          compra na loja parceira, o Parjusto pode receber uma comissão — sem
           qualquer custo adicional para ti.
         </p>
         <p>
@@ -22,7 +22,7 @@ export default function DivulgacaoAfiliadosPage() {
           separadamente pela loja, não pelo consumidor.
         </p>
         <p>
-          O uso de links de afiliados ajuda a manter o Tenisfy gratuito e a
+          O uso de links de afiliados ajuda a manter o Parjusto gratuito e a
           continuar a comparar preços de forma independente.
         </p>
       </div>

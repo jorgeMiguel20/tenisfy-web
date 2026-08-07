@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tenisfy — Compara preços de ténis em Portugal",
+  title: "Parjusto — Compara preços de ténis em Portugal",
   description: "O comparador de preços de ténis e sneakers nas melhores lojas. Encontra o melhor preço para Nike, Adidas, New Balance e mais.",
   metadataBase: new URL("https://tenisfy-web.vercel.app"),
 };

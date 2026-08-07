@@ -1,6 +1,6 @@
 // app/privacidade/page.tsx
 export const metadata = {
-  title: 'Política de Privacidade | Tenisfy',
+  title: 'Política de Privacidade | Parjusto',
 }
 
 export default function PrivacidadePage() {
@@ -13,7 +13,7 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="font-semibold text-gray-900 mb-2">1. Quem somos</h2>
           <p>
-            O Tenisfy é uma plataforma de comparação de preços de ténis e calçado
+            O Parjusto é uma plataforma de comparação de preços de ténis e calçado
             desportivo, operada de forma independente em Portugal. Não vendemos
             produtos diretamente — redirecionamos para lojas parceiras onde a
             compra é efetivamente realizada.
@@ -23,7 +23,7 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="font-semibold text-gray-900 mb-2">2. Dados que recolhemos</h2>
           <p>
-            Atualmente, o Tenisfy não requer registo nem conta de utilizador. Não
+            Atualmente, o Parjusto não requer registo nem conta de utilizador. Não
             recolhemos dados pessoais diretamente através do site. Podemos, no
             futuro, utilizar ferramentas de análise de tráfego anónimo (ex: número
             de visitas) para melhorar o serviço.
@@ -45,7 +45,7 @@ export default function PrivacidadePage() {
           <p>
             Ao clicar num link "Ver oferta", és redirecionado para o site da loja
             parceira, que tem a sua própria política de privacidade e termos,
-            independentes dos do Tenisfy.
+            independentes dos do Parjusto.
           </p>
         </section>
 

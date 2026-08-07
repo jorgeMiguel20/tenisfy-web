@@ -19,7 +19,7 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ fontSize: 100, fontWeight: 700, color: 'white' }}>
-          Tenisfy
+          Parjusto
         </div>
         <div style={{ fontSize: 34, color: '#EA580C', marginTop: 20 }}>
           Compara preços de ténis em Portugal
