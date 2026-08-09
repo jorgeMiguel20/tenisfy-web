@@ -1,6 +1,7 @@
 // components/ProductCard.tsx
 import Link from 'next/link'
 import type { ProductWithPrice } from '@/lib/types'
+import { formatPrice } from '@/lib/formatPrice'
 import FavoriteButton from './FavoriteButton'
 
 type ProductCardProps = {
@@ -71,7 +72,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           )}
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-extrabold text-orange-600">
-              {lowestPrice.toFixed(2)}€
+              {formatPrice(lowestPrice)}
             </span>
             {storeCount > 0 && (
               <span className="text-xs text-gray-600">

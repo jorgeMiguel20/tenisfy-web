@@ -8,6 +8,7 @@ import ComparePicker from '@/components/ComparePicker'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
 import type { ProductWithPrice } from '@/lib/types'
+import { formatPrice } from '@/lib/formatPrice'
 
 function parseSlugs(produtos?: string): string[] {
   return (produtos ?? '')
@@ -15,10 +16,6 @@ function parseSlugs(produtos?: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 3)
-}
-
-function formatPrice(value: number): string {
-  return Number.isInteger(value) ? `${value}€` : `${value.toFixed(2)}€`
 }
 
 export async function generateMetadata({

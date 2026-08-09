@@ -12,6 +12,8 @@ import type { Metadata } from 'next'
 
 import FavoriteButton from '@/components/FavoriteButton'
 
+import { formatPrice } from '@/lib/formatPrice'
+
 
 
 export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do projeto
@@ -76,9 +78,9 @@ export async function generateMetadata({
 
 
 
-  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${lowestPrice.toFixed(2)}€` : ''} | Parjusto`
+  const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${formatPrice(lowestPrice)}` : ''} | Parjusto`
 
-  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${lowestPrice.toFixed(2)}€.` : ''} Encontra a melhor oferta no Parjusto.`
+  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${formatPrice(lowestPrice)}.` : ''} Encontra a melhor oferta no Parjusto.`
 
 
 
@@ -120,10 +122,6 @@ type GroupedOffer = {
 
   shipping_free_threshold: number | null
 
-}
-
-function formatPrice(value: number): string {
-  return Number.isInteger(value) ? `${value}€` : `${value.toFixed(2)}€`
 }
 
 type ShippingDisplay = { type: 'badge' | 'text'; text: string }
@@ -194,7 +192,7 @@ export default async function ProdutoPage({
 
       product_offers (
 
-        id, size, price, currency, affiliate_url, in_stock,
+        id, size, price, currency, affiliate_url, in_stock, last_checked_at,
 
         stores (name, shipping_info, shipping_base_fee, shipping_free_threshold)
 
@@ -284,13 +282,18 @@ export default async function ProdutoPage({
 
 
 
-  const updatedLabel = new Date().toLocaleDateString('pt-PT', {
+  // A mais antiga entre as ofertas visíveis (pior caso) - mais honesto do que
+  // "hoje", que não refletia quando os preços foram mesmo verificados.
+  const oldestCheckedAt = rawOffers.length > 0
+    ? rawOffers.reduce((oldest: string, o: any) => (o.last_checked_at < oldest ? o.last_checked_at : oldest), rawOffers[0].last_checked_at)
+    : null
 
-    month: 'long',
-
-    year: 'numeric',
-
-  })
+  const updatedLabel = oldestCheckedAt
+    ? new Date(oldestCheckedAt).toLocaleDateString('pt-PT', {
+        month: 'long',
+        year: 'numeric',
+      })
+    : null
 
   const specs = [
     { label: 'Material', value: product.material },
@@ -382,13 +385,15 @@ export default async function ProdutoPage({
 
               {savings > 0 && (
 
-                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {savings.toFixed(2)}€ escolhendo {cheapest.store}</div>
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savings)} escolhendo {cheapest.store}</div>
 
               )}
 
 
 
-              <p className="text-sm text-gray-500 mt-4 mb-2 font-medium">Preços atualizados em {updatedLabel}</p>
+              {updatedLabel && (
+                <p className="text-sm text-gray-500 mt-4 mb-2 font-medium">Preços atualizados em {updatedLabel}</p>
+              )}
 
 
 
@@ -443,7 +448,7 @@ export default async function ProdutoPage({
 
                         <td className="p-4 align-middle">
                           <div className="flex flex-col justify-center min-h-[52px]">
-                            <span className="text-lg font-bold text-orange-600">{offer.price.toFixed(2)}€</span>
+                            <span className="text-lg font-bold text-orange-600">{formatPrice(offer.price)}</span>
                             <ShippingLine offer={offer} className="mt-1" />
                           </div>
                         </td>
@@ -481,7 +486,7 @@ export default async function ProdutoPage({
                     )}
 
                     <div className="flex flex-col items-center gap-1">
-                      <p className="text-2xl font-bold text-orange-600">{offer.price.toFixed(2)}€</p>
+                      <p className="text-2xl font-bold text-orange-600">{formatPrice(offer.price)}</p>
                       <ShippingLine offer={offer} />
                     </div>
 

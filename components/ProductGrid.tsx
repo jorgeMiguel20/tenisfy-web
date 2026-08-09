@@ -12,6 +12,7 @@ import { getImageEmbedding } from '@/lib/imageEmbedding'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 import { useCompare } from '@/lib/compare'
 import { searchProducts } from '@/lib/searchProducts'
+import { formatPrice } from '@/lib/formatPrice'
 
 type ImageSearchResult = {
   id: string
@@ -675,7 +676,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
       const [priceMin, priceMax] = effectiveSelectedPriceRange
       chips.push({
         key: 'price',
-        label: `${priceMin}€ - ${priceMax}€`,
+        label: `${priceMin} € - ${priceMax} €`,
         onRemove: () => setSelectedPriceRange([sidebarPriceBounds.min, sidebarPriceBounds.max]),
       })
     }
@@ -912,7 +913,7 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
                   </span>
                   {p.lowest_price && (
                     <span className="text-orange-600 font-semibold">
-                      {p.lowest_price.toFixed(2)}€
+                      {formatPrice(p.lowest_price)}
                     </span>
                   )}
                 </Link>

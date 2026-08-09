@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
+import { SITE_URL } from "@/lib/siteUrl";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Parjusto — Compara preços de ténis em Portugal",
   description: "O comparador de preços de ténis e sneakers nas melhores lojas. Encontra o melhor preço para Nike, Adidas, New Balance e mais.",
-  metadataBase: new URL("https://tenisfy-web.vercel.app"),
+  metadataBase: new URL(SITE_URL),
 };
 
 export default function RootLayout({

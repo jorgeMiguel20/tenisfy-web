@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { ProductWithPrice } from '@/lib/types'
 import { searchProducts } from '@/lib/searchProducts'
 import { useCompare } from '@/lib/compare'
+import { formatPrice } from '@/lib/formatPrice'
 
 export default function ComparePicker({
   allProducts,
@@ -142,7 +143,7 @@ export default function ComparePicker({
               </div>
               {p.lowest_price != null && (
                 <span className="text-xs font-semibold text-orange-600 shrink-0">
-                  {p.lowest_price.toFixed(2)}€
+                  {formatPrice(p.lowest_price)}
                 </span>
               )}
             </button>
