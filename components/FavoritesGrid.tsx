@@ -54,22 +54,22 @@ export default function FavoritesGrid() {
 
   if (favorites.length === 0) {
     return (
-      <div>
+      <div className="flex flex-col items-center py-6 text-center">
         <p className="text-sm text-gray-500 mb-6">
           Ainda sem favoritos. Clica no coração num produto para o guardares aqui.
         </p>
         <Link
           href="/"
-          className="flex max-w-xs flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
+          className="flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 p-14 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
         >
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M12 21s-6.716-4.35-9.428-8.06C.85 10.1 1.2 6.6 4.1 5.02 6.4 3.77 9 4.5 12 7.5c3-3 5.6-3.73 7.9-2.48 2.9 1.58 3.25 5.08 1.53 7.92C18.716 16.65 12 21 12 21z"
             />
           </svg>
-          <span className="text-sm font-semibold">Ver catálogo</span>
+          <span className="text-base font-semibold">Ver catálogo</span>
         </Link>
       </div>
     )
