@@ -82,12 +82,7 @@ function applyAttributeFilters(products: ProductWithPrice[], filters: AttributeF
     result = result.filter((p) => p.base_colors?.some((c) => filters.colors.includes(c)))
   }
   if (filters.search.trim() !== '') {
-    const query = filters.search.toLowerCase()
-    result = result.filter(
-      (p) =>
-        p.model_name.toLowerCase().includes(query) ||
-        p.brands?.name?.toLowerCase().includes(query)
-    )
+    result = searchProducts(result, filters.search)
   }
   return result
 }

@@ -1,22 +1,27 @@
 // lib/searchProducts.ts
+import Fuse from 'fuse.js'
 import type { ProductWithPrice } from './types'
 
-// Mesma lógica de correspondência usada na pesquisa da homepage (nome do
-// modelo ou marca, mínimo de 2 caracteres) — centralizada aqui para não
-// haver uma segunda versão da pesquisa no seletor da página /comparar.
+// Pesquisa tolerante a erros de escrita (ex: "nikke" ou "nik" encontram
+// "Nike"), usada tanto na grelha do catálogo como nas sugestões rápidas do
+// dropdown - centralizada aqui para as duas usarem sempre os mesmos resultados.
+const FUSE_OPTIONS = {
+  keys: ['model_name', 'brands.name'],
+  threshold: 0.35,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
+}
+
 export function searchProducts(
   products: ProductWithPrice[],
   query: string,
-  limit = 5
+  limit?: number
 ): ProductWithPrice[] {
   const trimmed = query.trim()
   if (trimmed.length < 2) return []
-  const q = trimmed.toLowerCase()
-  return products
-    .filter(
-      (p) =>
-        p.model_name.toLowerCase().includes(q) ||
-        p.brands?.name?.toLowerCase().includes(q)
-    )
-    .slice(0, limit)
+
+  const fuse = new Fuse(products, FUSE_OPTIONS)
+  const results = fuse.search(trimmed)
+  const items = results.map((r) => r.item)
+  return limit != null ? items.slice(0, limit) : items
 }

@@ -25,10 +25,26 @@ export async function markPricesVerified(): Promise<MarkPricesResult> {
     .from('product_offers')
     .update({ last_checked_at: now })
     .not('id', 'is', null)
-    .select('id')
+    .select('id, price')
 
   if (error) {
     return { success: false, error: error.message }
+  }
+
+  // Um ponto de histórico por oferta, alinhado com esta verificação - é o
+  // que alimenta o gráfico de preços na página de produto.
+  const historyRows = (data ?? []).map((offer) => ({
+    product_offer_id: offer.id,
+    price: offer.price,
+    recorded_at: now,
+  }))
+
+  if (historyRows.length > 0) {
+    const { error: historyError } = await supabase.from('price_history').insert(historyRows)
+
+    if (historyError) {
+      return { success: false, error: `Preços atualizados, mas falhou o registo no histórico: ${historyError.message}` }
+    }
   }
 
   return { success: true, timestamp: now, count: data?.length ?? 0 }

@@ -12,7 +12,13 @@ import type { Metadata } from 'next'
 
 import FavoriteButton from '@/components/FavoriteButton'
 
+import ProductCard from '@/components/ProductCard'
+
+import PriceHistoryChart, { type PricePoint } from '@/components/PriceHistoryChart'
+
 import { formatPrice } from '@/lib/formatPrice'
+
+import type { ProductWithPrice } from '@/lib/types'
 
 
 
@@ -116,12 +122,35 @@ type GroupedOffer = {
 
   affiliate_url: string
 
+  affiliate_url_template: string | null
+
   shipping_info: string | null
 
   shipping_base_fee: number | null
 
   shipping_free_threshold: number | null
 
+}
+
+// Se a loja tiver um template de afiliado configurado (ver Divulgação de
+// Afiliados), substitui {url} pelo link direto da oferta; caso contrário
+// (hoje, para todas as lojas) usa o link direto tal como sempre foi.
+function buildOfferUrl(offer: GroupedOffer): string {
+  if (!offer.affiliate_url_template) return offer.affiliate_url
+  return offer.affiliate_url_template.replace('{url}', encodeURIComponent(offer.affiliate_url))
+}
+
+// Custo de envio calculável (número) para uma oferta, ou null se não houver
+// dados fiáveis suficientes para somar ao preço (ex: Nike depende do estatuto
+// de membro; outras lojas só têm o limiar de grátis mas não a taxa abaixo dele).
+function getShippingCost(offer: GroupedOffer): number | null {
+  const { shipping_free_threshold: threshold, shipping_base_fee: fee, store } = offer
+
+  if (store === 'Nike Oficial') return null
+  if (threshold == null) return null
+  if (offer.price >= threshold) return 0
+
+  return fee ?? null
 }
 
 type ShippingDisplay = { type: 'badge' | 'text'; text: string }
@@ -164,6 +193,85 @@ function ShippingLine({ offer, className }: { offer: GroupedOffer; className?: s
   return <span className={`text-xs text-gray-400 ${className ?? ''}`}>{shipping.text}</span>
 }
 
+// Cor aproximada para cada valor de base_colors (mesma lista usada no filtro
+// de cor do catálogo, ver COLOR_ORDER em components/ProductGrid.tsx).
+const COLOR_SWATCH_HEX: Record<string, string> = {
+  Preto: '#111827',
+  Branco: '#f9fafb',
+  Cinzento: '#9ca3af',
+  Azul: '#2563eb',
+  Vermelho: '#dc2626',
+  Verde: '#16a34a',
+  Bege: '#d6c7a1',
+  Multicolor: '#f97316',
+}
+
+function ColorSwatch({
+  baseColors,
+  label,
+  selected = false,
+}: {
+  baseColors: string[] | null
+  label: string
+  selected?: boolean
+}) {
+  const colors = (baseColors ?? []).map((c) => COLOR_SWATCH_HEX[c] ?? '#d1d5db')
+
+  const style =
+    colors.length >= 2
+      ? { background: `linear-gradient(135deg, ${colors[0]} 50%, ${colors[1]} 50%)` }
+      : { background: colors[0] ?? '#d1d5db' }
+
+  return (
+    <span
+      aria-hidden="true"
+      title={label}
+      style={style}
+      className={`block h-8 w-8 rounded-full ${
+        selected ? 'ring-2 ring-offset-2 ring-gray-900' : 'border border-gray-200'
+      }`}
+    />
+  )
+}
+
+function withinPriceRange(price: number | null, anchor: number, ratio = 0.3) {
+  if (price == null) return false
+  return price >= anchor * (1 - ratio) && price <= anchor * (1 + ratio)
+}
+
+// Cascata: primeiro mesma marca + preço parecido (±30%); se der menos de 3,
+// alarga a mesma categoria + preço parecido. Nunca inclui o próprio produto
+// nem duplica (a segunda fase ignora os já escolhidos na primeira).
+function pickSimilarProducts(
+  candidates: ProductWithPrice[],
+  current: { id: string; brand_id: string; category: string | null },
+  anchorPrice: number | null,
+  max = 5
+): ProductWithPrice[] {
+  if (anchorPrice == null) return []
+
+  const pool = candidates.filter((p) => p.id !== current.id && p.lowest_price != null)
+
+  const sameBrand = pool.filter(
+    (p) => p.brand_id === current.brand_id && withinPriceRange(p.lowest_price, anchorPrice)
+  )
+
+  const result = [...sameBrand]
+
+  if (result.length < 3 && current.category) {
+    const usedIds = new Set(result.map((p) => p.id))
+    const sameCategory = pool.filter(
+      (p) =>
+        !usedIds.has(p.id) &&
+        p.category === current.category &&
+        withinPriceRange(p.lowest_price, anchorPrice)
+    )
+    result.push(...sameCategory)
+  }
+
+  return result.slice(0, max)
+}
+
 
 
 export default async function ProdutoPage({
@@ -194,7 +302,7 @@ export default async function ProdutoPage({
 
         id, size, price, currency, affiliate_url, in_stock, last_checked_at,
 
-        stores (name, shipping_info, shipping_base_fee, shipping_free_threshold)
+        stores (name, shipping_info, shipping_base_fee, shipping_free_threshold, affiliate_url_template)
 
       )
 
@@ -214,7 +322,58 @@ export default async function ProdutoPage({
 
 
 
+  const { data: candidateProducts } = await supabase
+    .from('products')
+    .select(`
+      *,
+      brands (*),
+      product_offers (price, in_stock, store_id, size)
+    `)
+    .eq('is_active', true)
+    .neq('id', product.id)
+
+  const similarCandidates: ProductWithPrice[] = (candidateProducts ?? []).map((p: any) => {
+    const inStockOffers = (p.product_offers as any[]).filter((o) => o.in_stock)
+    const lowest_price = inStockOffers.length > 0
+      ? Math.min(...inStockOffers.map((o: any) => o.price))
+      : null
+    const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
+    const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
+    return { ...p, lowest_price, store_count: distinctStores.size, sizes }
+  })
+
+
+
   const rawOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+
+  const visibleOfferIds = rawOffers.map((o: any) => o.id)
+
+  // Histórico de preços: só das ofertas atualmente visíveis (mesma lógica do
+  // "melhor preço" usada no resto do site), até 60 dias - o máximo que o
+  // seletor do gráfico permite ver.
+  let priceHistory: PricePoint[] = []
+  if (visibleOfferIds.length > 0) {
+    const sixtyDaysAgo = new Date()
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+
+    const { data: historyRows } = await supabase
+      .from('price_history')
+      .select('product_offer_id, price, recorded_at')
+      .in('product_offer_id', visibleOfferIds)
+      .gte('recorded_at', sixtyDaysAgo.toISOString())
+      .order('recorded_at', { ascending: true })
+
+    const bestPriceByDate = new Map<string, number>()
+    for (const row of historyRows ?? []) {
+      const date = (row.recorded_at as string).slice(0, 10)
+      const current = bestPriceByDate.get(date)
+      if (current == null || row.price < current) bestPriceByDate.set(date, row.price)
+    }
+
+    priceHistory = Array.from(bestPriceByDate.entries())
+      .map(([date, price]) => ({ date, price }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }
 
 
 
@@ -235,6 +394,8 @@ export default async function ProdutoPage({
         price: offer.price,
 
         affiliate_url: offer.affiliate_url,
+
+        affiliate_url_template: offer.stores?.affiliate_url_template ?? null,
 
         shipping_info: offer.stores?.shipping_info ?? null,
 
@@ -274,11 +435,29 @@ export default async function ProdutoPage({
 
 
 
-  const cheapest = groupedOffers[0]
+  // Poupança real: compara o custo total (preço + portes) apenas entre ofertas
+  // com portes calculáveis - exclui ofertas sem taxa fiável (ver getShippingCost).
+  const offersWithTotalCost = groupedOffers
+    .map((offer) => {
+      const shippingCost = getShippingCost(offer)
+      return shippingCost == null ? null : { offer, total: offer.price + shippingCost }
+    })
+    .filter((o): o is { offer: GroupedOffer; total: number } => o !== null)
+    .sort((a, b) => a.total - b.total)
 
-  const mostExpensive = groupedOffers[groupedOffers.length - 1]
+  let savingsOffer: GroupedOffer | null = null
+  let savings = 0
 
-  const savings = groupedOffers.length > 1 ? mostExpensive.price - cheapest.price : 0
+  if (offersWithTotalCost.length > 1) {
+    const cheapestTotal = offersWithTotalCost[0]
+    const mostExpensiveTotal = offersWithTotalCost[offersWithTotalCost.length - 1]
+    const rawSavings = Math.round((mostExpensiveTotal.total - cheapestTotal.total) * 100) / 100
+
+    if (rawSavings >= 1) {
+      savings = rawSavings
+      savingsOffer = cheapestTotal.offer
+    }
+  }
 
 
 
@@ -306,6 +485,20 @@ export default async function ProdutoPage({
     { label: 'Declive', value: product.drop_height },
     { label: 'Sustentabilidade', value: product.sustainability },
   ].filter((spec) => spec.value)
+
+  const similarProducts = pickSimilarProducts(
+    similarCandidates,
+    { id: product.id, brand_id: product.brand_id, category: product.category },
+    groupedOffers[0]?.price ?? null
+  )
+  const showSimilar = similarProducts.length >= 3
+
+  // Produtos-irmãos: mesmo color_variant_group, excluindo o próprio produto.
+  // Sem grupo ou sem irmãos = sem secção (nunca mostra um swatch sozinho).
+  const colorSiblings = product.color_variant_group
+    ? similarCandidates.filter((p) => p.color_variant_group === product.color_variant_group)
+    : []
+  const showColorSwatches = colorSiblings.length > 0
 
 
 
@@ -373,7 +566,20 @@ export default async function ProdutoPage({
             <FavoriteButton slug={product.slug} className="shrink-0" />
           </div>
 
-
+          {showColorSwatches && (
+            <div className="flex items-center gap-2 mt-4">
+              <ColorSwatch
+                baseColors={product.base_colors}
+                label={product.color ?? product.model_name}
+                selected
+              />
+              {colorSiblings.map((sibling) => (
+                <Link key={sibling.id} href={`/produto/${sibling.slug}`} className="block">
+                  <ColorSwatch baseColors={sibling.base_colors} label={sibling.color ?? sibling.model_name} />
+                </Link>
+              ))}
+            </div>
+          )}
 
           {groupedOffers.length === 0 ? (
 
@@ -383,9 +589,9 @@ export default async function ProdutoPage({
 
             <>
 
-              {savings > 0 && (
+              {savingsOffer && (
 
-                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savings)} escolhendo {cheapest.store}</div>
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savings)} escolhendo {savingsOffer.store}</div>
 
               )}
 
@@ -453,7 +659,7 @@ export default async function ProdutoPage({
                           </div>
                         </td>
 
-                        <td className="p-4"><a href={offer.affiliate_url} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-gray-700 transition-colors">Ver oferta</a></td>
+                        <td className="p-4"><a href={buildOfferUrl(offer)} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-gray-700 transition-colors">Ver oferta</a></td>
 
                       </tr>
 
@@ -491,7 +697,7 @@ export default async function ProdutoPage({
                     </div>
 
                     <a
-                      href={offer.affiliate_url}
+                      href={buildOfferUrl(offer)}
                       target="_blank"
                       rel="nofollow sponsored noopener"
                       className="w-full bg-gray-900 text-white px-4 py-2.5 rounded-full text-sm font-medium text-center hover:bg-gray-700 transition-colors"
@@ -516,6 +722,12 @@ export default async function ProdutoPage({
 
       </div>
 
+      {visibleOfferIds.length > 0 && (
+        <div className="mt-10">
+          <PriceHistoryChart data={priceHistory} />
+        </div>
+      )}
+
       {specs.length > 0 && (
         <div className="mt-10">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalhes do produto</h2>
@@ -530,6 +742,19 @@ export default async function ProdutoPage({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {showSimilar && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Modelos semelhantes</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 sm:mx-0 sm:px-0">
+            {similarProducts.map((p) => (
+              <div key={p.id} className="w-44 shrink-0">
+                <ProductCard product={p} />
+              </div>
+            ))}
           </div>
         </div>
       )}

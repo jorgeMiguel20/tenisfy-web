@@ -7,23 +7,25 @@ export default function DivulgacaoAfiliadosPage() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-10">
       <h1 className="text-2xl font-bold text-gray-900">Divulgação de Afiliados</h1>
-      <p className="text-sm text-gray-400 mt-1">Última atualização: Julho 2026</p>
+      <p className="text-sm text-gray-400 mt-1">Última atualização: Agosto 2026</p>
 
       <div className="mt-8 space-y-6 text-gray-700 leading-relaxed">
         <p>
-          O Parjusto participa em programas de marketing de afiliados. Isto
-          significa que, quando clicas num link "Ver oferta" e realizas uma
-          compra na loja parceira, o Parjusto pode receber uma comissão — sem
-          qualquer custo adicional para ti.
+          O Parjusto é um site independente de comparação de preços. Atualmente
+          não participamos em nenhum programa de marketing de afiliados: os
+          links "Ver oferta" apontam diretamente para a página do produto na
+          loja parceira, sem qualquer identificador de afiliado ou rastreio
+          associado, e não recebemos qualquer comissão pelas tuas compras.
         </p>
         <p>
-          Esta comissão não influencia os preços apresentados: mostramos o
-          preço real praticado pela loja parceira, e a nossa comissão é paga
-          separadamente pela loja, não pelo consumidor.
+          Os preços apresentados são os preços reais praticados pelas lojas
+          parceiras, tal como os disponibilizam.
         </p>
         <p>
-          O uso de links de afiliados ajuda a manter o Parjusto gratuito e a
-          continuar a comparar preços de forma independente.
+          Se isso vier a mudar no futuro — por exemplo, ao aderirmos a um
+          programa de afiliados — atualizaremos esta página antes disso
+          acontecer, para que saibas sempre exatamente como o Parjusto se
+          sustenta.
         </p>
       </div>
     </main>
