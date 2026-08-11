@@ -6,13 +6,13 @@ import { notFound } from 'next/navigation'
 
 import Link from 'next/link'
 
-import Image from 'next/image'
-
 import type { Metadata } from 'next'
 
 import FavoriteButton from '@/components/FavoriteButton'
 
 import ProductCard from '@/components/ProductCard'
+
+import ProductGallery from '@/components/ProductGallery'
 
 import PriceHistoryChart, { type PricePoint } from '@/components/PriceHistoryChart'
 
@@ -536,23 +536,10 @@ export default async function ProdutoPage({
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
 
-        <div className="h-[55vh] md:h-auto md:aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
-
-          {product.image_url ? (
-
-            <Image src={product.image_url} alt={`${product.brands?.name} ${product.model_name}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
-
-          ) : (
-
-            <div className="w-full h-full flex items-center justify-center">
-
-              <span className="text-gray-300 text-sm">Sem imagem disponível</span>
-
-            </div>
-
-          )}
-
-        </div>
+        <ProductGallery
+          images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
+          alt={`${product.brands?.name} ${product.model_name}`}
+        />
 
 
 

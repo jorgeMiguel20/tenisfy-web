@@ -16,6 +16,7 @@ export type Product = {
   color: string | null
   base_colors: string[] | null
   color_variant_group: string | null
+  image_urls: string[] | null
   description: string | null
   image_url: string | null
   is_active: boolean
