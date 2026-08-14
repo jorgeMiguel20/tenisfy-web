@@ -103,7 +103,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
               alt={`${alt} - foto ${index + 1} de ${images.length}`}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover pointer-events-none"
+              className="object-contain pointer-events-none"
               priority={index === 0}
               loading={index === 0 ? undefined : 'lazy'}
               draggable={false}
