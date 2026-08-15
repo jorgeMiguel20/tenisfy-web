@@ -137,36 +137,32 @@ export default function ProductGallery({
 
       {hasMultiple && (
         <>
-          {!showThumbnails && (
-            <>
-              <button
-                type="button"
-                onClick={() => scrollToIndex(targetIndexRef.current - 1)}
-                disabled={currentIndex === 0}
-                aria-label="Foto anterior"
-                className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
-                  compact ? 'left-2 h-6 w-6' : 'left-3 h-9 w-9'
-                }`}
-              >
-                <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollToIndex(targetIndexRef.current + 1)}
-                disabled={currentIndex === images.length - 1}
-                aria-label="Foto seguinte"
-                className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
-                  compact ? 'right-2 h-6 w-6' : 'right-3 h-9 w-9'
-                }`}
-              >
-                <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => scrollToIndex(targetIndexRef.current - 1)}
+            disabled={currentIndex === 0}
+            aria-label="Foto anterior"
+            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+              compact ? 'left-2 h-6 w-6' : 'left-3 h-9 w-9'
+            }`}
+          >
+            <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToIndex(targetIndexRef.current + 1)}
+            disabled={currentIndex === images.length - 1}
+            aria-label="Foto seguinte"
+            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+              compact ? 'right-2 h-6 w-6' : 'right-3 h-9 w-9'
+            }`}
+          >
+            <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
 
           <div
             className={`absolute inset-x-0 flex items-center justify-center gap-1.5 ${compact ? 'bottom-2' : 'bottom-3'} ${
