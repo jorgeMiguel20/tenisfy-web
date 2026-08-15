@@ -539,6 +539,7 @@ export default async function ProdutoPage({
         <ProductGallery
           images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
           alt={`${product.brands?.name} ${product.model_name}`}
+          layout="thumbnails"
         />
 
 

@@ -2,9 +2,9 @@
 import { Fragment } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Metadata } from 'next'
 import ComparePicker from '@/components/ComparePicker'
+import ProductGallery from '@/components/ProductGallery'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
 import type { ProductWithPrice } from '@/lib/types'
@@ -207,21 +207,13 @@ export default async function CompararPage({
             >
               <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
 
-              <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden relative">
-                {product.image_url ? (
-                  <Image
-                    src={product.image_url}
-                    alt={product.model_name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-gray-300 text-sm">Sem imagem disponível</span>
-                  </div>
-                )}
-              </div>
+              <ProductGallery
+                images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
+                alt={product.model_name}
+                compact
+                imageBoxClassName="aspect-square"
+                sizes="(max-width: 768px) 100vw, 33vw"
+              />
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">

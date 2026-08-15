@@ -4,12 +4,32 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 
-export default function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
+type ProductGalleryProps = {
+  images: string[]
+  alt: string
+  // 'thumbnails': barra vertical de miniaturas no desktop em vez de
+  // setas/pontos (usado na página de produto). 'default': mantém
+  // setas + pontos no desktop (usado no cartão de /comparar).
+  layout?: 'default' | 'thumbnails'
+  // Setas e pontos mais pequenos, para caber num cartão estreito.
+  compact?: boolean
+  imageBoxClassName?: string
+  sizes?: string
+}
+
+export default function ProductGallery({
+  images,
+  alt,
+  layout = 'default',
+  compact = false,
+  imageBoxClassName = 'h-[55vh] md:h-auto md:aspect-square',
+  sizes = '(max-width: 768px) 100vw, 50vw',
+}: ProductGalleryProps) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const dragState = useRef<{ startX: number; startScrollLeft: number } | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // Fonte da verdade para navegação intencional (setas/teclado/pontos).
+  // Fonte da verdade para navegação intencional (setas/teclado/miniaturas).
   // currentIndex (estado) segue o scroll real e pode ficar temporariamente
   // desatualizado a meio da animação suave; usar esse estado como base para
   // a próxima tecla/clique fazia a navegação rápida repetida desviar-se do
@@ -17,6 +37,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
   const targetIndexRef = useRef(0)
 
   const hasMultiple = images.length > 1
+  const showThumbnails = layout === 'thumbnails'
 
   function scrollToIndex(index: number) {
     const scroller = scrollerRef.current
@@ -69,7 +90,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
 
   if (images.length === 0) {
     return (
-      <div className="h-[55vh] md:h-auto md:aspect-square bg-gray-50 rounded-2xl overflow-hidden relative">
+      <div className={`${imageBoxClassName} bg-gray-50 rounded-2xl overflow-hidden relative`}>
         <div className="w-full h-full flex items-center justify-center">
           <span className="text-gray-300 text-sm">Sem imagem disponível</span>
         </div>
@@ -77,9 +98,11 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
     )
   }
 
-  return (
+  const imageBox = (
     <div
-      className="h-[55vh] md:h-auto md:aspect-square bg-gray-50 rounded-2xl overflow-hidden relative select-none"
+      className={`${imageBoxClassName} bg-gray-50 rounded-2xl overflow-hidden relative select-none ${
+        showThumbnails ? 'md:flex-1 md:min-w-0' : ''
+      }`}
       role="region"
       aria-label="Galeria de fotos do produto"
       tabIndex={hasMultiple ? 0 : -1}
@@ -102,7 +125,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
               src={src}
               alt={`${alt} - foto ${index + 1} de ${images.length}`}
               fill
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes={sizes}
               className="object-contain pointer-events-none"
               priority={index === 0}
               loading={index === 0 ? undefined : 'lazy'}
@@ -114,30 +137,42 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
 
       {hasMultiple && (
         <>
-          <button
-            type="button"
-            onClick={() => scrollToIndex(targetIndexRef.current - 1)}
-            disabled={currentIndex === 0}
-            aria-label="Foto anterior"
-            className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToIndex(targetIndexRef.current + 1)}
-            disabled={currentIndex === images.length - 1}
-            aria-label="Foto seguinte"
-            className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          {!showThumbnails && (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollToIndex(targetIndexRef.current - 1)}
+                disabled={currentIndex === 0}
+                aria-label="Foto anterior"
+                className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+                  compact ? 'left-2 h-6 w-6' : 'left-3 h-9 w-9'
+                }`}
+              >
+                <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToIndex(targetIndexRef.current + 1)}
+                disabled={currentIndex === images.length - 1}
+                aria-label="Foto seguinte"
+                className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+                  compact ? 'right-2 h-6 w-6' : 'right-3 h-9 w-9'
+                }`}
+              >
+                <svg className={compact ? 'h-3.5 w-3.5' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
 
-          <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-1.5">
+          <div
+            className={`absolute inset-x-0 flex items-center justify-center gap-1.5 ${compact ? 'bottom-2' : 'bottom-3'} ${
+              showThumbnails ? 'md:hidden' : ''
+            }`}
+          >
             {images.map((src, index) => (
               <button
                 key={src}
@@ -145,14 +180,42 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
                 onClick={() => scrollToIndex(index)}
                 aria-label={`Ir para a foto ${index + 1} de ${images.length}`}
                 aria-current={index === currentIndex}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentIndex ? 'w-5 bg-gray-900' : 'w-2 bg-white/80 hover:bg-white'
+                className={`rounded-full transition-all ${compact ? 'h-1.5' : 'h-2'} ${
+                  index === currentIndex
+                    ? `${compact ? 'w-4' : 'w-5'} bg-gray-900`
+                    : `${compact ? 'w-1.5' : 'w-2'} bg-white/80 hover:bg-white`
                 }`}
               />
             ))}
           </div>
         </>
       )}
+    </div>
+  )
+
+  if (!showThumbnails) return imageBox
+
+  return (
+    <div className="md:flex md:items-stretch md:gap-3">
+      {hasMultiple && (
+        <div className="hidden md:flex md:flex-col md:gap-2 md:w-16 md:shrink-0 md:overflow-y-auto md:max-h-full">
+          {images.map((src, index) => (
+            <button
+              key={src}
+              type="button"
+              onClick={() => scrollToIndex(index)}
+              aria-label={`Ir para a foto ${index + 1} de ${images.length}`}
+              aria-current={index === currentIndex}
+              className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-gray-50 transition-colors ${
+                index === currentIndex ? 'border-gray-900' : 'border-transparent hover:border-gray-300'
+              }`}
+            >
+              <Image src={src} alt="" fill sizes="64px" className="object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+      {imageBox}
     </div>
   )
 }
