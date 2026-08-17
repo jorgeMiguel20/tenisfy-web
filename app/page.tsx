@@ -92,8 +92,12 @@ export default async function Home() {
         </p>
       </section>
 
+      <Suspense fallback={null}>
+        <ProductGrid products={productsWithPrice as any} />
+      </Suspense>
+
       {recentDrops.length > 0 && (
-        <section className="mb-10">
+        <section className="mt-12 pt-10 border-t border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
             {recentDrops.map((product) => (
@@ -102,10 +106,6 @@ export default async function Home() {
           </div>
         </section>
       )}
-
-      <Suspense fallback={null}>
-        <ProductGrid products={productsWithPrice as any} />
-      </Suspense>
     </main>
   )
 }
