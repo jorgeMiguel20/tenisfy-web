@@ -18,6 +18,8 @@ import PriceHistoryChart, { type PricePoint } from '@/components/PriceHistoryCha
 
 import { formatPrice } from '@/lib/formatPrice'
 
+import { computeSavings, computeSavingsFromRawOffers } from '@/lib/savings'
+
 import type { ProductWithPrice } from '@/lib/types'
 
 
@@ -138,19 +140,6 @@ type GroupedOffer = {
 function buildOfferUrl(offer: GroupedOffer): string {
   if (!offer.affiliate_url_template) return offer.affiliate_url
   return offer.affiliate_url_template.replace('{url}', encodeURIComponent(offer.affiliate_url))
-}
-
-// Custo de envio calculável (número) para uma oferta, ou null se não houver
-// dados fiáveis suficientes para somar ao preço (ex: Nike depende do estatuto
-// de membro; outras lojas só têm o limiar de grátis mas não a taxa abaixo dele).
-function getShippingCost(offer: GroupedOffer): number | null {
-  const { shipping_free_threshold: threshold, shipping_base_fee: fee, store } = offer
-
-  if (store === 'Nike Oficial') return null
-  if (threshold == null) return null
-  if (offer.price >= threshold) return 0
-
-  return fee ?? null
 }
 
 type ShippingDisplay = { type: 'badge' | 'text'; text: string }
@@ -327,7 +316,7 @@ export default async function ProdutoPage({
     .select(`
       *,
       brands (*),
-      product_offers (price, in_stock, store_id, size)
+      product_offers (price, in_stock, store_id, size, stores (name, shipping_base_fee, shipping_free_threshold))
     `)
     .eq('is_active', true)
     .neq('id', product.id)
@@ -339,7 +328,8 @@ export default async function ProdutoPage({
       : null
     const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
     const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
-    return { ...p, lowest_price, store_count: distinctStores.size, sizes }
+    const savings = computeSavingsFromRawOffers(p.product_offers as any[])
+    return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings }
   })
 
 
@@ -435,29 +425,7 @@ export default async function ProdutoPage({
 
 
 
-  // Poupança real: compara o custo total (preço + portes) apenas entre ofertas
-  // com portes calculáveis - exclui ofertas sem taxa fiável (ver getShippingCost).
-  const offersWithTotalCost = groupedOffers
-    .map((offer) => {
-      const shippingCost = getShippingCost(offer)
-      return shippingCost == null ? null : { offer, total: offer.price + shippingCost }
-    })
-    .filter((o): o is { offer: GroupedOffer; total: number } => o !== null)
-    .sort((a, b) => a.total - b.total)
-
-  let savingsOffer: GroupedOffer | null = null
-  let savings = 0
-
-  if (offersWithTotalCost.length > 1) {
-    const cheapestTotal = offersWithTotalCost[0]
-    const mostExpensiveTotal = offersWithTotalCost[offersWithTotalCost.length - 1]
-    const rawSavings = Math.round((mostExpensiveTotal.total - cheapestTotal.total) * 100) / 100
-
-    if (rawSavings >= 1) {
-      savings = rawSavings
-      savingsOffer = cheapestTotal.offer
-    }
-  }
+  const savingsResult = computeSavings(groupedOffers)
 
 
 
@@ -577,9 +545,9 @@ export default async function ProdutoPage({
 
             <>
 
-              {savingsOffer && (
+              {savingsResult && (
 
-                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savings)} escolhendo {savingsOffer.store}</div>
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
 
               )}
 

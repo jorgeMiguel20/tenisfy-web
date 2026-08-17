@@ -1,4 +1,7 @@
 // lib/types.ts
+import type { SavingsResult } from './savings'
+import type { PriceDropResult } from './priceDrop'
+
 export type Brand = {
   id: string
   name: string
@@ -28,4 +31,6 @@ export type ProductWithPrice = Product & {
   lowest_price: number | null
   store_count: number | null
   sizes: string[]
+  savings?: SavingsResult
+  priceDrop?: PriceDropResult
 }

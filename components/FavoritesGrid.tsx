@@ -6,9 +6,16 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ProductCard from './ProductCard'
 import { useFavorites } from '@/lib/favorites'
+import { computeSavingsFromRawOffers } from '@/lib/savings'
 import type { Brand, Product, ProductWithPrice } from '@/lib/types'
 
-type RawOffer = { price: number; in_stock: boolean; store_id: string; size: string }
+type RawOffer = {
+  price: number
+  in_stock: boolean
+  store_id: string
+  size: string
+  stores: { name: string; shipping_base_fee: number | null; shipping_free_threshold: number | null } | null
+}
 type RawProduct = Product & { brands: Brand; product_offers: RawOffer[] }
 
 export default function FavoritesGrid() {
@@ -25,7 +32,7 @@ export default function FavoritesGrid() {
       .select(`
         *,
         brands (*),
-        product_offers (price, in_stock, store_id, size)
+        product_offers (price, in_stock, store_id, size, stores (name, shipping_base_fee, shipping_free_threshold))
       `)
       .in('slug', favorites)
       .then(({ data }: { data: RawProduct[] | null }) => {
@@ -38,7 +45,8 @@ export default function FavoritesGrid() {
             : null
           const distinctStores = new Set(inStockOffers.map((o) => o.store_id))
           const sizes = Array.from(new Set(inStockOffers.map((o) => o.size)))
-          return { ...p, lowest_price, store_count: distinctStores.size, sizes }
+          const savings = computeSavingsFromRawOffers(p.product_offers)
+          return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings }
         })
 
         // mantém a ordem em que foram adicionados aos favoritos
