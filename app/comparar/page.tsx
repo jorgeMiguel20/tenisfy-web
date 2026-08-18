@@ -7,6 +7,7 @@ import ComparePicker from '@/components/ComparePicker'
 import ProductGallery from '@/components/ProductGallery'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
+import CompareRestoreFromStorage from '@/components/CompareRestoreFromStorage'
 import type { ProductWithPrice } from '@/lib/types'
 import { formatPrice } from '@/lib/formatPrice'
 
@@ -174,6 +175,10 @@ export default async function CompararPage({
           explícito - visitar /comparar "em branco" não deve apagar uma
           seleção já feita algures (ex.: header, barra flutuante). */}
       {slugs.length > 0 && <CompareSelectionSync slugs={ordered.map((p) => p.slug)} />}
+
+      {/* Sentido inverso: URL vazio mas já pode haver uma seleção guardada
+          (localStorage) - restaura-a para o URL em vez de mostrar a página vazia. */}
+      {slugs.length === 0 && <CompareRestoreFromStorage />}
 
       <Link href="/" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar ao catálogo
