@@ -20,6 +20,8 @@ import { formatPrice } from '@/lib/formatPrice'
 
 import { computeSavings, computeSavingsFromRawOffers } from '@/lib/savings'
 
+import { buildOfferUrl } from '@/lib/offerUrl'
+
 import type { ProductWithPrice } from '@/lib/types'
 
 
@@ -132,14 +134,6 @@ type GroupedOffer = {
 
   shipping_free_threshold: number | null
 
-}
-
-// Se a loja tiver um template de afiliado configurado (ver Divulgação de
-// Afiliados), substitui {url} pelo link direto da oferta; caso contrário
-// (hoje, para todas as lojas) usa o link direto tal como sempre foi.
-function buildOfferUrl(offer: GroupedOffer): string {
-  if (!offer.affiliate_url_template) return offer.affiliate_url
-  return offer.affiliate_url_template.replace('{url}', encodeURIComponent(offer.affiliate_url))
 }
 
 type ShippingDisplay = { type: 'badge' | 'text'; text: string }

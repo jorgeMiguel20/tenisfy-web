@@ -411,7 +411,13 @@ function PriceFilterGroup({
   )
 }
 
-export default function ProductGrid({ products }: { products: ProductWithPrice[] }) {
+export default function ProductGrid({
+  products,
+  belowSearch,
+}: {
+  products: ProductWithPrice[]
+  belowSearch?: React.ReactNode
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -955,6 +961,8 @@ export default function ProductGrid({ products }: { products: ProductWithPrice[]
           className="hidden"
         />
       </div>
+
+      {belowSearch}
 
       {imageSearchLoading && (
         <p className="text-center text-sm text-gray-500 mb-6">A analisar o modelo com IA...</p>

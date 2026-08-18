@@ -4,7 +4,10 @@
 // Nunca infere uma descida a partir de um único ponto - exige sempre dois
 // dias distintos com registo.
 
-export type PriceDropResult = { amount: number } | null
+// asOfDate = dia (YYYY-MM-DD) mais recente usado na comparação - permite a
+// quem escolhe entre vários produtos com descida desempatar pela mais
+// recente (ver app/page.tsx, seleção do produto em destaque).
+export type PriceDropResult = { amount: number; asOfDate: string } | null
 
 type HistoryRow = { price: number; recorded_at: string }
 
@@ -23,11 +26,12 @@ export function computePriceDrop(historyRows: HistoryRow[]): PriceDropResult {
   const dates = Array.from(bestPriceByDate.keys()).sort()
   if (dates.length < 2) return null
 
-  const latestPrice = bestPriceByDate.get(dates[dates.length - 1])!
+  const latestDate = dates[dates.length - 1]
+  const latestPrice = bestPriceByDate.get(latestDate)!
   const previousPrice = bestPriceByDate.get(dates[dates.length - 2])!
 
   const rawDrop = Math.round((previousPrice - latestPrice) * 100) / 100
   if (rawDrop < 1) return null
 
-  return { amount: rawDrop }
+  return { amount: rawDrop, asOfDate: latestDate }
 }
