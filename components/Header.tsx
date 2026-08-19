@@ -13,6 +13,7 @@ const NAV_LINKS: { label: string; value: GenderGroupValue }[] = [
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <div className="h-[3px] bg-orange-600" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 flex items-center gap-1.5 sm:gap-8">
         {/* Link nativo (não o <Link> do Next.js) para garantir sempre
             uma recarga completa - reset total da pesquisa, filtros e

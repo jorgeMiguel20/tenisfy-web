@@ -3,35 +3,66 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-100 mt-16">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
+    <footer className="bg-gray-900 mt-16">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
           <div>
-            <p className="font-semibold text-gray-900">Parjusto</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Compara preços de ténis nas melhores lojas
+            <p className="text-xl font-extrabold tracking-tight text-white">Parjusto</p>
+            <p className="text-sm text-gray-400 mt-2 max-w-xs">
+              Compara preços, stock e tamanhos nas melhores lojas.
             </p>
+            <span className="inline-flex items-center gap-2 mt-4 text-xs font-medium uppercase tracking-wide text-gray-300 border border-white/15 rounded-full px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" aria-hidden="true" />
+              Preços verificados à mão
+            </span>
           </div>
 
-          <nav className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm text-gray-500">
-            <Link href="/sobre" className="hover:text-gray-900 hover:underline">
+          <nav className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Catálogo</p>
+            <Link href="/?genero=homem" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Homem
+            </Link>
+            <Link href="/?genero=mulher" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Mulher
+            </Link>
+            <Link href="/?genero=crianca" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Crianças
+            </Link>
+          </nav>
+
+          <nav className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Ferramentas</p>
+            <Link href="/comparar" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Comparar
+            </Link>
+            <Link href="/favoritos" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Favoritos
+            </Link>
+          </nav>
+
+          <nav className="flex flex-col gap-2.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Legal</p>
+            <Link href="/sobre" className="text-sm text-gray-300 hover:text-white transition-colors">
               Sobre
             </Link>
-            <Link href="/privacidade" className="hover:text-gray-900 hover:underline">
+            <Link href="/privacidade" className="text-sm text-gray-300 hover:text-white transition-colors">
               Política de Privacidade
             </Link>
-            <Link href="/termos" className="hover:text-gray-900 hover:underline">
+            <Link href="/termos" className="text-sm text-gray-300 hover:text-white transition-colors">
               Termos de Utilização
             </Link>
-            <Link href="/divulgacao-afiliados" className="hover:text-gray-900 hover:underline">
+            <Link href="/divulgacao-afiliados" className="text-sm text-gray-300 hover:text-white transition-colors">
               Divulgação de Afiliados
             </Link>
           </nav>
         </div>
 
-        <p className="text-xs text-gray-400 mt-6">
-          © {new Date().getFullYear()} Parjusto. Todos os direitos reservados.
-        </p>
+        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <p className="text-sm text-gray-500">
+            © {new Date().getFullYear()} Parjusto. Todos os direitos reservados.
+          </p>
+          <p className="text-sm text-gray-500">Feito em Portugal</p>
+        </div>
       </div>
     </footer>
   )

@@ -40,7 +40,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
   const bestOffer = offers[0]
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-8 shadow-[0_1px_3px_rgba(17,24,39,0.05),0_20px_44px_rgba(17,24,39,0.10)]">
+    <div className="bg-white border border-gray-100 border-l-[3px] border-l-orange-600 rounded-2xl p-5 sm:p-8 shadow-[0_1px_3px_rgba(17,24,39,0.05),0_20px_44px_rgba(17,24,39,0.10)]">
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 sm:gap-8 items-start">
         <div>
           <Link href={`/produto/${product.slug}`} className="block aspect-square rounded-xl bg-gray-50 overflow-hidden">

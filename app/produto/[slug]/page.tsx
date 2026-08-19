@@ -554,7 +554,7 @@ export default async function ProdutoPage({
 
 
               {/* Desktop/tablet: tabela (a partir de md) */}
-              <div className="border border-gray-100 rounded-2xl overflow-hidden hidden md:block">
+              <div className="border border-gray-100 border-l-[3px] border-l-orange-600 rounded-2xl overflow-hidden hidden md:block">
 
                 <table className="w-full border-collapse">
 
