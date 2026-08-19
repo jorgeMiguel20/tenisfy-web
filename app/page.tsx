@@ -135,6 +135,17 @@ export default async function Home() {
       ).map((p) => ({ slug: p.slug, label: p.model_name }))
     : []
 
+  // Microcópia do cabeçalho do destaque: só fala em "baixou de preço" quando
+  // isso é mesmo verdade (veio do caminho da descida) - no caminho de
+  // reserva (maior poupança entre lojas, sem descida associada) usa uma
+  // frase honesta para essa situação, para nunca inventar uma descida.
+  const highlightEyebrow = highlightProduct?.priceDrop
+    ? 'Baixou de preço esta semana'
+    : 'A maior poupança entre lojas'
+  const highlightSubtitle = highlightOffers.length > 0
+    ? `${highlightOffers.length} ${highlightOffers.length === 1 ? 'loja' : 'lojas'}, o mesmo par, preços com portes já incluídos.`
+    : ''
+
   // Fotos do hero: 3 produtos aleatórios do catálogo com foto, escolhidos de
   // novo sempre que a página é gerada/revalidada (ISR já em vigor - roda
   // sozinho ao ritmo da revalidação, sem precisar de infraestrutura nova).
@@ -171,7 +182,7 @@ export default async function Home() {
                 <Link
                   key={p.id}
                   href={`/produto/${p.slug}`}
-                  className="block w-20 sm:w-28 lg:w-36 aspect-square rounded-2xl bg-gray-50 overflow-hidden shrink-0 hover:opacity-90 transition-opacity"
+                  className="block w-20 sm:w-28 lg:w-36 aspect-square rounded-2xl bg-gray-50 overflow-hidden shrink-0 shadow-[0_1px_2px_rgba(17,24,39,0.04),0_6px_18px_rgba(17,24,39,0.06)] hover:opacity-90 transition-opacity"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -194,10 +205,13 @@ export default async function Home() {
               <section className="bg-gray-50 rounded-3xl p-4 sm:p-6 mb-10">
                 <div className="flex items-end justify-between gap-4 mb-4 px-1">
                   <div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                      Destaque automático
+                    <span className="text-sm font-semibold text-orange-700">
+                      {highlightEyebrow}
                     </span>
                     <h2 className="text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
+                    {highlightSubtitle && (
+                      <p className="text-sm text-gray-500 mt-1">{highlightSubtitle}</p>
+                    )}
                   </div>
                 </div>
                 <HighlightProductCard

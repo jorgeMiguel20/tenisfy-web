@@ -541,7 +541,7 @@ export default async function ProdutoPage({
 
               {savingsResult && (
 
-                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 text-sm font-medium px-3 py-1.5 rounded-full mt-4">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
+                <div className="inline-flex items-center gap-1.5 bg-orange-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg mt-4 shadow-[0_2px_8px_rgba(234,88,12,0.28)]">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
 
               )}
 

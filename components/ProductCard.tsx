@@ -17,7 +17,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group relative block rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-gray-200 hover:shadow-lg hover:-translate-y-1"
+      className="group relative block rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_1px_2px_rgba(17,24,39,0.04),0_8px_20px_rgba(17,24,39,0.06)] transition-all hover:border-gray-200 hover:shadow-lg hover:-translate-y-1"
     >
       <FavoriteButton slug={product.slug} className="absolute top-3 left-3 z-10" />
 
@@ -83,12 +83,12 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           {(product.savings || product.priceDrop) && (
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {product.savings && (
-                <span className="inline-flex items-center bg-orange-50 text-orange-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center bg-orange-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
                   Poupa {formatPrice(product.savings.amount)}
                 </span>
               )}
               {product.priceDrop && (
-                <span className="inline-flex items-center gap-0.5 bg-blue-50 text-blue-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-0.5 bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-semibold px-2 py-0.5 rounded-full">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5" />
                   </svg>
