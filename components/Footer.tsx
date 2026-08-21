@@ -11,10 +11,6 @@ export default function Footer() {
             <p className="text-sm text-gray-400 mt-2 max-w-xs">
               Compara preços, stock e tamanhos nas melhores lojas.
             </p>
-            <span className="inline-flex items-center gap-2 mt-4 text-xs font-medium uppercase tracking-wide text-gray-300 border border-white/15 rounded-full px-3 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" aria-hidden="true" />
-              Preços verificados à mão
-            </span>
           </div>
 
           <nav className="flex flex-col gap-2.5">
