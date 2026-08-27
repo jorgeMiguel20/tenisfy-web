@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8">
           <div>
-            <p className="text-xl font-extrabold tracking-tight text-white">Parjusto</p>
+            <p className="font-display text-xl font-bold tracking-tight text-white">Parjusto</p>
             <p className="text-sm text-gray-400 mt-2 max-w-xs">
               Compara preços, stock e tamanhos nas melhores lojas.
             </p>

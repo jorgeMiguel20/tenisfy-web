@@ -19,7 +19,7 @@ export default function Header() {
             uma recarga completa - reset total da pesquisa, filtros e
             género selecionado, mesmo se já estivermos na homepage. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 shrink-0">
+        <a href="/" className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gray-900 shrink-0">
           Parjusto
         </a>
 

@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
+import CategoryTiles from '@/components/CategoryTiles'
 import ProductCard from '@/components/ProductCard'
 import HighlightProductCard, { type HighlightOffer } from '@/components/HighlightProductCard'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
@@ -166,7 +167,7 @@ export default async function Home() {
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-14">
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+            <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 leading-tight">
               Encontra o par certo.
               <br />
               Ao preço <span className="text-orange-600">certo</span>.
@@ -197,6 +198,8 @@ export default async function Home() {
         </div>
       </section>
 
+      <CategoryTiles />
+
       <Suspense fallback={null}>
         <ProductGrid
           products={productsWithPrice as any}
@@ -208,7 +211,7 @@ export default async function Home() {
                     <span className="text-sm font-semibold text-orange-700">
                       {highlightEyebrow}
                     </span>
-                    <h2 className="text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
+                    <h2 className="font-display text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
                     {highlightSubtitle && (
                       <p className="text-sm text-gray-500 mt-1">{highlightSubtitle}</p>
                     )}

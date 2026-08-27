@@ -14,7 +14,7 @@ export default function SobrePage() {
           significa saltar de site em site à procura do melhor preço, sem
           nunca ter a certeza se encontraste mesmo a oferta mais vantajosa.
           Criámos o Parjusto para resolver exatamente isso — comparar preços
-          de ténis das principais lojas portuguesas, num só sítio.
+          de ténis das principais lojas, num só sítio.
         </p>
 
         <p>
