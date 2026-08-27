@@ -474,6 +474,16 @@ export default function ProductGrid({
     }
   }
 
+  // Sincroniza search com o parâmetro ?q= da URL: usado pela pesquisa do
+  // hero da homepage (formulário GET simples, sem JS) e pelos chips de
+  // sugestão - mesmo padrão de sincronização que ?genero= acima.
+  const searchQueryParam = searchParams.get('q')
+  const [syncedSearchParam, setSyncedSearchParam] = useState<string | null>(null)
+  if (searchQueryParam !== syncedSearchParam) {
+    setSyncedSearchParam(searchQueryParam)
+    if (searchQueryParam) setSearch(searchQueryParam)
+  }
+
   // Sincroniza compareSlugs com o parâmetro ?comparar= da URL: usado quando se
   // volta ao catálogo a partir de um placeholder "+ Adicionar produto" na
   // página /comparar, para não perder os produtos já selecionados.

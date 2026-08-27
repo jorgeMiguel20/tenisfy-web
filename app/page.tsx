@@ -1,9 +1,13 @@
 // app/page.tsx
 import { Suspense } from 'react'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ProductGrid from '@/components/ProductGrid'
 import CategoryTiles from '@/components/CategoryTiles'
+import HomeHero from '@/components/HomeHero'
+import HomeBanner from '@/components/HomeBanner'
+import CompararPreview from '@/components/CompararPreview'
+import PesquisaPorFoto from '@/components/PesquisaPorFoto'
+import ComoFunciona from '@/components/ComoFunciona'
 import ProductCard from '@/components/ProductCard'
 import HighlightProductCard, { type HighlightOffer } from '@/components/HighlightProductCard'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
@@ -147,96 +151,62 @@ export default async function Home() {
     ? `${highlightOffers.length} ${highlightOffers.length === 1 ? 'loja' : 'lojas'}, o mesmo par, preços com portes já incluídos.`
     : ''
 
-  // Fotos do hero: 3 produtos aleatórios do catálogo com foto, escolhidos de
-  // novo sempre que a página é gerada/revalidada (ISR já em vigor - roda
-  // sozinho ao ritmo da revalidação, sem precisar de infraestrutura nova).
-  const heroPhotos = pickRandom(
-    productsWithPrice.filter((p) => p.image_url),
-    3
+  // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
+  // inventados) - com foto e preço, e de fora do produto em destaque acima,
+  // para não repetir o mesmo par duas vezes na página.
+  const compareProducts = pickRandom(
+    productsWithPrice.filter(
+      (p) => p.image_url && p.lowest_price != null && p.id !== highlightProduct?.id
+    ),
+    2
   )
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
-      <section className="relative overflow-hidden pt-6 sm:pt-8 pb-8 sm:pb-12">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center"
-        >
-          <div className="h-72 w-[36rem] rounded-full bg-orange-100/50 blur-3xl" />
-        </div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-14">
-          <div className="text-center lg:text-left">
-            <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 leading-tight">
-              Encontra o par certo.
-              <br />
-              Ao preço <span className="text-orange-600">certo</span>.
-            </h1>
-            <p className="mt-4 text-gray-900/60 text-lg max-w-xl mx-auto lg:mx-0">
-              Compara preços, stock e tamanhos nas melhores lojas.
-            </p>
-          </div>
-
-          {heroPhotos.length > 0 && (
-            <div className="flex justify-center lg:justify-end gap-3 sm:gap-4 shrink-0">
-              {heroPhotos.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/produto/${p.slug}`}
-                  className="block w-20 sm:w-28 lg:w-36 aspect-square rounded-2xl bg-gray-50 overflow-hidden shrink-0 shadow-[0_1px_2px_rgba(17,24,39,0.04),0_6px_18px_rgba(17,24,39,0.06)] hover:opacity-90 transition-opacity"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image_url!}
-                    alt={`${p.brands?.name} ${p.model_name}`}
-                    className="w-full h-full object-cover"
-                  />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      <HomeHero />
+      <HomeBanner />
 
       <CategoryTiles />
 
-      <Suspense fallback={null}>
-        <ProductGrid
-          products={productsWithPrice as any}
-          belowSearch={
-            highlightProduct && highlightOffers.length > 0 ? (
-              <section className="bg-gray-50 rounded-3xl p-4 sm:p-6 mb-10">
-                <div className="flex items-end justify-between gap-4 mb-4 px-1">
-                  <div>
-                    <span className="text-sm font-semibold text-orange-700">
-                      {highlightEyebrow}
-                    </span>
-                    <h2 className="font-display text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
-                    {highlightSubtitle && (
-                      <p className="text-sm text-gray-500 mt-1">{highlightSubtitle}</p>
-                    )}
+      <div id="catalogo">
+        <Suspense fallback={null}>
+          <ProductGrid
+            products={productsWithPrice as any}
+            belowSearch={
+              highlightProduct && highlightOffers.length > 0 ? (
+                <section className="bg-gray-50 rounded-3xl p-4 sm:p-6 mb-10">
+                  <div className="flex items-end justify-between gap-4 mb-4 px-1">
+                    <div>
+                      <span className="text-sm font-semibold text-orange-700">
+                        {highlightEyebrow}
+                      </span>
+                      <h2 className="font-display text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
+                      {highlightSubtitle && (
+                        <p className="text-sm text-gray-500 mt-1">{highlightSubtitle}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <HighlightProductCard
-                  product={{
-                    slug: highlightProduct.slug,
-                    brand: highlightProduct.brands?.name ?? '',
-                    name: highlightProduct.model_name,
-                    image: highlightProduct.image_url,
-                  }}
-                  savings={highlightProduct.savings ?? null}
-                  priceDrop={highlightProduct.priceDrop ?? null}
-                  offers={highlightOffers}
-                  shortcuts={shortcuts}
-                />
-              </section>
-            ) : undefined
-          }
-        />
-      </Suspense>
+                  <HighlightProductCard
+                    product={{
+                      slug: highlightProduct.slug,
+                      brand: highlightProduct.brands?.name ?? '',
+                      name: highlightProduct.model_name,
+                      image: highlightProduct.image_url,
+                    }}
+                    savings={highlightProduct.savings ?? null}
+                    priceDrop={highlightProduct.priceDrop ?? null}
+                    offers={highlightOffers}
+                    shortcuts={shortcuts}
+                  />
+                </section>
+              ) : undefined
+            }
+          />
+        </Suspense>
+      </div>
 
       {recentDrops.length > 0 && (
-        <section className="mt-12 pt-10 border-t border-gray-100">
+        <section className="mt-12 pt-10 border-t border-gray-100 mb-12">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
             {recentDrops.map((product) => (
@@ -245,6 +215,12 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      <div className="pt-10 border-t border-gray-100">
+        <CompararPreview products={compareProducts} />
+        <PesquisaPorFoto />
+        <ComoFunciona />
+      </div>
     </main>
   )
 }
