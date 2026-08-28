@@ -19,7 +19,7 @@ export default function CategoryTiles() {
         <Link
           key={category.value}
           href={`/?genero=${category.value}`}
-          className="group relative block aspect-[21/9] sm:aspect-[4/3] overflow-hidden rounded-2xl"
+          className="group relative block h-40 overflow-hidden rounded-2xl"
         >
           <Image
             src={category.image}
