@@ -2,7 +2,7 @@
 'use client'
 
 import { useMemo, useState, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import SortDropdown from './SortDropdown'
@@ -12,7 +12,6 @@ import { getImageEmbedding } from '@/lib/imageEmbedding'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 import { useCompare } from '@/lib/compare'
 import { searchProducts } from '@/lib/searchProducts'
-import { formatPrice } from '@/lib/formatPrice'
 
 type ImageSearchResult = {
   id: string
@@ -418,7 +417,6 @@ export default function ProductGrid({
   products: ProductWithPrice[]
   belowSearch?: React.ReactNode
 }) {
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
@@ -444,10 +442,7 @@ export default function ProductGrid({
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number] | null>(null)
 
   const [search, setSearch] = useState('')
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [imageSearchLoading, setImageSearchLoading] = useState(false)
@@ -596,8 +591,6 @@ export default function ProductGrid({
     const present = new Set(products.flatMap((p) => p.base_colors ?? []))
     return COLOR_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c, display: c }))
   }, [products])
-
-  const suggestions = useMemo(() => searchProducts(products, search, 5), [products, search])
 
   const filteredProducts = useMemo(() => {
     let result = applyAttributeFilters(products, {
@@ -749,25 +742,6 @@ export default function ProductGrid({
     setDraftPriceRange(null)
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (suggestions.length === 0) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveIndex((prev) => (prev + 1) % suggestions.length)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length)
-    } else if (e.key === 'Enter' && activeIndex >= 0) {
-      e.preventDefault()
-      const chosen = suggestions[activeIndex]
-      router.push(`/produto/${chosen.slug}`)
-      setShowSuggestions(false)
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false)
-      inputRef.current?.blur()
-    }
-  }
-
   async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -875,93 +849,30 @@ export default function ProductGrid({
 
   return (
     <div>
-      <div className="flex items-center gap-3 max-w-lg mx-auto mb-6">
-        <div className="relative flex-1">
-          <svg
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
-          </svg>
-
-          <input
-            ref={inputRef}
-            id="catalog-search"
-            name="catalog-search"
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setActiveIndex(-1)
-            }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-            placeholder="O que procuras hoje?"
-            className="w-full border border-gray-200 rounded-full pl-10 pr-5 py-3 text-sm text-center placeholder:text-center focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          />
-
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
-              {suggestions.map((p, index) => (
-                <Link
-                  key={p.id}
-                  href={`/produto/${p.slug}`}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex items-center justify-between px-4 py-3 text-sm transition-colors ${
-                    index === activeIndex ? 'bg-gray-50' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <span>
-                    <span className="text-gray-400 mr-1.5">{p.brands?.name}</span>
-                    <span className="text-gray-900 font-medium">{p.model_name}</span>
-                  </span>
-                  {p.lowest_price && (
-                    <span className="text-orange-600 font-semibold">
-                      {formatPrice(p.lowest_price)}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
+      {/* A pesquisa por texto já é feita na barra do topo da homepage (?q=
+          sincronizado acima) - aqui fica só o atalho para a pesquisa por
+          foto, para não duplicar a mesma caixa de pesquisa duas vezes na
+          página. */}
+      <div className="flex items-center justify-center mb-6">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={imageSearchLoading}
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-orange-600 hover:border-orange-300 transition-colors disabled:opacity-50"
+        >
+          {imageSearchLoading ? (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <circle cx="12" cy="13" r="3" />
+            </svg>
           )}
-        </div>
-
-        {/* Botão da câmara, fora e ao lado do input */}
-        <div className="relative group flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={imageSearchLoading}
-            aria-label="Pesquisar por foto"
-            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-orange-600 hover:border-orange-300 transition-colors disabled:opacity-50"
-          >
-            {imageSearchLoading ? (
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-            )}
-          </button>
-
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-          >
-            Pesquisar por foto
-          </span>
-        </div>
+          {imageSearchLoading ? 'A analisar...' : 'Pesquisar por foto'}
+        </button>
 
         <input
           ref={fileInputRef}

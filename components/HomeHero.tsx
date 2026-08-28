@@ -32,7 +32,7 @@ export default function HomeHero() {
 
         {/* Pesquisa real: formulário GET simples, sem precisar de JS —
             "/" já lê ?q= (ver ProductGrid.tsx) e aplica-o à grelha abaixo. */}
-        <form action="/" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
+        <form action="/#catalogo" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
           <input
             type="text"
             name="q"
@@ -55,7 +55,7 @@ export default function HomeHero() {
           {SUGGESTIONS.map((term) => (
             <Link
               key={term}
-              href={`/?q=${encodeURIComponent(term)}`}
+              href={`/?q=${encodeURIComponent(term)}#catalogo`}
               className="text-xs font-semibold bg-white/90 hover:bg-white text-gray-700 rounded-full px-3 py-1.5 transition-colors"
             >
               {term}

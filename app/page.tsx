@@ -9,44 +9,9 @@ import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
 import ComoFunciona from '@/components/ComoFunciona'
 import ProductCard from '@/components/ProductCard'
-import HighlightProductCard, { type HighlightOffer } from '@/components/HighlightProductCard'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
 import { computePriceDrop } from '@/lib/priceDrop'
-import { getFreshnessLabel } from '@/lib/freshness'
-import { buildOfferUrl } from '@/lib/offerUrl'
 import type { ProductWithPrice } from '@/lib/types'
-
-// Agrupa as ofertas em stock de um produto por loja (preço mais baixo por
-// loja fica), mantendo os dados necessários para a tabela de destaque -
-// mesma ideia de app/produto/[slug]/page.tsx e app/comparar/page.tsx, cada
-// um com o subconjunto de campos que precisa.
-function groupHighlightOffers(rawOffers: any[]): HighlightOffer[] {
-  type Grouped = { store: string; price: number; last_checked_at: string; affiliate_url: string; affiliate_url_template: string | null }
-  const grouped: Record<string, Grouped> = {}
-
-  for (const offer of rawOffers) {
-    if (!offer.in_stock) continue
-    const storeName = offer.stores?.name ?? 'Loja'
-    if (!grouped[storeName] || offer.price < grouped[storeName].price) {
-      grouped[storeName] = {
-        store: storeName,
-        price: offer.price,
-        last_checked_at: offer.last_checked_at,
-        affiliate_url: offer.affiliate_url,
-        affiliate_url_template: offer.stores?.affiliate_url_template ?? null,
-      }
-    }
-  }
-
-  return Object.values(grouped)
-    .sort((a, b) => a.price - b.price)
-    .map((g) => ({
-      store: g.store,
-      price: g.price,
-      freshness: getFreshnessLabel(g.last_checked_at),
-      url: buildOfferUrl(g),
-    }))
-}
 
 function pickRandom<T>(items: T[], count: number): T[] {
   const shuffled = [...items].sort(() => Math.random() - 0.5)
@@ -119,45 +84,10 @@ export default async function Home() {
     .filter((p) => p.priceDrop)
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
 
-  // Produto em destaque ("Maior poupança agora"): maior descida absoluta em
-  // €, mesmos registos de price_history da secção acima - empate desempata
-  // pela descida mais recente. Sem nenhuma descida, cai para o produto com
-  // maior poupança entre lojas (mesma lógica do "Poupa X€"). Se não houver
-  // nem uma coisa nem outra, a secção simplesmente não aparece.
-  const highlightProduct: ProductWithPrice | null =
-    recentDrops[0] ??
-    [...productsWithPrice].filter((p) => p.savings).sort((a, b) => b.savings!.amount - a.savings!.amount)[0] ??
-    null
-
-  const highlightOffers = highlightProduct
-    ? groupHighlightOffers((highlightProduct as any).product_offers as any[])
-    : []
-
-  const shortcuts = highlightProduct
-    ? pickRandom(
-        productsWithPrice.filter((p) => p.id !== highlightProduct.id),
-        3
-      ).map((p) => ({ slug: p.slug, label: p.model_name }))
-    : []
-
-  // Microcópia do cabeçalho do destaque: só fala em "baixou de preço" quando
-  // isso é mesmo verdade (veio do caminho da descida) - no caminho de
-  // reserva (maior poupança entre lojas, sem descida associada) usa uma
-  // frase honesta para essa situação, para nunca inventar uma descida.
-  const highlightEyebrow = highlightProduct?.priceDrop
-    ? 'Baixou de preço esta semana'
-    : 'A maior poupança entre lojas'
-  const highlightSubtitle = highlightOffers.length > 0
-    ? `${highlightOffers.length} ${highlightOffers.length === 1 ? 'loja' : 'lojas'}, o mesmo par, preços com portes já incluídos.`
-    : ''
-
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
-  // inventados) - com foto e preço, e de fora do produto em destaque acima,
-  // para não repetir o mesmo par duas vezes na página.
+  // inventados) - com foto e preço.
   const compareProducts = pickRandom(
-    productsWithPrice.filter(
-      (p) => p.image_url && p.lowest_price != null && p.id !== highlightProduct?.id
-    ),
+    productsWithPrice.filter((p) => p.image_url && p.lowest_price != null),
     2
   )
 
@@ -168,58 +98,27 @@ export default async function Home() {
 
       <CategoryTiles />
 
-      <div id="catalogo">
-        <Suspense fallback={null}>
-          <ProductGrid
-            products={productsWithPrice as any}
-            belowSearch={
-              highlightProduct && highlightOffers.length > 0 ? (
-                <section className="bg-gray-50 rounded-3xl p-4 sm:p-6 mb-10">
-                  <div className="flex items-end justify-between gap-4 mb-4 px-1">
-                    <div>
-                      <span className="text-sm font-semibold text-orange-700">
-                        {highlightEyebrow}
-                      </span>
-                      <h2 className="font-display text-xl font-bold text-gray-900 mt-0.5">Maior poupança agora</h2>
-                      {highlightSubtitle && (
-                        <p className="text-sm text-gray-500 mt-1">{highlightSubtitle}</p>
-                      )}
-                    </div>
-                  </div>
-                  <HighlightProductCard
-                    product={{
-                      slug: highlightProduct.slug,
-                      brand: highlightProduct.brands?.name ?? '',
-                      name: highlightProduct.model_name,
-                      image: highlightProduct.image_url,
-                    }}
-                    savings={highlightProduct.savings ?? null}
-                    priceDrop={highlightProduct.priceDrop ?? null}
-                    offers={highlightOffers}
-                    shortcuts={shortcuts}
-                  />
-                </section>
-              ) : undefined
-            }
-          />
-        </Suspense>
-      </div>
-
-      {recentDrops.length > 0 && (
-        <section className="mt-12 pt-10 border-t border-gray-100 mb-12">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-            {recentDrops.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="pt-10 border-t border-gray-100">
+      <div className="pt-2">
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
         <ComoFunciona />
+      </div>
+
+      <div id="catalogo" className="pt-10 border-t border-gray-100">
+        <Suspense fallback={null}>
+          <ProductGrid products={productsWithPrice as any} />
+        </Suspense>
+
+        {recentDrops.length > 0 && (
+          <section className="mt-12 pt-10 border-t border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+              {recentDrops.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   )
