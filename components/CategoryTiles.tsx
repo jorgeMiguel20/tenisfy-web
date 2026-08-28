@@ -30,9 +30,9 @@ export default function CategoryTiles() {
           />
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent"
           />
-          <span className="font-display absolute inset-0 flex items-center justify-center text-center px-4 text-lg sm:text-xl font-bold text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)]">
+          <span className="font-display absolute bottom-4 left-4 text-base font-bold text-white">
             {category.label}
           </span>
         </Link>
