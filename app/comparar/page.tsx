@@ -180,7 +180,7 @@ export default async function CompararPage({
           (localStorage) - restaura-a para o URL em vez de mostrar a página vazia. */}
       {slugs.length === 0 && <CompareRestoreFromStorage />}
 
-      <Link href="/" className="text-gray-500 text-sm hover:underline">
+      <Link href="/catalogo" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar ao catálogo
       </Link>
 

@@ -1,26 +1,20 @@
 // components/ProductGrid.tsx
 'use client'
 
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import SortDropdown from './SortDropdown'
 import FilterDrawer from './FilterDrawer'
 import type { ProductWithPrice } from '@/lib/types'
-import { getImageEmbedding } from '@/lib/imageEmbedding'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 import { useCompare } from '@/lib/compare'
 import { searchProducts } from '@/lib/searchProducts'
 
-type ImageSearchResult = {
-  id: string
-  slug: string
-  model_name: string
-  image_url: string | null
-  brand_name: string
-  similarity: number
-}
+// A pesquisa por foto deixou de estar aqui - passou para o modal unificado
+// aberto pela lupa do cabeçalho (ver components/SearchModal.tsx), por isso
+// este ficheiro já não precisa do estado/lógica de pesquisa por imagem.
 
 type SortOrder = 'default' | 'price-asc' | 'price-desc' | 'newest'
 
@@ -443,11 +437,6 @@ export default function ProductGrid({
 
   const [search, setSearch] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [imageSearchLoading, setImageSearchLoading] = useState(false)
-  const [imageSearchResults, setImageSearchResults] = useState<ImageSearchResult[] | null>(null)
-  const [imageSearchError, setImageSearchError] = useState<string | null>(null)
 
   // Seleção de comparação partilhada com o cabeçalho (lib/compare.ts,
   // localStorage): tanto a barra flutuante abaixo como o link "Comparar" no
@@ -742,43 +731,6 @@ export default function ProductGrid({
     setDraftPriceRange(null)
   }
 
-  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setImageSearchLoading(true)
-    setImageSearchError(null)
-    setImageSearchResults(null)
-
-    try {
-      const embedding = await getImageEmbedding(file)
-
-      const response = await fetch('/api/search-by-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embedding }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setImageSearchError(data.error ?? 'Não foi possível processar a imagem.')
-      } else {
-        setImageSearchResults(data.results)
-      }
-    } catch {
-      setImageSearchError('Não foi possível analisar a imagem. Tenta outra vez.')
-    } finally {
-      setImageSearchLoading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
-
-  function clearImageSearch() {
-    setImageSearchResults(null)
-    setImageSearchError(null)
-  }
-
   // mode "sidebar": recolhível, aplica em tempo real.
   // mode "drawer": sempre aberto, opera sobre o estado rascunho (só aplica ao clicar em "Aplicar filtros").
   function renderFilterGroups(mode: 'sidebar' | 'drawer') {
@@ -849,161 +801,87 @@ export default function ProductGrid({
 
   return (
     <div>
-      {/* A pesquisa por texto já é feita na barra do topo da homepage (?q=
-          sincronizado acima) - aqui fica só o atalho para a pesquisa por
-          foto, para não duplicar a mesma caixa de pesquisa duas vezes na
-          página. */}
-      <div className="flex items-center justify-center mb-6">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={imageSearchLoading}
-          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-orange-600 hover:border-orange-300 transition-colors disabled:opacity-50"
-        >
-          {imageSearchLoading ? (
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          ) : (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <circle cx="12" cy="13" r="3" />
-            </svg>
-          )}
-          {imageSearchLoading ? 'A analisar...' : 'Pesquisar por foto'}
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelected}
-          className="hidden"
-        />
-      </div>
-
+      {/* A pesquisa por texto e por foto passaram para o modal unificado
+          aberto pela lupa do cabeçalho (ver components/SearchModal.tsx) -
+          já não há um atalho de pesquisa por foto aqui no meio da página. */}
       {belowSearch}
 
-      {imageSearchLoading && (
-        <p className="text-center text-sm text-gray-500 mb-6">A analisar o modelo com IA...</p>
-      )}
+      <div className="lg:flex lg:items-start lg:gap-10">
+        <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
+          {renderFilterGroups('sidebar')}
 
-      {imageSearchError && (
-        <p className="text-center text-sm text-red-600 mb-6">{imageSearchError}</p>
-      )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Limpar
+            </button>
+          )}
+        </aside>
 
-      {imageSearchResults ? (
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-500">
-              Resultados da pesquisa por foto ({imageSearchResults.length})
+        <div className="flex-1 min-w-0">
+          {/* Barra de controlos - desktop */}
+          <div className="hidden lg:flex items-center justify-end gap-3 mb-6">
+            <SortDropdown
+              options={SORT_OPTIONS}
+              selected={sortOrder}
+              onSelect={(value) => setSortOrder(value as SortOrder)}
+            />
+          </div>
+
+          {/* Barra de controlos - mobile */}
+          <div className="flex lg:hidden items-center justify-between gap-2 mb-6">
+            <p className="text-sm text-gray-500 shrink-0">
+              {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
             </p>
             <button
-              onClick={clearImageSearch}
-              className="text-sm text-orange-600 hover:underline"
+              type="button"
+              onClick={openDrawer}
+              className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
             >
-              Limpar e ver catálogo completo
+              <FilterIcon className="h-4 w-4" />
+              Filtrar
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {imageSearchResults.map((r) => (
-              <Link
-                key={r.id}
-                href={`/produto/${r.slug}`}
-                className="block rounded-2xl border border-gray-100 bg-white p-6 hover:shadow-lg hover:-translate-y-1 transition-all"
-              >
-                <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
-                  {r.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.image_url} alt={r.model_name} className="w-full h-full object-cover" />
-                  )}
-                </div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{r.brand_name}</p>
-                <p className="font-semibold text-gray-900 mt-0.5">{r.model_name}</p>
-                <p className="text-xs text-gray-400 mt-1">{Math.round(r.similarity * 100)}% parecido</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="lg:flex lg:items-start lg:gap-10">
-          <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
-            {renderFilterGroups('sidebar')}
 
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Limpar
-              </button>
-            )}
-          </aside>
-
-          <div className="flex-1 min-w-0">
-            {/* Barra de controlos - desktop */}
-            <div className="hidden lg:flex items-center justify-end gap-3 mb-6">
-              <SortDropdown
-                options={SORT_OPTIONS}
-                selected={sortOrder}
-                onSelect={(value) => setSortOrder(value as SortOrder)}
-              />
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {activeChips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={chip.onRemove}
+                  aria-label={`Remover filtro ${chip.label}`}
+                  className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
+                >
+                  {chip.label}
+                  <span aria-hidden="true" className="text-gray-300">×</span>
+                </button>
+              ))}
             </div>
+          )}
 
-            {/* Barra de controlos - mobile */}
-            <div className="flex lg:hidden items-center justify-between gap-2 mb-6">
-              <p className="text-sm text-gray-500 shrink-0">
-                {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
-              </p>
-              <button
-                type="button"
-                onClick={openDrawer}
-                className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
-              >
-                <FilterIcon className="h-4 w-4" />
-                Filtrar
-              </button>
+          {filteredProducts.length === 0 ? (
+            <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isSelected={compareSlugs.includes(product.slug)}
+                  onToggleCompare={toggleCompare}
+                />
+              ))}
             </div>
-
-            {activeChips.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {activeChips.map((chip) => (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    onClick={chip.onRemove}
-                    aria-label={`Remover filtro ${chip.label}`}
-                    className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
-                  >
-                    {chip.label}
-                    <span aria-hidden="true" className="text-gray-300">×</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {filteredProducts.length === 0 ? (
-              <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    isSelected={compareSlugs.includes(product.slug)}
-                    onToggleCompare={toggleCompare}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {compareLimitWarning && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-full shadow-lg">

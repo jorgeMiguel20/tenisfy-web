@@ -1,10 +1,11 @@
 // components/PesquisaPorFoto.tsx
-import Link from 'next/link'
+import PesquisaPorFotoButton from './PesquisaPorFotoButton'
 
 // Secção só ilustrativa/explicativa — a funcionalidade real de pesquisa por
-// foto já existe (app/api/search-by-image/route.ts, usada pelo botão de
-// câmara na página /catalogo). Por isso o rótulo abaixo não inventa uma
-// percentagem de semelhança falsa: diz claramente "exemplo".
+// foto já existe (app/api/search-by-image/route.ts, usada pelo modal
+// unificado de pesquisa - ver components/SearchModal.tsx). Por isso o
+// rótulo abaixo não inventa uma percentagem de semelhança falsa: diz
+// claramente "exemplo".
 export default function PesquisaPorFoto() {
   return (
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
@@ -17,12 +18,7 @@ export default function PesquisaPorFoto() {
           Procuramos no nosso catálogo os ténis mais parecidos com a tua foto, com preço incluído — funciona com
           fotos da câmara ou imagens guardadas no telemóvel, incluindo screenshots.
         </p>
-        <Link
-          href="/catalogo"
-          className="inline-block bg-gray-900 text-white font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-800 transition-colors"
-        >
-          Experimenta a Pesquisa por Foto
-        </Link>
+        <PesquisaPorFotoButton />
       </div>
 
       <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-lg">

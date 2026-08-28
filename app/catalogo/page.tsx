@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import ProductGrid from '@/components/ProductGrid'
 import ProductCard from '@/components/ProductCard'
+import CatalogoBackBar from '@/components/CatalogoBackBar'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 
 export const metadata: Metadata = {
@@ -30,6 +31,8 @@ export default async function CatalogoPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
+      <CatalogoBackBar />
+
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
 
       <Suspense fallback={null}>

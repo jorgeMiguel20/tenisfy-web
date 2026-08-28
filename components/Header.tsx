@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import CompareNavLink from './CompareNavLink'
 import FavoritesNavLink from './FavoritesNavLink'
+import HeaderSearchButton from './HeaderSearchButton'
 import type { GenderGroupValue } from '@/lib/genderGroups'
 
 const NAV_LINKS: { label: string; value: GenderGroupValue }[] = [
@@ -53,16 +54,7 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-6">
-          <Link
-            href="/"
-            aria-label="Pesquisar"
-            className="hidden sm:flex text-gray-600 hover:text-orange-600 transition-colors"
-          >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="7" />
-              <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
-            </svg>
-          </Link>
+          <HeaderSearchButton />
           <CompareNavLink />
           <FavoritesNavLink />
         </div>

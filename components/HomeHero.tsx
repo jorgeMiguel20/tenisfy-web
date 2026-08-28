@@ -1,5 +1,6 @@
 // components/HomeHero.tsx
 import Link from 'next/link'
+import HeroPhotoSearchButton from './HeroPhotoSearchButton'
 
 // Chips de sugestão: apontam para /catalogo?q=..., que o ProductGrid já lê
 // como pesquisa inicial (ver o parâmetro "q" sincronizado em ProductGrid.tsx).
@@ -36,9 +37,10 @@ export default function HomeHero() {
 
         {/* Pesquisa real: formulário GET simples, sem precisar de JS — a
             página /catalogo já lê ?q= (ver ProductGrid.tsx) e aplica-o à
-            grelha. O ícone de câmara leva ao botão real de "Pesquisar por
-            foto" no catálogo em vez de duplicar aqui a lógica de upload -
-            um só sítio a fazer a pesquisa por imagem de verdade. */}
+            grelha. O ícone de câmara abre o modal unificado de pesquisa
+            (ver components/SearchModal.tsx) - mesmo modal aberto pela lupa
+            do cabeçalho, para não haver dois caminhos diferentes para a
+            pesquisa por foto. */}
         <form action="/catalogo" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
           <input
             type="text"
@@ -46,16 +48,7 @@ export default function HomeHero() {
             placeholder="Pesquisa por modelo, marca ou foto..."
             className="flex-1 min-w-0 text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent"
           />
-          <Link
-            href="/catalogo"
-            aria-label="Pesquisar por foto"
-            className="w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center text-white shrink-0"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <circle cx="12" cy="13" r="3" />
-            </svg>
-          </Link>
+          <HeroPhotoSearchButton />
           <button
             type="submit"
             aria-label="Pesquisar"

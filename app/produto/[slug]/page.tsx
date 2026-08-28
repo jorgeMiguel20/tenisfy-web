@@ -492,7 +492,7 @@ export default async function ProdutoPage({
 
 
 
-      <Link href="/" className="text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
+      <Link href="/catalogo" className="text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
 
 
 
