@@ -9,9 +9,12 @@ export default function PesquisaPorFoto() {
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
       <div>
         <span className="text-orange-600 text-xs font-bold uppercase tracking-wide">Pesquisa por foto</span>
-        <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">Encontra pelo que vês</h2>
+        <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">
+          Viste uns ténis na rua? Tira uma foto.
+        </h2>
         <p className="text-gray-500 mb-5 max-w-sm">
-          Tira uma foto ou carrega uma imagem e mostramos os ténis mais parecidos no nosso catálogo, com preço incluído.
+          Procuramos no nosso catálogo os ténis mais parecidos com a tua foto, com preço incluído — funciona com
+          fotos da câmara ou imagens guardadas no telemóvel, incluindo screenshots.
         </p>
         <a
           href="#catalogo"
