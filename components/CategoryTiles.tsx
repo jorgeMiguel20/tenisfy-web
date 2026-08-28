@@ -10,15 +10,15 @@ const CATEGORIES: { label: string; value: GenderGroupValue; image: string }[] = 
 ]
 
 // Atalho visual para navegar por género, a complementar os links de texto
-// que já existem no cabeçalho/rodapé — mesmas hrefs (/?genero=...), só
-// com fotos para tornar a homepage mais convidativa a olho nu.
+// que já existem no cabeçalho/rodapé — mesmas hrefs (/catalogo?genero=...),
+// só com fotos para tornar a homepage mais convidativa a olho nu.
 export default function CategoryTiles() {
   return (
     <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
       {CATEGORIES.map((category) => (
         <Link
           key={category.value}
-          href={`/?genero=${category.value}`}
+          href={`/catalogo?genero=${category.value}`}
           className="group relative block h-40 overflow-hidden rounded-2xl"
         >
           <Image

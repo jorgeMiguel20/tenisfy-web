@@ -15,13 +15,13 @@ export default function Footer() {
 
           <nav className="flex flex-col gap-2.5">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Catálogo</p>
-            <Link href="/?genero=homem" className="text-sm text-gray-300 hover:text-white transition-colors">
+            <Link href="/catalogo?genero=homem" className="text-sm text-gray-300 hover:text-white transition-colors">
               Homem
             </Link>
-            <Link href="/?genero=mulher" className="text-sm text-gray-300 hover:text-white transition-colors">
+            <Link href="/catalogo?genero=mulher" className="text-sm text-gray-300 hover:text-white transition-colors">
               Mulher
             </Link>
-            <Link href="/?genero=crianca" className="text-sm text-gray-300 hover:text-white transition-colors">
+            <Link href="/catalogo?genero=crianca" className="text-sm text-gray-300 hover:text-white transition-colors">
               Crianças
             </Link>
           </nav>

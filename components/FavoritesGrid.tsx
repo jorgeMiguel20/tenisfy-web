@@ -67,7 +67,7 @@ export default function FavoritesGrid() {
           Ainda sem favoritos. Clica no coração num produto para o guardares aqui.
         </p>
         <Link
-          href="/"
+          href="/catalogo"
           className="flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 p-14 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
         >
           <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">

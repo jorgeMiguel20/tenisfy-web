@@ -1,8 +1,8 @@
 // components/HomeHero.tsx
 import Link from 'next/link'
 
-// Chips de sugestão: apontam para /?q=..., que o ProductGrid já lê como
-// pesquisa inicial (ver o parâmetro "q" sincronizado em ProductGrid.tsx).
+// Chips de sugestão: apontam para /catalogo?q=..., que o ProductGrid já lê
+// como pesquisa inicial (ver o parâmetro "q" sincronizado em ProductGrid.tsx).
 const SUGGESTIONS = ['Air Force 1', 'Samba', 'New Balance 550']
 
 export default function HomeHero() {
@@ -34,12 +34,12 @@ export default function HomeHero() {
           Compara preços, stock e tamanhos nas melhores lojas.
         </p>
 
-        {/* Pesquisa real: formulário GET simples, sem precisar de JS —
-            "/" já lê ?q= (ver ProductGrid.tsx) e aplica-o à grelha abaixo. O
-            ícone de câmara leva ao botão real de "Pesquisar por foto" no
-            catálogo (#catalogo) em vez de duplicar aqui a lógica de upload -
+        {/* Pesquisa real: formulário GET simples, sem precisar de JS — a
+            página /catalogo já lê ?q= (ver ProductGrid.tsx) e aplica-o à
+            grelha. O ícone de câmara leva ao botão real de "Pesquisar por
+            foto" no catálogo em vez de duplicar aqui a lógica de upload -
             um só sítio a fazer a pesquisa por imagem de verdade. */}
-        <form action="/#catalogo" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
+        <form action="/catalogo" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
           <input
             type="text"
             name="q"
@@ -47,7 +47,7 @@ export default function HomeHero() {
             className="flex-1 min-w-0 text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent"
           />
           <Link
-            href="/#catalogo"
+            href="/catalogo"
             aria-label="Pesquisar por foto"
             className="w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center text-white shrink-0"
           >
@@ -72,7 +72,7 @@ export default function HomeHero() {
           {SUGGESTIONS.map((term) => (
             <Link
               key={term}
-              href={`/?q=${encodeURIComponent(term)}#catalogo`}
+              href={`/catalogo?q=${encodeURIComponent(term)}`}
               className="text-xs font-semibold bg-white/90 hover:bg-white text-gray-700 rounded-full px-3 py-1.5 transition-colors"
             >
               {term}

@@ -24,13 +24,13 @@ export default function Header() {
         </a>
 
         <nav className="flex items-center gap-1.5 sm:gap-6">
-          {/* Marcas e Promoções apontam para secções da própria homepage
-              (catálogo com filtro de marca, e os destaques de "Maior
-              poupança agora") - a app ainda não tem páginas dedicadas para
-              cada uma, por isso ficam escondidas no mobile para não
+          {/* Marcas leva à página de catálogo (onde está o filtro de marca);
+              Promoções continua a apontar para a secção "Maior poupança
+              agora" da própria homepage - a app ainda não tem uma página
+              dedicada a promoções. Ambos ficam escondidos no mobile para não
               sobrecarregar a barra já ocupada com Homem/Mulher/Crianças. */}
           <Link
-            href="/#catalogo"
+            href="/catalogo"
             className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
           >
             Marcas
@@ -38,7 +38,7 @@ export default function Header() {
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
-              href={`/?genero=${link.value}`}
+              href={`/catalogo?genero=${link.value}`}
               className="text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
             >
               {link.label}

@@ -1,4 +1,5 @@
 // components/HomeBanner.tsx
+import Link from 'next/link'
 
 export default function HomeBanner() {
   return (
@@ -25,12 +26,12 @@ export default function HomeBanner() {
         <p className="text-white/80 text-sm mb-5">
           Nike, Adidas, Asics e muitas outras marcas — verificamos os preços todos os dias para encontrares o teu par.
         </p>
-        <a
-          href="#catalogo"
+        <Link
+          href="/catalogo"
           className="inline-block bg-white text-gray-900 font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-100 transition-colors"
         >
           Explorar catálogo
-        </a>
+        </Link>
       </div>
     </section>
   )

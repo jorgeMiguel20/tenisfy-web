@@ -85,7 +85,7 @@ function EmptyState({ title, description }: { title: string; description: string
       <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
       <p className="text-gray-500 mt-2">{description}</p>
       <Link
-        href="/"
+        href="/catalogo"
         className="inline-block mt-6 bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
       >
         Ver catálogo
