@@ -24,6 +24,17 @@ export default function Header() {
         </a>
 
         <nav className="flex items-center gap-1.5 sm:gap-6">
+          {/* Marcas e Promoções apontam para secções da própria homepage
+              (catálogo com filtro de marca, e os destaques de "Maior
+              poupança agora") - a app ainda não tem páginas dedicadas para
+              cada uma, por isso ficam escondidas no mobile para não
+              sobrecarregar a barra já ocupada com Homem/Mulher/Crianças. */}
+          <Link
+            href="/#catalogo"
+            className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+          >
+            Marcas
+          </Link>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.label}
@@ -33,9 +44,25 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/#promocoes"
+            className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+          >
+            Promoções
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-6">
+          <Link
+            href="/"
+            aria-label="Pesquisar"
+            className="hidden sm:flex text-gray-600 hover:text-orange-600 transition-colors"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
+            </svg>
+          </Link>
           <CompareNavLink />
           <FavoritesNavLink />
         </div>

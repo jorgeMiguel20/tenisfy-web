@@ -8,6 +8,7 @@ import HomeBanner from '@/components/HomeBanner'
 import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
 import ComoFunciona from '@/components/ComoFunciona'
+import MaiorPoupancaAgora from '@/components/MaiorPoupancaAgora'
 import ProductCard from '@/components/ProductCard'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
 import { computePriceDrop } from '@/lib/priceDrop'
@@ -84,6 +85,12 @@ export default async function Home() {
     .filter((p) => p.priceDrop)
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
 
+  // As 3 maiores descidas viram o destaque "Maior poupança agora"; as
+  // restantes continuam disponíveis em "Descidas de preço recentes" no
+  // catálogo, sem repetir os mesmos 3 produtos nas duas secções.
+  const topDeals = recentDrops.slice(0, 3)
+  const remainingDrops = recentDrops.slice(3)
+
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
   // inventados) - com foto e preço.
   const compareProducts = pickRandom(
@@ -102,6 +109,7 @@ export default async function Home() {
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
         <ComoFunciona />
+        <MaiorPoupancaAgora products={topDeals} />
       </div>
 
       <div id="catalogo" className="pt-10 border-t border-gray-100">
@@ -109,11 +117,11 @@ export default async function Home() {
           <ProductGrid products={productsWithPrice as any} />
         </Suspense>
 
-        {recentDrops.length > 0 && (
+        {remainingDrops.length > 0 && (
           <section className="mt-12 pt-10 border-t border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-              {recentDrops.map((product) => (
+              {remainingDrops.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
