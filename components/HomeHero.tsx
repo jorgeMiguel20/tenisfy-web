@@ -24,7 +24,11 @@ export default function HomeHero() {
         <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
           Encontra o par certo.
           <br />
-          Ao preço <span className="text-orange-500">certo</span>.
+          Ao preço{' '}
+          <span className="underline decoration-orange-500 decoration-4 underline-offset-[7px]">
+            certo
+          </span>
+          .
         </h1>
         <p className="mt-4 text-white/80 text-lg max-w-md">
           Compara preços, stock e tamanhos nas melhores lojas.
