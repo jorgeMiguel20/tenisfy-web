@@ -35,7 +35,17 @@ export default function Header() {
         </a>
 
         {searchOpen ? (
-          <HeaderSearchBar />
+          <>
+            <HeaderSearchBar />
+            {/* Em ecrãs pequenos ficam escondidos para dar espaço à barra
+                (mesmo padrão do "Marcas"/"Promoções" acima); em tablet/
+                desktop sobra espaço de sobra e mantê-los visíveis evita o
+                vazio à direita da barra. */}
+            <div className="hidden sm:flex items-center gap-2 sm:gap-6 shrink-0">
+              <CompareNavLink />
+              <FavoritesNavLink />
+            </div>
+          </>
         ) : (
           <>
             <nav className="flex items-center gap-1.5 sm:gap-6">

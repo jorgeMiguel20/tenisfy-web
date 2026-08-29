@@ -1,10 +1,5 @@
 // components/HomeHero.tsx
-import Link from 'next/link'
-import HeroPhotoSearchButton from './HeroPhotoSearchButton'
-
-// Chips de sugestão: apontam para /catalogo?q=..., que o ProductGrid já lê
-// como pesquisa inicial (ver o parâmetro "q" sincronizado em ProductGrid.tsx).
-const SUGGESTIONS = ['Air Force 1', 'Samba', 'New Balance 550']
+import HeroSearchBar from './HeroSearchBar'
 
 export default function HomeHero() {
   return (
@@ -35,43 +30,11 @@ export default function HomeHero() {
           Compara preços, stock e tamanhos nas melhores lojas.
         </p>
 
-        {/* Pesquisa real: formulário GET simples, sem precisar de JS — a
-            página /catalogo já lê ?q= (ver ProductGrid.tsx) e aplica-o à
-            grelha. O ícone de câmara abre o modal unificado de pesquisa
-            (ver components/SearchModal.tsx) - mesmo modal aberto pela lupa
-            do cabeçalho, para não haver dois caminhos diferentes para a
-            pesquisa por foto. */}
-        <form action="/catalogo" method="get" className="mt-6 flex items-center gap-2 bg-white rounded-full p-1.5 pl-5 shadow-lg max-w-md">
-          <input
-            type="text"
-            name="q"
-            placeholder="Pesquisa por modelo, marca ou foto..."
-            className="flex-1 min-w-0 text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent"
-          />
-          <HeroPhotoSearchButton />
-          <button
-            type="submit"
-            aria-label="Pesquisar"
-            className="w-10 h-10 rounded-full bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center text-white shrink-0"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="7" />
-              <path d="M21 21l-4.3-4.3" />
-            </svg>
-          </button>
-        </form>
-
-        <div className="mt-3 flex flex-wrap gap-2 max-w-md">
-          {SUGGESTIONS.map((term) => (
-            <Link
-              key={term}
-              href={`/catalogo?q=${encodeURIComponent(term)}`}
-              className="text-xs font-semibold bg-white/90 hover:bg-white text-gray-700 rounded-full px-3 py-1.5 transition-colors"
-            >
-              {term}
-            </Link>
-          ))}
-        </div>
+        {/* Barra de pesquisa "completa" (com sugestões) - vive só aqui no
+            Hero, ver components/HeroSearchBar.tsx. Esconde-se sozinha
+            quando a pesquisa compacta do cabeçalho está aberta, para nunca
+            haver duas barras de pesquisa visíveis ao mesmo tempo. */}
+        <HeroSearchBar />
 
         <div className="mt-6 flex flex-wrap gap-6 text-sm font-semibold text-white">
           <span className="flex items-center gap-1.5">
