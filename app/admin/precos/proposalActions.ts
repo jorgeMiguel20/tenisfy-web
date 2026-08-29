@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { checkAndSendPriceAlerts } from '@/lib/priceAlerts'
 
 type ActionResult = { success: true; count: number } | { success: false; error: string }
 
@@ -28,7 +29,7 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
 
   const { data: proposals, error: fetchError } = await supabase
     .from('price_check_proposals')
-    .select('id, product_offer_id, checked_price, checked_available, status')
+    .select('id, product_offer_id, checked_price, checked_available, status, product_offers (product_id)')
     .in('id', proposalIds)
 
   if (fetchError) return { success: false, error: fetchError.message }
@@ -36,6 +37,10 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
   const toApprove = (proposals ?? []).filter((p) => p.status === 'pending')
   const now = new Date().toISOString()
   let approvedCount = 0
+
+  // Produtos cujo preço mudou nesta aprovação - usado no fim para ver se
+  // algum alerta de preço (ver lib/priceAlerts.ts) já pode disparar.
+  const affectedProductIds: string[] = []
 
   for (const proposal of toApprove) {
     const offerUpdate: Record<string, unknown> = { last_checked_at: now }
@@ -60,6 +65,10 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
       if (historyError) {
         return { success: false, error: `Oferta atualizada, mas falhou o histórico: ${historyError.message}` }
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const productId = (proposal.product_offers as any)?.product_id
+      if (productId) affectedProductIds.push(productId)
     }
 
     const { error: proposalError } = await supabase
@@ -72,6 +81,16 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
     }
 
     approvedCount++
+  }
+
+  // Alertas de preço (ver lib/priceAlerts.ts): nunca deixar uma falha aqui
+  // impedir a resposta de sucesso - os preços já foram guardados acima, e
+  // um alerta que falhe a enviar só fica por notificar até à próxima
+  // aprovação deste produto.
+  try {
+    await checkAndSendPriceAlerts(affectedProductIds)
+  } catch (err) {
+    console.error('Falha ao verificar alertas de preço depois de aprovar propostas:', err)
   }
 
   revalidatePath('/admin/precos')
