@@ -20,7 +20,7 @@ import { formatPrice } from '@/lib/formatPrice'
 
 import { computeSavings, computeSavingsFromRawOffers } from '@/lib/savings'
 
-import { buildOfferUrl } from '@/lib/offerUrl'
+import StoreOffersList, { type StoreOfferForDisplay } from '@/components/StoreOffersList'
 
 import type { ProductWithPrice } from '@/lib/types'
 
@@ -115,66 +115,6 @@ export async function generateMetadata({
 }
 
 
-
-type GroupedOffer = {
-
-  store: string
-
-  sizes: string[]
-
-  price: number
-
-  affiliate_url: string
-
-  affiliate_url_template: string | null
-
-  shipping_info: string | null
-
-  shipping_base_fee: number | null
-
-  shipping_free_threshold: number | null
-
-}
-
-type ShippingDisplay = { type: 'badge' | 'text'; text: string }
-
-function getShippingDisplay(offer: GroupedOffer): ShippingDisplay | null {
-  const { shipping_free_threshold: threshold, shipping_base_fee: fee, shipping_info, store } = offer
-
-  if (threshold == null) {
-    return shipping_info ? { type: 'text', text: shipping_info } : null
-  }
-
-  if (offer.price >= threshold) {
-    return { type: 'badge', text: 'Portes Grátis' }
-  }
-
-  // Nike: abaixo do limiar o envio depende do estatuto de membro, que não temos — mantém o texto estático em vez de calcular
-  if (store === 'Nike Oficial') {
-    return shipping_info ? { type: 'text', text: shipping_info } : null
-  }
-
-  if (fee != null) {
-    return { type: 'text', text: `+${formatPrice(fee)} envio (grátis acima de ${formatPrice(threshold)})` }
-  }
-
-  return { type: 'text', text: `Grátis acima de ${formatPrice(threshold)}` }
-}
-
-function ShippingLine({ offer, className }: { offer: GroupedOffer; className?: string }) {
-  const shipping = getShippingDisplay(offer)
-  if (!shipping) return null
-
-  if (shipping.type === 'badge') {
-    return (
-      <span className={`inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full w-fit ${className ?? ''}`}>
-        {shipping.text}
-      </span>
-    )
-  }
-
-  return <span className={`text-xs text-gray-400 ${className ?? ''}`}>{shipping.text}</span>
-}
 
 // Cor aproximada para cada valor de base_colors (mesma lista usada no filtro
 // de cor do catálogo, ver COLOR_ORDER em components/ProductGrid.tsx).
@@ -328,7 +268,9 @@ export default async function ProdutoPage({
 
 
 
-  const rawOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+  const allOffers = product.product_offers as any[]
+
+  const rawOffers = allOffers.filter((o) => o.in_stock)
 
   const visibleOfferIds = rawOffers.map((o: any) => o.id)
 
@@ -361,67 +303,83 @@ export default async function ProdutoPage({
 
 
 
-  const grouped: Record<string, GroupedOffer> = {}
+  // Agrupa por loja a partir de TODAS as ofertas (em stock ou não), para
+  // podermos mostrar tamanhos esgotados riscados no card da loja (pedido do
+  // Jorge). Preço, link de afiliado e "verificado há" continuam a basear-se
+  // SÓ nas ofertas em stock - nunca deixar uma oferta esgotada influenciar o
+  // preço mostrado, o "Melhor preço" ou o "Portes Grátis".
+  type StoreGroupAccumulator = {
+    store: string
+    sizes: Map<string, boolean> // tamanho -> em stock nesta loja
+    price: number | null
+    affiliate_url: string | null
+    affiliate_url_template: string | null
+    shipping_info: string | null
+    shipping_base_fee: number | null
+    shipping_free_threshold: number | null
+    oldestCheckedAt: string | null
+  }
 
-  for (const offer of rawOffers) {
+  const grouped: Record<string, StoreGroupAccumulator> = {}
 
+  for (const offer of allOffers) {
     const storeName = offer.stores?.name ?? 'Loja'
 
     if (!grouped[storeName]) {
-
       grouped[storeName] = {
-
         store: storeName,
-
-        sizes: [],
-
-        price: offer.price,
-
-        affiliate_url: offer.affiliate_url,
-
+        sizes: new Map(),
+        price: null,
+        affiliate_url: null,
         affiliate_url_template: offer.stores?.affiliate_url_template ?? null,
-
         shipping_info: offer.stores?.shipping_info ?? null,
-
         shipping_base_fee: offer.stores?.shipping_base_fee ?? null,
-
         shipping_free_threshold: offer.stores?.shipping_free_threshold ?? null,
-
+        oldestCheckedAt: null,
       }
-
     }
 
-    grouped[storeName].sizes.push(offer.size)
+    const group = grouped[storeName]
 
-    if (offer.price < grouped[storeName].price) {
-
-      grouped[storeName].price = offer.price
-
-      grouped[storeName].affiliate_url = offer.affiliate_url
-
+    // Nunca "despromove" um tamanho já visto em stock para esgotado (evita
+    // contradições se os dados tiverem linhas duplicadas para o mesmo
+    // tamanho).
+    if (!group.sizes.get(offer.size)) {
+      group.sizes.set(offer.size, offer.in_stock)
     }
 
+    if (offer.in_stock) {
+      if (group.price == null || offer.price < group.price) {
+        group.price = offer.price
+        group.affiliate_url = offer.affiliate_url
+      }
+      if (group.oldestCheckedAt == null || offer.last_checked_at < group.oldestCheckedAt) {
+        group.oldestCheckedAt = offer.last_checked_at
+      }
+    }
   }
 
-
-
-  const groupedOffers = Object.values(grouped)
-
+  const groupedOffers: StoreOfferForDisplay[] = Object.values(grouped)
+    // Só lojas com pelo menos uma oferta em stock - uma loja sem nenhum
+    // tamanho disponível não deve aparecer na lista (fica para a ronda à
+    // parte de "Descontinuar ofertas").
+    .filter((g): g is StoreGroupAccumulator & { price: number; affiliate_url: string } => g.price != null && g.affiliate_url != null)
     .map((g) => ({
-
-      ...g,
-
-      sizes: g.sizes.sort((a, b) => parseFloat(a) - parseFloat(b)),
-
+      store: g.store,
+      price: g.price,
+      affiliate_url: g.affiliate_url,
+      affiliate_url_template: g.affiliate_url_template,
+      shipping_info: g.shipping_info,
+      shipping_base_fee: g.shipping_base_fee,
+      shipping_free_threshold: g.shipping_free_threshold,
+      lastCheckedAt: g.oldestCheckedAt,
+      sizes: Array.from(g.sizes.entries())
+        .map(([size, inStock]) => ({ size, inStock }))
+        .sort((a, b) => parseFloat(a.size) - parseFloat(b.size)),
     }))
-
     .sort((a, b) => a.price - b.price)
 
-
-
   const savingsResult = computeSavings(groupedOffers)
-
-
 
   // A mais antiga entre as ofertas visíveis (pior caso) - mais honesto do que
   // "hoje", que não refletia quando os preços foram mesmo verificados.
@@ -553,116 +511,7 @@ export default async function ProdutoPage({
 
 
 
-              {/* Desktop/tablet: tabela (a partir de md) */}
-              <div className="border border-gray-100 border-l-[3px] border-l-orange-600 rounded-2xl overflow-hidden hidden md:block">
-
-                <table className="w-full border-collapse">
-
-                  <thead>
-
-                    <tr className="border-b border-gray-100 text-left bg-gray-50">
-
-                      <th className="p-4 text-sm font-medium text-gray-500">Loja</th>
-
-                      <th className="p-4 text-sm font-medium text-gray-500">Tamanhos</th>
-
-                      <th className="p-4 text-sm font-medium text-gray-500">Preço</th>
-
-                      <th className="p-4"></th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
-                    {groupedOffers.map((offer, index) => (
-
-                      <tr key={offer.store} className="border-b border-gray-50 last:border-0">
-
-                        <td className="p-4">
-
-                          <div className="flex items-center gap-2">
-
-                            <span>{offer.store}</span>
-
-                            {index === 0 && groupedOffers.length > 1 && (
-
-                              <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-
-                                Melhor preço
-
-                              </span>
-
-                            )}
-
-                          </div>
-
-                        </td>
-
-                        <td className="p-4 text-gray-600">{offer.sizes.join(', ')}</td>
-
-                        <td className="p-4 align-middle">
-                          <div className="flex flex-col justify-center min-h-[52px]">
-                            <span className="text-lg font-bold text-orange-600">{formatPrice(offer.price)}</span>
-                            <ShippingLine offer={offer} className="mt-1" />
-                          </div>
-                        </td>
-
-                        <td className="p-4"><a href={buildOfferUrl(offer)} target="_blank" rel="nofollow sponsored noopener" className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium inline-block hover:bg-gray-700 transition-colors">Ver oferta</a></td>
-
-                      </tr>
-
-                    ))}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-              {/* Mobile: cards verticais empilhados, sem scroll horizontal (abaixo de md) */}
-              <div className="flex flex-col gap-3 md:hidden">
-                {groupedOffers.map((offer, index) => (
-                  <div
-                    key={offer.store}
-                    className="rounded-2xl border border-gray-100 p-4 flex flex-col items-center text-center gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">{offer.store}</span>
-                      {index === 0 && groupedOffers.length > 1 && (
-                        <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                          Melhor preço
-                        </span>
-                      )}
-                    </div>
-
-                    {offer.sizes.length > 0 && (
-                      <p className="text-sm text-gray-500">Tamanhos: {offer.sizes.join(', ')}</p>
-                    )}
-
-                    <div className="flex flex-col items-center gap-1">
-                      <p className="text-2xl font-bold text-orange-600">{formatPrice(offer.price)}</p>
-                      <ShippingLine offer={offer} />
-                    </div>
-
-                    <a
-                      href={buildOfferUrl(offer)}
-                      target="_blank"
-                      rel="nofollow sponsored noopener"
-                      className="w-full bg-gray-900 text-white px-4 py-2.5 rounded-full text-sm font-medium text-center hover:bg-gray-700 transition-colors"
-                    >
-                      Ver oferta
-                    </a>
-                  </div>
-                ))}
-              </div>
-
-              {groupedOffers.some((offer) => getShippingDisplay(offer)) && (
-                <p className="text-xs text-gray-400 mt-3">
-                  As taxas de envio são estimadas (Portugal continental). Confirma sempre na loja antes de finalizar a compra.
-                </p>
-              )}
+              <StoreOffersList offers={groupedOffers} />
 
             </>
 
