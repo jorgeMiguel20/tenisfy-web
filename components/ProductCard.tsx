@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { ProductWithPrice } from '@/lib/types'
 import { formatPrice } from '@/lib/formatPrice'
 import FavoriteButton from './FavoriteButton'
+import PriceAlertButton from './PriceAlertButton'
 
 type ProductCardProps = {
   product: ProductWithPrice
@@ -21,33 +22,37 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
     >
       <FavoriteButton slug={product.slug} className="absolute top-3 left-3 z-10" />
 
-      {onToggleCompare && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            onToggleCompare(product)
-          }}
-          aria-pressed={isSelected}
-          className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors ${
-            isSelected
-              ? 'bg-gray-900 text-white'
-              : 'bg-white/90 text-gray-600 hover:bg-white'
-          }`}
-        >
-          {isSelected ? (
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
-            </svg>
-          )}
-          {isSelected ? 'Selecionado' : 'Comparar'}
-        </button>
-      )}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+        {lowestPrice != null && <PriceAlertButton productId={product.id} currentPrice={lowestPrice} />}
+
+        {onToggleCompare && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onToggleCompare(product)
+            }}
+            aria-pressed={isSelected}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+              isSelected
+                ? 'bg-gray-900 text-white'
+                : 'bg-white/90 text-gray-600 hover:bg-white'
+            }`}
+          >
+            {isSelected ? (
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
+              </svg>
+            )}
+            {isSelected ? 'Selecionado' : 'Comparar'}
+          </button>
+        )}
+      </div>
 
       <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
         {product.image_url && (
