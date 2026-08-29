@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const now = new Date().toISOString()
     const proposalRow = {
       product_offer_id: item.product_offer_id,
       checked_price: item.checked_price,
@@ -125,13 +126,17 @@ export async function POST(request: NextRequest) {
       status: 'pending' as const,
       needs_attention: needsAttention,
       notes: noteParts.length > 0 ? noteParts.join(' ') : null,
-      checked_at: new Date().toISOString(),
+      checked_at: now,
       reviewed_at: null,
     }
 
     const existingPendingId = pendingByOfferId.get(item.product_offer_id)
 
     if (existingPendingId) {
+      // Nunca tocar em first_flagged_at aqui - é a data em que o problema
+      // apareceu pela primeira vez, usada em /admin/precos para mostrar "há
+      // quantos dias" está por resolver. Atualizar a proposta existente não
+      // deve "rejuvenescê-la".
       const { error: updateError } = await supabase
         .from('price_check_proposals')
         .update(proposalRow)
@@ -143,7 +148,9 @@ export async function POST(request: NextRequest) {
       }
       results.push({ product_offer_id: item.product_offer_id, status: 'updated' })
     } else {
-      const { error: insertError } = await supabase.from('price_check_proposals').insert(proposalRow)
+      const { error: insertError } = await supabase
+        .from('price_check_proposals')
+        .insert({ ...proposalRow, first_flagged_at: now })
 
       if (insertError) {
         results.push({ product_offer_id: item.product_offer_id, status: 'failed', error: insertError.message })
