@@ -59,7 +59,7 @@ export async function generateMetadata({
 
     .from('products')
 
-    .select('*, brands (*), product_offers (price, in_stock, store_id)')
+    .select('*, brands (*), product_offers (price, in_stock, store_id, discontinued_at)')
 
     .eq('slug', slug)
 
@@ -75,7 +75,7 @@ export async function generateMetadata({
 
 
 
-  const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock)
+  const inStockOffers = (product.product_offers as any[]).filter((o) => o.in_stock && !o.discontinued_at)
 
   const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
 
@@ -224,7 +224,7 @@ export default async function ProdutoPage({
 
       product_offers (
 
-        id, size, price, currency, affiliate_url, in_stock, last_checked_at,
+        id, size, price, currency, affiliate_url, in_stock, last_checked_at, discontinued_at,
 
         stores (name, shipping_info, shipping_base_fee, shipping_free_threshold, affiliate_url_template)
 
@@ -251,13 +251,13 @@ export default async function ProdutoPage({
     .select(`
       *,
       brands (*),
-      product_offers (price, in_stock, store_id, size, stores (name, shipping_base_fee, shipping_free_threshold))
+      product_offers (price, in_stock, store_id, size, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold))
     `)
     .eq('is_active', true)
     .neq('id', product.id)
 
   const similarCandidates: ProductWithPrice[] = (candidateProducts ?? []).map((p: any) => {
-    const inStockOffers = (p.product_offers as any[]).filter((o) => o.in_stock)
+    const inStockOffers = (p.product_offers as any[]).filter((o) => o.in_stock && !o.discontinued_at)
     const lowest_price = inStockOffers.length > 0
       ? Math.min(...inStockOffers.map((o: any) => o.price))
       : null
@@ -269,7 +269,11 @@ export default async function ProdutoPage({
 
 
 
-  const allOffers = product.product_offers as any[]
+  // Ofertas descontinuadas (loja deixou de vender - ver "Descontinuar
+  // oferta" em /admin/precos) tratam-se como se não existissem: nem sequer
+  // aparecem riscadas como esgotadas, ao contrário de uma oferta só
+  // temporariamente sem stock.
+  const allOffers = (product.product_offers as any[]).filter((o) => !o.discontinued_at)
 
   const rawOffers = allOffers.filter((o) => o.in_stock)
 
