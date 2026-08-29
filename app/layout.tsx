@@ -35,11 +35,17 @@ export default function RootLayout({
   return (
     <html
       lang="pt"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/* Sem "sticky footer" (min-h-full + flex-1): esse padrão obriga a
+          página a ter sempre pelo menos a altura do ecrã, empurrando o
+          rodapé para baixo e deixando um espaço em branco grande sempre
+          que o conteúdo real é mais curto que o ecrã (por exemplo, quando
+          "Maior poupança agora" não tem produtos para mostrar). Sem ele, o
+          rodapé segue logo a seguir ao conteúdo, como seria de esperar. */}
+      <body>
         <Header />
-        <div className="flex-1">{children}</div>
+        {children}
         <Footer />
         <Analytics />
       </body>
