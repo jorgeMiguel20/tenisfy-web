@@ -13,18 +13,26 @@ export async function getProductsWithPrice(): Promise<{
   products: ProductWithPrice[]
   error: string | null
 }> {
-  const { data: products, error } = await supabase
+  const { data: rawProducts, error } = await supabase
     .from('products')
     .select(`
       *,
       brands (*),
-      product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, stores (name, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
+      product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
     `)
     .eq('is_active', true)
 
   if (error) {
     return { products: [], error: error.message }
   }
+
+  // Ofertas descontinuadas (loja deixou de vender - ver "Descontinuar
+  // oferta" em /admin/precos) tratam-se como se não existissem em lado
+  // nenhum do site, não só na página do produto.
+  const products = (rawProducts ?? []).map((p) => ({
+    ...p,
+    product_offers: (p.product_offers as any[]).filter((o) => !o.discontinued_at),
+  }))
 
   // Histórico de preços das ofertas atualmente em stock, para detetar
   // descidas de preço recentes.
