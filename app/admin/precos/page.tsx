@@ -27,7 +27,7 @@ async function getProposals() {
   const { data, error } = await supabase
     .from('price_check_proposals')
     .select(`
-      id, checked_price, checked_available, previous_price, previous_in_stock, notes, needs_attention,
+      id, product_offer_id, checked_price, checked_available, previous_price, previous_in_stock, notes, needs_attention, first_flagged_at,
       product_offers (
         size, affiliate_url,
         products (model_name, brands (name)),
@@ -50,11 +50,13 @@ async function getProposals() {
     if (row.needs_attention) {
       attention.push({
         id: row.id,
+        productOfferId: row.product_offer_id,
         productName,
         storeName,
         size: offer?.size ?? '',
         url: offer?.affiliate_url ?? '#',
         notes: row.notes,
+        firstFlaggedAt: row.first_flagged_at,
       })
     } else {
       proposals.push({
@@ -69,6 +71,16 @@ async function getProposals() {
       })
     }
   }
+
+  // Item 4 do pedido do Jorge: maior variação de preço primeiro (valor
+  // absoluto entre previous_price e checked_price). Propostas sem preço
+  // lido (checked_price null, só a confirmar disponibilidade) ficam no fim,
+  // já que não há variação nenhuma para ordenar.
+  proposals.sort((a, b) => {
+    const diffA = a.checkedPrice == null ? -1 : Math.abs(a.checkedPrice - a.previousPrice)
+    const diffB = b.checkedPrice == null ? -1 : Math.abs(b.checkedPrice - b.previousPrice)
+    return diffB - diffA
+  })
 
   return { proposals, attention }
 }
@@ -92,3 +104,4 @@ export default async function AdminPrecosPage() {
     </main>
   )
 }
+
