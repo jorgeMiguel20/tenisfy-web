@@ -799,12 +799,43 @@ export default function ProductGrid({
     )
   }
 
+  function renderActiveChips() {
+    return activeChips.map((chip) => (
+      <button
+        key={chip.key}
+        type="button"
+        onClick={chip.onRemove}
+        aria-label={`Remover filtro ${chip.label}`}
+        className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
+      >
+        {chip.label}
+        <span aria-hidden="true" className="text-gray-300">×</span>
+      </button>
+    ))
+  }
+
   return (
     <div>
       {/* A pesquisa por texto e por foto passaram para o modal unificado
           aberto pela lupa do cabeçalho (ver components/SearchModal.tsx) -
           já não há um atalho de pesquisa por foto aqui no meio da página. */}
       {belowSearch}
+
+      {/* Barra partilhada (só desktop), ACIMA das duas colunas: filtros
+          ativos + "Ordenar por" ficam aqui, fora da coluna da grelha, para
+          que o topo da barra lateral ("Marca") e o topo da grelha de
+          produtos fiquem sempre à mesma altura - haja ou não filtros
+          selecionados. Antes, esta barra vivia só na coluna da direita, o
+          que desalinhava as duas colunas (mais ainda quando havia chips de
+          filtros ativos). */}
+      <div className="hidden lg:flex items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap gap-2">{renderActiveChips()}</div>
+        <SortDropdown
+          options={SORT_OPTIONS}
+          selected={sortOrder}
+          onSelect={(value) => setSortOrder(value as SortOrder)}
+        />
+      </div>
 
       <div className="lg:flex lg:items-start lg:gap-10">
         <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
@@ -825,16 +856,7 @@ export default function ProductGrid({
         </aside>
 
         <div className="flex-1 min-w-0">
-          {/* Barra de controlos - desktop */}
-          <div className="hidden lg:flex items-center justify-end gap-3 mb-6">
-            <SortDropdown
-              options={SORT_OPTIONS}
-              selected={sortOrder}
-              onSelect={(value) => setSortOrder(value as SortOrder)}
-            />
-          </div>
-
-          {/* Barra de controlos - mobile */}
+          {/* Barra de controlos - mobile (sem barra lateral para alinhar, mantém-se aqui) */}
           <div className="flex lg:hidden items-center justify-between gap-2 mb-6">
             <p className="text-sm text-gray-500 shrink-0">
               {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
@@ -850,20 +872,7 @@ export default function ProductGrid({
           </div>
 
           {activeChips.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {activeChips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  onClick={chip.onRemove}
-                  aria-label={`Remover filtro ${chip.label}`}
-                  className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
-                >
-                  {chip.label}
-                  <span aria-hidden="true" className="text-gray-300">×</span>
-                </button>
-              ))}
-            </div>
+            <div className="flex lg:hidden flex-wrap gap-2 mb-6">{renderActiveChips()}</div>
           )}
 
           {filteredProducts.length === 0 ? (
