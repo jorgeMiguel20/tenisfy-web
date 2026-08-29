@@ -21,6 +21,7 @@ import { formatPrice } from '@/lib/formatPrice'
 import { computeSavings, computeSavingsFromRawOffers } from '@/lib/savings'
 
 import StoreOffersList, { type StoreOfferForDisplay } from '@/components/StoreOffersList'
+import PriceAlertForm from '@/components/PriceAlertForm'
 
 import type { ProductWithPrice } from '@/lib/types'
 
@@ -512,6 +513,7 @@ export default async function ProdutoPage({
 
 
               <StoreOffersList offers={groupedOffers} />
+              <PriceAlertForm productId={product.id} currentPrice={groupedOffers[0]?.price ?? null} />
 
             </>
 
