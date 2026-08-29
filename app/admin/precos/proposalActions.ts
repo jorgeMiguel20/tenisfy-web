@@ -133,3 +133,39 @@ export async function dismissProposal(proposalId: string): Promise<ActionResult>
   revalidatePath('/admin/precos')
   return { success: true, count: 1 }
 }
+
+// Descontinuar oferta: usa-se quando a loja deixou mesmo de vender o
+// produto. Carimba discontinued_at na oferta (nunca apaga a linha nem o
+// price_history - fica só inativa) e fecha a proposta como dismissed, já
+// que não faz sentido continuar a pedir para confirmar à mão uma oferta que
+// já sabemos que acabou. GET /api/admin/price-check-targets exclui ofertas
+// com discontinued_at preenchido, e a página do produto também as ignora -
+// para reativar por engano, basta limpar discontinued_at diretamente na
+// base de dados (sem botão próprio nesta ronda).
+export async function discontinueOffer(proposalId: string, productOfferId: string): Promise<ActionResult> {
+  const supabase = getServiceClient()
+  if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
+
+  const now = new Date().toISOString()
+
+  const { error: offerError } = await supabase
+    .from('product_offers')
+    .update({ discontinued_at: now })
+    .eq('id', productOfferId)
+
+  if (offerError) return { success: false, error: offerError.message }
+
+  const { error: proposalError } = await supabase
+    .from('price_check_proposals')
+    .update({ status: 'dismissed', reviewed_at: now })
+    .eq('id', proposalId)
+    .eq('status', 'pending')
+
+  if (proposalError) {
+    return { success: false, error: `Oferta descontinuada, mas falhou fechar a proposta: ${proposalError.message}` }
+  }
+
+  revalidatePath('/admin/precos')
+  revalidatePath('/produto/[slug]', 'page')
+  return { success: true, count: 1 }
+}
