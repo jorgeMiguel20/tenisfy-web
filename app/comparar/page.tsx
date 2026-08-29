@@ -58,7 +58,7 @@ type GroupedOffer = {
 }
 
 function groupOffers(offers: any[]): GroupedOffer[] {
-  const inStock = offers.filter((o) => o.in_stock)
+  const inStock = offers.filter((o) => o.in_stock && !o.discontinued_at)
   const grouped: Record<string, GroupedOffer> = {}
 
   for (const offer of inStock) {
@@ -110,7 +110,7 @@ export default async function CompararPage({
         *,
         brands (*),
         product_offers (
-          id, price, in_stock,
+          id, price, in_stock, discontinued_at,
           stores (name)
         )
       `)
@@ -146,12 +146,12 @@ export default async function CompararPage({
       .select(`
         *,
         brands (*),
-        product_offers (price, in_stock, store_id, size)
+        product_offers (price, in_stock, store_id, size, discontinued_at)
       `)
       .eq('is_active', true)
 
     pickerProducts = (allProducts ?? []).map((p) => {
-      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock)
+      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock && !o.discontinued_at)
       const lowest_price = inStockOffers.length > 0
         ? Math.min(...inStockOffers.map((o: any) => o.price))
         : null
