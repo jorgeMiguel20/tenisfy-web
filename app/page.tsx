@@ -40,17 +40,33 @@ export default async function Home() {
     2
   )
 
+  // Produto real usado nos passos 2 e 3 do "Como funciona" (tabela de preços
+  // por loja + cartão de poupança - ver components/ComoFunciona.tsx). Nunca
+  // os números fixos do mockup: preferimos um produto com descida de preço
+  // recente e várias lojas comparáveis; sem isso, o que tiver a maior
+  // poupança entre lojas. Se nada qualificar, ComoFunciona usa as imagens
+  // estáticas originais para esses passos.
+  const showcaseCandidates = productsWithPrice
+    .filter((p) => p.savings && (p.store_count ?? 0) >= 2)
+    .sort((a, b) => {
+      const aHasDrop = a.priceDrop ? 1 : 0
+      const bHasDrop = b.priceDrop ? 1 : 0
+      if (aHasDrop !== bHasDrop) return bHasDrop - aHasDrop
+      return (b.savings?.amount ?? 0) - (a.savings?.amount ?? 0)
+    })
+  const showcaseProduct = showcaseCandidates[0] ?? null
+
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
       <HomeHero />
-      <HomeBanner />
 
       <CategoryTiles />
+      <HomeBanner />
 
       <div className="pt-2">
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
-        <ComoFunciona />
+        <ComoFunciona showcaseProduct={showcaseProduct} />
         <MaiorPoupancaAgora products={topDeals} />
       </div>
     </main>
