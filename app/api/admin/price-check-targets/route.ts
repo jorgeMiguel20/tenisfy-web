@@ -9,7 +9,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // Fonte única de verdade para o que precisa de ser verificado: lê
 // diretamente de product_offers/products/stores, nada de lista duplicada
-// mantida à parte. Só ofertas de produtos e lojas ativos.
+// mantida à parte. Só ofertas de produtos e lojas ativos, e nunca ofertas já
+// descontinuadas (ver "Descontinuar oferta" em /admin/precos) - a loja
+// deixou de as vender, não faz sentido o agente continuar a verificá-las
+// todos os dias.
 export async function GET(request: NextRequest) {
   if (!isPriceSyncAuthorized(request)) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
@@ -24,6 +27,7 @@ export async function GET(request: NextRequest) {
     `)
     .eq('products.is_active', true)
     .eq('stores.is_active', true)
+    .is('discontinued_at', null)
     .order('id')
 
   if (error) {
