@@ -41,8 +41,15 @@ function bestPricePerStore(product: ProductWithPrice) {
 
 export default function ComoFunciona({
   showcaseProduct,
+  hasNextSection = true,
 }: {
   showcaseProduct?: ProductWithPrice | null
+  // "Maior poupança agora" (a seguir a esta secção) só aparece quando há
+  // descidas de preço reais - ver app/page.tsx. Sem isso, esta secção fica
+  // por último na página e não precisa do espaço extra "mb-12" que existe
+  // só para a separar da secção seguinte (o espaçamento normal antes do
+  // rodapé já vem do próprio <main> e do rodapé, em qualquer página).
+  hasNextSection?: boolean
 }) {
   const [active, setActive] = useState(0)
 
@@ -51,7 +58,7 @@ export default function ComoFunciona({
   const hasBuyData = !!showcaseProduct?.lowest_price && !!showcaseProduct?.savings
 
   return (
-    <section className="mb-12">
+    <section className={hasNextSection ? 'mb-12' : ''}>
       <style>{`
         @keyframes scan-sweep {
           0% { transform: translateY(-100%); opacity: 0; }

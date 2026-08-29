@@ -66,7 +66,7 @@ export default async function Home() {
       <div className="pt-2">
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
-        <ComoFunciona showcaseProduct={showcaseProduct} />
+        <ComoFunciona showcaseProduct={showcaseProduct} hasNextSection={topDeals.length > 0} />
         <MaiorPoupancaAgora products={topDeals} />
       </div>
     </main>
