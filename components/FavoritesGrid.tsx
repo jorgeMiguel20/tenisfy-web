@@ -14,6 +14,7 @@ type RawOffer = {
   in_stock: boolean
   store_id: string
   size: string
+  discontinued_at: string | null
   stores: { name: string; shipping_base_fee: number | null; shipping_free_threshold: number | null } | null
 }
 type RawProduct = Product & { brands: Brand; product_offers: RawOffer[] }
@@ -32,26 +33,29 @@ export default function FavoritesGrid() {
       .select(`
         *,
         brands (*),
-        product_offers (price, in_stock, store_id, size, stores (name, shipping_base_fee, shipping_free_threshold))
+        product_offers (price, in_stock, store_id, size, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold))
       `)
       .in('slug', favorites)
       .then(({ data }: { data: RawProduct[] | null }) => {
         if (cancelled) return
 
         const withPrice = (data ?? []).map((p) => {
-          const inStockOffers = p.product_offers.filter((o) => o.in_stock)
+          // Ofertas descontinuadas (ver "Descontinuar oferta" em
+          // /admin/precos) tratam-se como se não existissem.
+          const activeOffers = p.product_offers.filter((o) => !o.discontinued_at)
+          const inStockOffers = activeOffers.filter((o) => o.in_stock)
           const lowest_price = inStockOffers.length > 0
             ? Math.min(...inStockOffers.map((o) => o.price))
             : null
           const distinctStores = new Set(inStockOffers.map((o) => o.store_id))
           const sizes = Array.from(new Set(inStockOffers.map((o) => o.size)))
-          const savings = computeSavingsFromRawOffers(p.product_offers)
+          const savings = computeSavingsFromRawOffers(activeOffers)
           return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings }
         })
 
         // mantém a ordem em que foram adicionados aos favoritos
         const bySlug = new Map(withPrice.map((p) => [p.slug, p]))
-        const ordered = favorites.map((slug) => bySlug.get(slug)).filter(Boolean) as ProductWithPrice[]
+        const ordered = favorites.map((slug) => bySlug.get(slug)).filter(Boolean) as unknown as ProductWithPrice[]
         setProducts(ordered)
       })
 
