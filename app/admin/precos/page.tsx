@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import PriceCheckButton from './PriceCheckButton'
 import ProposalsSection, { type ProposalRow } from './ProposalsSection'
 import AttentionSection, { type AttentionRow } from './AttentionSection'
+import NewSizesSection, { type NewSizeRow } from './NewSizesSection'
 
 // Ferramenta operacional (revista todos os dias) - tem de mostrar sempre as
 // propostas mais recentes, nunca uma versão em cache de quando o site foi
@@ -85,8 +86,39 @@ async function getProposals() {
   return { proposals, attention }
 }
 
+async function getNewSizes(): Promise<NewSizeRow[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) return []
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+  const { data, error } = await supabase
+    .from('size_discovery_proposals')
+    .select(`
+      id, size, price, in_stock, url,
+      products (model_name, brands (name)),
+      stores (name)
+    `)
+    .eq('status', 'pending')
+    .order('first_seen_at', { ascending: false })
+
+  if (error || !data) return []
+
+  return (data as any[]).map((row) => ({
+    id: row.id,
+    productName: `${row.products?.brands?.name ?? ''} ${row.products?.model_name ?? ''}`.trim(),
+    storeName: row.stores?.name ?? 'Loja',
+    size: row.size,
+    price: row.price,
+    inStock: row.in_stock,
+    url: row.url,
+  }))
+}
+
 export default async function AdminPrecosPage() {
   const { proposals, attention } = await getProposals()
+  const newSizes = await getNewSizes()
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
@@ -100,6 +132,7 @@ export default async function AdminPrecosPage() {
       </div>
 
       <ProposalsSection proposals={proposals} />
+      <NewSizesSection sizes={newSizes} />
       <AttentionSection proposals={attention} />
     </main>
   )
