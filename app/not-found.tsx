@@ -4,7 +4,7 @@ import Link from 'next/link'
 export default function NotFound() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-20 text-center">
-      <p className="text-sm font-medium uppercase tracking-wide text-orange-600">
+      <p className="text-sm font-medium uppercase tracking-wide text-orange-700">
         Erro 404
       </p>
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-2">
