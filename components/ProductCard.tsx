@@ -22,7 +22,13 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
     >
       <FavoriteButton slug={product.slug} className="absolute top-3 left-3 z-10" />
 
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+      {/* flex-col (em vej de flex-row) para nunca colidir com o coração no
+          canto oposto: numa linha, o sino + o botão "Comparar" (com texto)
+          juntos passam facilmente da largura de um card estreito na grelha
+          de 2 colunas do mobile e acabam por invadir o canto esquerdo onde
+          está o FavoriteButton. Empilhados na vertical, ficam sempre
+          encostados ao canto direito, seja qual for a largura do card. */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
         {lowestPrice != null && <PriceAlertButton productId={product.id} currentPrice={lowestPrice} />}
 
         {onToggleCompare && (
