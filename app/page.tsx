@@ -24,14 +24,15 @@ export default async function Home() {
     )
   }
 
-  // As 3 maiores descidas de preço reais (>=2 pontos de histórico e >=1€ de
+  // As 4 maiores descidas de preço reais (>=2 pontos de histórico e >=1€ de
   // diferença - ver lib/priceDrop.ts) viram o destaque "Maior poupança
-  // agora". A grelha completa (com todas as descidas, sem limite) vive em
-  // /catalogo.
+  // agora". Nunca ténis de criança neste destaque - fica sempre reservado a
+  // pares de adulto (pedido do Jorge). A grelha completa (com todas as
+  // descidas, sem limite nem exclusão de género) vive em /catalogo.
   const topDeals = productsWithPrice
-    .filter((p) => p.priceDrop)
+    .filter((p) => p.priceDrop && p.gender !== 'crianca')
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
-    .slice(0, 3)
+    .slice(0, 4)
 
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
   // inventados) - com foto e preço.
