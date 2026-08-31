@@ -2,7 +2,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import ProductGrid from '@/components/ProductGrid'
-import ProductCard from '@/components/ProductCard'
+import RecentDropsGrid from '@/components/RecentDropsGrid'
 import CatalogoBackBar from '@/components/CatalogoBackBar'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 
@@ -22,9 +22,6 @@ export default async function CatalogoPage() {
     )
   }
 
-  // Aqui a grelha é o conteúdo principal da página, por isso mostra-se
-  // sempre a lista completa de descidas de preço (sem limite a 3, ao
-  // contrário do destaque "Maior poupança agora" da homepage).
   const recentDrops = productsWithPrice
     .filter((p) => p.priceDrop)
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
@@ -42,11 +39,7 @@ export default async function CatalogoPage() {
       {recentDrops.length > 0 && (
         <section className="mt-12 pt-10 border-t border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-            {recentDrops.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <RecentDropsGrid products={recentDrops} />
         </section>
       )}
     </main>
