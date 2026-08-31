@@ -13,6 +13,11 @@ function pickRandom<T>(items: T[], count: number): T[] {
   return shuffled.slice(0, count)
 }
 
+// Homepage era totalmente estática (dados presos ao snapshot do build) - com
+// revalidate a Next.js volta a ir buscar dados novos à Supabase de X em X
+// tempo (ISR), sem precisar de um build novo sempre que os preços mudam.
+export const revalidate = 3600
+
 export default async function Home() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
 
