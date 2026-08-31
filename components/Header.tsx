@@ -54,9 +54,17 @@ export default function Header() {
                   agora" da própria homepage - a app ainda não tem uma página
                   dedicada a promoções. Ambos ficam escondidos no mobile para não
                   sobrecarregar a barra já ocupada com Homem/Mulher/Crianças. */}
+              {/* prefetch=false nestes links: /catalogo é uma Server Component
+                  que não lê ?genero=/?q= no próprio servidor (quem lê é o
+                  ProductGrid, no cliente, via useSearchParams) - por isso o
+                  Next.js estava a pré-carregar o mesmo payload do servidor
+                  várias vezes (uma por cada link "Marcas"/Homem/Mulher/
+                  Crianças), gastando dados à toa em ligações móveis mais
+                  fracas sem qualquer ganho de velocidade real. */}
               <Link
                 href="/catalogo"
-                className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                prefetch={false}
+                className="hidden sm:inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
               >
                 Marcas
               </Link>
@@ -64,14 +72,15 @@ export default function Header() {
                 <Link
                   key={link.label}
                   href={`/catalogo?genero=${link.value}`}
-                  className="text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
-                >
-                  {link.label}
-                </Link>
-              ))}
+                  prefetch={false}
+                  className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ))}
               <Link
                 href="/#promocoes"
-                className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                className="hidden sm:inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
               >
                 Promoções
               </Link>
