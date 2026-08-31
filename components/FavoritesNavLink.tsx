@@ -12,7 +12,7 @@ export default function FavoritesNavLink() {
     <Link
       href="/favoritos"
       aria-label="Favoritos"
-      className="flex shrink-0 items-center gap-1.5 text-gray-600 hover:text-orange-600 transition-colors"
+      className="flex shrink-0 items-center justify-center gap-1.5 min-h-[44px] px-1 text-gray-600 hover:text-orange-600 transition-colors"
     >
       {/* Ícone de coração, sempre visível (sem o texto "Favoritos" ao lado) -
           padrão universal que poupa espaço na barra, igual em mobile e desktop. */}
