@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   description: 'Compara preços, stock e tamanhos de ténis nas principais lojas portuguesas.',
 }
 
+// Mesma lógica de ISR da homepage (ver app/page.tsx) - sem isto a página
+// ficava presa ao snapshot do build e não refletia descidas de preço novas.
+export const revalidate = 3600
+
 export default async function CatalogoPage() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
 
