@@ -21,7 +21,7 @@ import { formatPrice } from '@/lib/formatPrice'
 import { computeSavings, computeSavingsFromRawOffers } from '@/lib/savings'
 
 import StoreOffersList, { type StoreOfferForDisplay } from '@/components/StoreOffersList'
-import PriceAlertForm from '@/components/PriceAlertForm'
+import PriceAlertButton from '@/components/PriceAlertButton'
 
 import type { ProductWithPrice } from '@/lib/types'
 
@@ -476,7 +476,12 @@ export default async function ProdutoPage({
           <div className="flex items-center gap-2 mt-1">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">{product.model_name}</h1>
 
-            <FavoriteButton slug={product.slug} className="shrink-0" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <FavoriteButton slug={product.slug} />
+              {groupedOffers.length > 0 && (
+                <PriceAlertButton productId={product.id} currentPrice={groupedOffers[0]?.price ?? null} />
+              )}
+            </div>
           </div>
 
           {showColorSwatches && (
@@ -517,7 +522,6 @@ export default async function ProdutoPage({
 
 
               <StoreOffersList offers={groupedOffers} />
-              <PriceAlertForm productId={product.id} currentPrice={groupedOffers[0]?.price ?? null} />
 
             </>
 
