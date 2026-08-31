@@ -10,7 +10,8 @@ export default function PesquisaPorFoto() {
   return (
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
       <div>
-        <span className="text-orange-600 text-xs font-bold uppercase tracking-wide">Pesquisa por foto</span>
+        {/* orange-700 (não orange-600) por contraste - ver nota em CompararPreview.tsx */}
+        <span className="text-orange-700 text-xs font-bold uppercase tracking-wide">Pesquisa por foto</span>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">
           Viste uns ténis na rua? Tira uma foto.
         </h2>
