@@ -142,13 +142,13 @@ export default function ComparePicker({
                 <p className="text-sm font-medium text-gray-900 truncate">{p.model_name}</p>
               </div>
               {p.lowest_price != null && (
-                <span className="text-xs font-semibold text-orange-600 shrink-0">
+                <span className="text-xs font-semibold text-orange-700 shrink-0">
                   {formatPrice(p.lowest_price)}
                 </span>
               )}
             </button>
           ))
-        )}
+        }
       </div>
     </div>
   )
