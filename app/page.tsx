@@ -39,6 +39,8 @@ export default async function Home() {
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
     .slice(0, 4)
 
+  const __DEBUG_TOPDEALS = JSON.stringify({ total: productsWithPrice.length, priceDropCount: productsWithPrice.filter((p) => p.priceDrop).length, priceDropSample: productsWithPrice.filter((p) => p.priceDrop).map((p) => ({ slug: p.slug, gender: p.gender, amount: p.priceDrop!.amount })), topDealsCount: topDeals.length })
+
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
   // inventados) - com foto e preço.
   const compareProducts = pickRandom(
@@ -65,6 +67,7 @@ export default async function Home() {
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
       <HomeHero />
+      <div style={{ display: 'none' }} suppressHydrationWarning>{__DEBUG_TOPDEALS}</div>
 
       <CategoryTiles />
       <HomeBanner />
