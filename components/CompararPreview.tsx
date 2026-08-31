@@ -12,7 +12,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   return (
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12">
       <div>
-        <span className="text-orange-600 text-xs font-bold uppercase tracking-wide">Comparar</span>
+        {/* orange-700 em vez de orange-600 neste texto pequeno e a negrito:
+            orange-600 sobre branco fica perto de 3.6:1, abaixo do mínimo de
+            4.5:1 (WCAG AA) para texto normal - orange-700 já passa. */}
+        <span className="text-orange-700 text-xs font-bold uppercase tracking-wide">Comparar</span>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">Vê os ténis lado a lado</h2>
         <p className="text-gray-500 mb-5 max-w-sm">
           Seleciona dois ténis e vê-os lado a lado, com preço e loja — sem abrir dez separadores.
@@ -44,7 +47,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                 {product.model_name}
               </span>
               {product.lowest_price != null && (
-                <span className="text-sm font-bold text-orange-600">{formatPrice(product.lowest_price)}</span>
+                <span className="text-sm font-bold text-orange-700">{formatPrice(product.lowest_price)}</span>
               )}
             </div>
           </div>
