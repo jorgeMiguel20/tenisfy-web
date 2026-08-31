@@ -13,7 +13,7 @@ export default function CompareNavLink() {
     <Link
       href={href}
       aria-label="Comparar"
-      className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors"
+      className="flex shrink-0 items-center justify-center gap-1.5 min-h-[44px] px-1 text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors"
     >
       {/* Mobile: só o ícone (mesmas setas opostas do botão "Comparar" dos
           cards, para a linguagem visual ser igual). A partir de sm, mostra
