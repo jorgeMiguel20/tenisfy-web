@@ -78,10 +78,26 @@ export default function PriceAlertButton({
       </button>
 
       {open && (
-        <div
-          onClick={stopNav}
-          className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-gray-100 bg-white p-3 shadow-lg z-20"
-        >
+        <>
+          {/* Fundo semi-transparente só no mobile: transforma o popup num
+              "bottom sheet" fixo ao ecrã e permite fechar tocando fora. Sem
+              isto, o popup ficava ancorado (right-0) ao próprio botão, e em
+              cards estreitos perto da margem esquerda do ecrã (ex: coluna da
+              esquerda na grelha de 2 colunas do mobile) a largura fixa do
+              popup ultrapassava a borda esquerda do ecrã, cortando o campo
+              de email. */}
+          <div
+            onClick={(e) => {
+              stopNav(e)
+              setOpen(false)
+            }}
+            className="fixed inset-0 z-10 bg-black/30 sm:hidden"
+            aria-hidden="true"
+          />
+          <div
+            onClick={stopNav}
+            className="fixed inset-x-4 bottom-4 z-20 rounded-xl border border-gray-100 bg-white p-3 shadow-lg sm:absolute sm:inset-x-auto sm:inset-y-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-56"
+          >
           {status === 'done' ? (
             <p className="text-xs text-green-700">{message}</p>
           ) : (
@@ -98,7 +114,7 @@ export default function PriceAlertButton({
                 onChange={(e) => setEmail(e.target.value)}
                 onClick={stopNav}
                 className="w-full rounded-full border border-gray-200 px-3 py-1.5 text-xs outline-none focus:border-gray-400"
-              />
+          />
               <div className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5">
                 <span className="text-xs text-gray-400 whitespace-nowrap">abaixo de</span>
                 <input
@@ -137,7 +153,8 @@ export default function PriceAlertButton({
               </div>
             </form>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
