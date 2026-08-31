@@ -148,7 +148,7 @@ export default function ComparePicker({
               )}
             </button>
           ))
-        }
+        )}
       </div>
     </div>
   )
