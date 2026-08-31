@@ -3,11 +3,11 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
 
-// Grelha de 3 produtos reais com a maior descida de preço atual (o mesmo
-// critério de "Descidas de preço recentes", só que reduzido às 3 maiores e
-// com o layout de destaque do mockup) - nunca percentagens ou produtos
-// inventados, sempre a partir de product_offers/price_history reais
-// (ver app/page.tsx e lib/priceDrop.ts).
+// Grelha de 4 produtos reais com a maior descida de preço atual (o mesmo
+// critério de "Descidas de preço recentes", só que reduzido às 4 maiores,
+// sempre pares de adulto - ver app/page.tsx - e com o layout de destaque do
+// mockup) - nunca percentagens ou produtos inventados, sempre a partir de
+// product_offers/price_history reais (ver lib/priceDrop.ts).
 export default function MaiorPoupancaAgora({ products }: { products: ProductWithPrice[] }) {
   if (products.length === 0) return null
 
@@ -20,7 +20,10 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
         <h2 className="font-display text-2xl font-bold text-gray-900 mt-1">Maior poupança agora</h2>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-5">
+      {/* sm: 2 colunas (em vez de saltar logo para o layout final a 640px) e
+          lg: 4 colunas - para tablets no intervalo 640-1024px não ficarem
+          com 4 cards apertados numa só linha nem 1 card esticado por linha. */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {products.map((product) => {
           const drop = product.priceDrop!
           const currentPrice = product.lowest_price!
