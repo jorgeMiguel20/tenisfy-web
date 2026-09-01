@@ -9,7 +9,7 @@ export default function PesquisaPorFotoButton() {
   return (
     <button
       type="button"
-      onClick={openSearchModal}
+      onClick={() => openSearchModal({ autoTriggerFile: true })}
       className="inline-block bg-gray-900 text-white font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-800 transition-colors"
     >
       Experimenta a Pesquisa por Foto
