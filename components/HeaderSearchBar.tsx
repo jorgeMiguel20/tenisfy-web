@@ -1,7 +1,7 @@
 // components/HeaderSearchBar.tsx
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { closeSearchModal, consumeAutoTriggerFile, useSearchModalAutoTriggerFile } from '@/lib/searchModal'
@@ -62,8 +62,10 @@ export default function HeaderSearchBar() {
   // Aciona logo o seletor de ficheiro/câmara quando a barra abre a partir
   // do botão "Experimenta a Pesquisa por Foto" (ver PesquisaPorFotoButton.tsx
   // e lib/searchModal.ts), em vez de o utilizador ter de clicar uma segunda
-  // vez no ícone de câmara.
-  useEffect(() => {
+  // vez no ícone de câmara. useLayoutEffect (em vez de useEffect) dispara
+  // antes do browser pintar o ecrã, para nunca se ver a barra vazia por um
+  // instante antes do seletor de câmara/galeria abrir.
+  useLayoutEffect(() => {
     if (autoTriggerFile) {
       fileInputRef.current?.click()
       consumeAutoTriggerFile()
