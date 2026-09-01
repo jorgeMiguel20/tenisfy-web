@@ -12,7 +12,7 @@ export default function HeaderSearchButton() {
   return (
     <button
       type="button"
-      onClick={openSearchModal}
+      onClick={() => openSearchModal()}
       aria-label="Pesquisar"
       className="flex items-center justify-center min-h-[44px] min-w-[44px] text-gray-600 hover:text-orange-600 transition-colors"
     >
