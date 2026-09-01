@@ -3,7 +3,7 @@ import HeroSearchBar from './HeroSearchBar'
 
 export default function HomeHero() {
   return (
-    <section className="relative overflow-hidden rounded-3xl mb-10 min-h-[420px] flex items-center">
+    <section className="relative overflow-hidden rounded-3xl mb-10 aspect-[16/9] min-h-[320px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/hero-bg.jpg"
