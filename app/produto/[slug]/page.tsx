@@ -4,6 +4,10 @@ import { supabase } from '@/lib/supabase'
 
 import { notFound } from 'next/navigation'
 
+import { SITE_URL } from '@/lib/siteUrl'
+
+import { buildOfferUrl } from '@/lib/offerUrl'
+
 import Link from 'next/link'
 
 import type { Metadata } from 'next'
@@ -147,14 +151,17 @@ function ColorSwatch({
       : { background: colors[0] ?? '#d1d5db' }
 
   return (
-    <span
-      aria-hidden="true"
-      title={label}
-      style={style}
-      className={`block h-8 w-8 rounded-full ${
-        selected ? 'ring-2 ring-offset-2 ring-gray-900' : 'border border-gray-200'
-      }`}
-    />
+    <span className="relative inline-block">
+      <span
+        aria-hidden="true"
+        title={label}
+        style={style}
+        className={`block h-8 w-8 rounded-full ${
+          selected ? 'ring-2 ring-offset-2 ring-gray-900' : 'border border-gray-200'
+        }`}
+      />
+      <span className="sr-only">{label}</span>
+    </span>
   )
 }
 
@@ -246,6 +253,10 @@ export default async function ProdutoPage({
 
 
 
+  const relatedFilters = [`brand_id.eq.${product.brand_id}`]
+  if (product.category) relatedFilters.push(`category.eq.${product.category}`)
+  if (product.color_variant_group) relatedFilters.push(`color_variant_group.eq.${product.color_variant_group}`)
+
   const { data: candidateProducts } = await supabase
     .from('products')
     .select(`
@@ -255,6 +266,12 @@ export default async function ProdutoPage({
     `)
     .eq('is_active', true)
     .neq('id', product.id)
+    // So produtos que possam qualificar para "Modelos semelhantes" (mesma
+    // marca ou categoria) ou aparecer como variante de cor - evita trazer
+    // o catalogo inteiro nesta query, que corre em todas as paginas de
+    // produto.
+    .or(relatedFilters.join(','))
+    .limit(60)
 
   const similarCandidates: ProductWithPrice[] = (candidateProducts ?? []).map((p: any) => {
     const inStockOffers = (p.product_offers as any[]).filter((o) => o.in_stock && !o.discontinued_at)
@@ -427,9 +444,49 @@ export default async function ProdutoPage({
 
 
 
+    const productUrl = `${SITE_URL}/produto/${product.slug}`
+  const jsonLdImages = (product.image_urls && product.image_urls.length > 0)
+      ? product.image_urls
+      : product.image_url
+        ? [product.image_url]
+        : []
+    const jsonLd = groupedOffers.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: `${product.brands?.name ?? ''} ${product.model_name}`.trim(),
+          image: jsonLdImages,
+          ...(product.brands?.name ? { brand: { '@type': 'Brand', name: product.brands.name } } : {}),
+          offers: {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'EUR',
+            lowPrice: groupedOffers[0].price,
+            highPrice: groupedOffers[groupedOffers.length - 1].price,
+            offerCount: groupedOffers.length,
+            url: productUrl,
+            offers: groupedOffers.map((offer) => ({
+              '@type': 'Offer',
+              price: offer.price,
+              priceCurrency: 'EUR',
+              availability: 'https://schema.org/InStock',
+              url: buildOfferUrl(offer),
+              seller: { '@type': 'Organization', name: offer.store },
+            })),
+          },
+        }
+      : null
+
   return (
 
     <main className="max-w-5xl mx-auto px-6 py-10 relative overflow-hidden">
+
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
 
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center">
 
