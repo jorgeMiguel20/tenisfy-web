@@ -1,10 +1,10 @@
 // components/HeaderSearchBar.tsx
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { closeSearchModal, consumeAutoTriggerFile, useSearchModalAutoTriggerFile } from '@/lib/searchModal'
+import { closeSearchModal, consumePendingImageFile, usePendingImageFile } from '@/lib/searchModal'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
@@ -30,7 +30,7 @@ export default function HeaderSearchBar() {
   const [imageLoading, setImageLoading] = useState(false)
   const [imageResults, setImageResults] = useState<ImageSearchResult[] | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
-  const autoTriggerFile = useSearchModalAutoTriggerFile()
+  const pendingImageFile = usePendingImageFile()
 
   function handleClose() {
     closeSearchModal()
@@ -59,30 +59,7 @@ export default function HeaderSearchBar() {
     }
   }, [])
 
-  // Aciona logo o seletor de ficheiro/câmara quando a barra abre a partir
-  // do botão "Experimenta a Pesquisa por Foto" (ver PesquisaPorFotoButton.tsx
-  // e lib/searchModal.ts), em vez de o utilizador ter de clicar uma segunda
-  // vez no ícone de câmara. useLayoutEffect (em vez de useEffect) dispara
-  // antes do browser pintar o ecrã, para nunca se ver a barra vazia por um
-  // instante antes do seletor de câmara/galeria abrir.
-  useLayoutEffect(() => {
-    if (autoTriggerFile) {
-      fileInputRef.current?.click()
-      consumeAutoTriggerFile()
-    }
-  }, [autoTriggerFile])
-
-  function handleTextSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const trimmed = query.trim()
-    handleClose()
-    router.push(trimmed ? `/catalogo?q=${encodeURIComponent(trimmed)}` : '/catalogo')
-  }
-
-  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  async function processImageFile(file: File) {
     setImageLoading(true)
     setImageError(null)
     setImageResults(null)
@@ -107,8 +84,33 @@ export default function HeaderSearchBar() {
       setImageError('Não foi possível analisar a imagem. Tenta outra vez.')
     } finally {
       setImageLoading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  // Foto já escolhida por um botão fora do cabeçalho (ex.: "Experimenta a
+  // Pesquisa por Foto" da homepage - ver PesquisaPorFotoButton.tsx e
+  // lib/searchModal.ts) - processa-a assim que chega, sem o utilizador
+  // precisar de voltar a clicar no ícone de câmara desta barra.
+  useEffect(() => {
+    if (pendingImageFile) {
+      processImageFile(pendingImageFile)
+      consumePendingImageFile()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingImageFile])
+
+  function handleTextSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = query.trim()
+    handleClose()
+    router.push(trimmed ? `/catalogo?q=${encodeURIComponent(trimmed)}` : '/catalogo')
+  }
+
+  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await processImageFile(file)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const showDropdown = imageLoading || !!imageError || !!imageResults
