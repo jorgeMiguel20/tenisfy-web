@@ -905,7 +905,7 @@ export default function ProductGrid({
           </span>
           <Link
             href={`/comparar?produtos=${compareSlugs.join(',')}`}
-            className="bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-4 py-1.5 rounded-full"
+            className="bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-700 border border-emerald-200 text-sm font-semibold px-4 py-1.5 rounded-full"
           >
             Comparar
           </Link>
