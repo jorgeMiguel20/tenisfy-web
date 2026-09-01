@@ -14,9 +14,10 @@ type ProductCardProps = {
 export default function ProductCard({ product, isSelected = false, onToggleCompare }: ProductCardProps) {
   const lowestPrice = product.lowest_price
   const storeCount = product.store_count ?? 0
+  const discount = product.priceDrop ?? product.savings
   const dropPercent =
-    product.priceDrop && lowestPrice
-      ? Math.round((product.priceDrop.amount / (lowestPrice + product.priceDrop.amount)) * 100)
+    discount && lowestPrice
+      ? Math.round((discount.amount / (lowestPrice + discount.amount)) * 100)
       : null
 
   return (
@@ -68,13 +69,6 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               </span>
             )}
           </div>
-          {product.savings && (
-            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-              <span className="inline-flex items-center bg-orange-600 text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
-                Poupa {formatPrice(product.savings.amount)}
-              </span>
-            </div>
-          )}
         </div>
       ) : (
         <p className="text-gray-400 text-sm">Sem oferta disponível</p>
@@ -96,7 +90,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           className={`mt-auto pt-3 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
             isSelected
               ? 'bg-gray-900 text-white'
-              : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              : 'bg-gray-800 text-white hover:bg-gray-900'
           }`}
         >
           {isSelected ? (
