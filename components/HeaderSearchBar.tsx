@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { closeSearchModal } from '@/lib/searchModal'
+import { closeSearchModal, consumeAutoTriggerFile, useSearchModalAutoTriggerFile } from '@/lib/searchModal'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
@@ -30,6 +30,7 @@ export default function HeaderSearchBar() {
   const [imageLoading, setImageLoading] = useState(false)
   const [imageResults, setImageResults] = useState<ImageSearchResult[] | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
+  const autoTriggerFile = useSearchModalAutoTriggerFile()
 
   function handleClose() {
     closeSearchModal()
@@ -57,6 +58,17 @@ export default function HeaderSearchBar() {
       window.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [])
+
+  // Aciona logo o seletor de ficheiro/câmara quando a barra abre a partir
+  // do botão "Experimenta a Pesquisa por Foto" (ver PesquisaPorFotoButton.tsx
+  // e lib/searchModal.ts), em vez de o utilizador ter de clicar uma segunda
+  // vez no ícone de câmara.
+  useEffect(() => {
+    if (autoTriggerFile) {
+      fileInputRef.current?.click()
+      consumeAutoTriggerFile()
+    }
+  }, [autoTriggerFile])
 
   function handleTextSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -118,7 +130,7 @@ export default function HeaderSearchBar() {
           onClick={() => fileInputRef.current?.click()}
           disabled={imageLoading}
           aria-label="Pesquisar por foto"
-          className="w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center text-white shrink-0 disabled:opacity-50"
+          className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center text-gray-700 shrink-0 disabled:opacity-50"
         >
           {imageLoading ? (
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
