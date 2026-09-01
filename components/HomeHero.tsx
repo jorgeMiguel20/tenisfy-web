@@ -9,7 +9,7 @@ export default function HomeHero() {
         src="/marketing/hero-bg.jpg"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover object-[75%_center]"
       />
       <div
         aria-hidden="true"
