@@ -30,12 +30,10 @@ export default async function CatalogoPage() {
     .filter((p) => p.priceDrop)
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
 
-  const __DEBUG = JSON.stringify({ total: productsWithPrice.length, priceDropCount: productsWithPrice.filter((p) => p.priceDrop).length, priceDropSample: productsWithPrice.filter((p) => p.priceDrop).map((p) => ({ slug: p.slug, gender: p.gender, amount: p.priceDrop!.amount })) })
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
       <CatalogoBackBar />
-      <div style={{ display: 'none' }} suppressHydrationWarning>{__DEBUG}</div>
 
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
 
