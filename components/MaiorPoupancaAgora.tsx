@@ -58,7 +58,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                 {product.brands?.name}
                 {product.store_count ? ` · ${product.store_count} ${product.store_count === 1 ? 'loja' : 'lojas'}` : ''}
               </p>
-              <p className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</p>
+              <h3 className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</h3>
               {sizeRange && <p className="text-xs text-gray-400 mb-3">{sizeRange}</p>}
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
