@@ -14,6 +14,10 @@ type ProductCardProps = {
 export default function ProductCard({ product, isSelected = false, onToggleCompare }: ProductCardProps) {
   const lowestPrice = product.lowest_price
   const storeCount = product.store_count ?? 0
+  const dropPercent =
+    product.priceDrop && lowestPrice
+      ? Math.round((product.priceDrop.amount / (lowestPrice + product.priceDrop.amount)) * 100)
+      : null
 
   return (
     <Link
@@ -60,7 +64,12 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
         )}
       </div>
 
-      <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
+      <div className="relative aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
+        {dropPercent != null && (
+          <span className="absolute top-2 left-2 z-10 rounded-md bg-orange-600 px-2 py-1 text-xs font-bold text-white">
+            -{dropPercent}%
+          </span>
+        )}
         {product.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -73,14 +82,16 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
       <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
         {product.brands?.name}
       </p>
-      <p className="font-semibold text-gray-900 mt-0.5 mb-2">{product.model_name}</p>
+      <p className="font-semibold text-gray-900 mt-0.5 mb-2 line-clamp-2 min-h-[2.5rem]">{product.model_name}</p>
       {lowestPrice ? (
         <div>
-          {storeCount > 1 && (
-            <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full mb-1.5">
-              Melhor preço
-            </span>
-          )}
+          <div className="h-5 mb-1.5 flex items-center">
+            {storeCount > 1 && (
+              <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                Melhor preço
+              </span>
+            )}
+          </div>
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-extrabold text-orange-600">
               {formatPrice(lowestPrice)}
