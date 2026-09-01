@@ -28,22 +28,28 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white shadow-sm">
       <div className="h-[3px] bg-orange-600" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 flex items-center gap-1.5 sm:gap-8">
+        {/* No mobile o hamburger fica à esquerda e o "Parjusto" centrado -
+            esta zona (flex-1) equilibra o espaço com a zona espelho da
+            lupa/comparar/favorito à direita. No desktop desaparece
+            (sm:hidden) e o layout volta ao normal em linha. */}
+        <div className={`sm:hidden ${searchOpen ? '' : 'flex-1'}`}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Abrir menu"
+            aria-expanded={mobileMenuOpen}
+            className="inline-flex items-center justify-center w-8 h-8 shrink-0 text-gray-700 hover:text-orange-600 transition-colors"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
         {/* Link nativo (não o <Link> do Next.js) para garantir sempre
             uma recarga completa - reset total da pesquisa, filtros e
             género selecionado, mesmo se já estivermos na homepage. */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          aria-label="Abrir menu"
-          aria-expanded={mobileMenuOpen}
-          className="sm:hidden inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="4" y1="7" x2="20" y2="7" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="17" x2="20" y2="17" />
-          </svg>
-        </button>
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gray-900 shrink-0">
           Parjusto
@@ -63,12 +69,10 @@ export default function Header() {
           </>
         ) : (
           <>
-            <nav className="flex items-center gap-1.5 sm:gap-6">
-              {/* Marcas leva à página de catálogo (onde está o filtro de marca);
-                  Promoções continua a apontar para a secção "Maior poupança
-                  agora" da própria homepage - a app ainda não tem uma página
-                  dedicada a promoções. Ambos ficam escondidos no mobile para não
-                  sobrecarregar a barra já ocupada com Homem/Mulher/Crianças. */}
+            {/* No mobile, Homem/Mulher/Crianças/Marcas/Promoções vivem só
+                dentro do menu hamburger (ver painel abaixo) - aqui o nav
+                fica escondido e só aparece no desktop. */}
+            <nav className="hidden sm:flex items-center gap-6">
               {/* prefetch=false nestes links: /catalogo é uma Server Component
                   que não lê ?genero=/?q= no próprio servidor (quem lê é o
                   ProductGrid, no cliente, via useSearchParams) - por isso o
@@ -79,7 +83,7 @@ export default function Header() {
               <Link
                 href="/catalogo"
                 prefetch={false}
-                className="hidden sm:inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
               >
                 Marcas
               </Link>
@@ -89,19 +93,24 @@ export default function Header() {
                   href={`/catalogo?genero=${link.value}`}
                   prefetch={false}
                   className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
-              >
-                {link.label}
-              </Link>
-            ))}
+                >
+                  {link.label}
+                </Link>
+              ))}
               <Link
                 href="/#promocoes"
-                className="hidden sm:inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
               >
                 Promoções
               </Link>
             </nav>
 
-            <div className="ml-auto flex items-center gap-2 sm:gap-6">
+            {/* Lupa + comparar + favorito: sempre visíveis (mobile e
+                desktop). No mobile ganham flex-1 para equilibrar o espaço
+                com a zona do hamburger à esquerda e assim centrar o
+                "Parjusto"; no desktop voltam ao comportamento normal
+                (empurrados para a direita com ml-auto). */}
+            <div className="flex-1 flex items-center justify-end gap-2 sm:flex-none sm:ml-auto sm:gap-6">
               <HeaderSearchButton />
               <CompareNavLink />
               <FavoritesNavLink />
@@ -113,6 +122,17 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-2">
           <nav className="flex flex-col">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                href={`/catalogo?genero=${link.value}`}
+                prefetch={false}
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
             <Link
               href="/catalogo"
               prefetch={false}
