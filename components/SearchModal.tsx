@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { closeSearchModal, useSearchModalOpen } from '@/lib/searchModal'
+import { closeSearchModal, consumeAutoTriggerFile, useSearchModalAutoTriggerFile, useSearchModalOpen } from '@/lib/searchModal'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
@@ -28,6 +28,7 @@ const SUGGESTIONS = ['Air Force 1', 'Samba', 'New Balance 550']
 // HeaderSearchButton.tsx, HeroPhotoSearchButton.tsx e PesquisaPorFotoButton.tsx.
 export default function SearchModal() {
   const open = useSearchModalOpen()
+  const autoTriggerFile = useSearchModalAutoTriggerFile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -51,6 +52,16 @@ export default function SearchModal() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [open])
+
+  // Abre logo a câmara/galeria quando o modal é aberto a partir do botão
+  // "Experimenta a Pesquisa por Foto" (ver PesquisaPorFotoButton.tsx), em
+  // vez de mostrar primeiro a barra de texto.
+  useEffect(() => {
+    if (open && autoTriggerFile) {
+      fileInputRef.current?.click()
+      consumeAutoTriggerFile()
+    }
+  }, [open, autoTriggerFile])
 
   if (!open) return null
 
