@@ -89,8 +89,8 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           aria-pressed={isSelected}
           className={`mt-auto pt-3 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors ${
             isSelected
-              ? 'bg-gray-900 text-white'
-              : 'bg-gray-800 text-white hover:bg-gray-900'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           {isSelected ? (
