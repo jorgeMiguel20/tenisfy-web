@@ -26,6 +26,22 @@ export type Product = {
   created_at: string
 }
 
+export type ProductOfferWithStore = {
+  id: string
+  price: number
+  in_stock: boolean
+  store_id: string
+  size: string
+  last_checked_at: string
+  affiliate_url: string
+  stores: {
+    name: string
+    shipping_base_fee: number | null
+    shipping_free_threshold: number | null
+    affiliate_url_template: string | null
+  } | null
+}
+
 export type ProductWithPrice = Product & {
   brands: Brand
   lowest_price: number | null
@@ -33,4 +49,8 @@ export type ProductWithPrice = Product & {
   sizes: string[]
   savings?: SavingsResult
   priceDrop?: PriceDropResult
+  // Presente em tempo de execução (vem direto da query em
+  // lib/getProductsWithPrice.ts) mas opcional no tipo - nem todos os sítios
+  // que usam ProductWithPrice precisam do detalhe por oferta/loja.
+  product_offers?: ProductOfferWithStore[]
 }

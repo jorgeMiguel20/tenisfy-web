@@ -1,20 +1,24 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import { SITE_URL } from "@/lib/siteUrl";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Fonte só para títulos grandes (logo, headlines de secção) — dá
+// personalidade à marca sem sacrificar a legibilidade do Inter no resto
+// do texto/UI. Ver --font-display em app/globals.css.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["700"],
 });
 
 export const metadata: Metadata = {
@@ -31,11 +35,17 @@ export default function RootLayout({
   return (
     <html
       lang="pt"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/* Sem "sticky footer" (min-h-full + flex-1): esse padrão obriga a
+          página a ter sempre pelo menos a altura do ecrã, empurrando o
+          rodapé para baixo e deixando um espaço em branco grande sempre
+          que o conteúdo real é mais curto que o ecrã (por exemplo, quando
+          "Maior poupança agora" não tem produtos para mostrar). Sem ele, o
+          rodapé segue logo a seguir ao conteúdo, como seria de esperar. */}
+      <body>
         <Header />
-        <div className="flex-1">{children}</div>
+        {children}
         <Footer />
         <Analytics />
       </body>

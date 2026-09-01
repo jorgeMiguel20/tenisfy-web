@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { checkAndSendPriceAlerts } from '@/lib/priceAlerts'
 
 type ActionResult = { success: true; count: number } | { success: false; error: string }
 
@@ -28,7 +29,7 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
 
   const { data: proposals, error: fetchError } = await supabase
     .from('price_check_proposals')
-    .select('id, product_offer_id, checked_price, checked_available, status')
+    .select('id, product_offer_id, checked_price, checked_available, status, product_offers (product_id)')
     .in('id', proposalIds)
 
   if (fetchError) return { success: false, error: fetchError.message }
@@ -36,6 +37,10 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
   const toApprove = (proposals ?? []).filter((p) => p.status === 'pending')
   const now = new Date().toISOString()
   let approvedCount = 0
+
+  // Produtos cujo preço mudou nesta aprovação - usado no fim para ver se
+  // algum alerta de preço (ver lib/priceAlerts.ts) já pode disparar.
+  const affectedProductIds: string[] = []
 
   for (const proposal of toApprove) {
     const offerUpdate: Record<string, unknown> = { last_checked_at: now }
@@ -60,6 +65,10 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
       if (historyError) {
         return { success: false, error: `Oferta atualizada, mas falhou o histórico: ${historyError.message}` }
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const productId = (proposal.product_offers as any)?.product_id
+      if (productId) affectedProductIds.push(productId)
     }
 
     const { error: proposalError } = await supabase
@@ -72,6 +81,16 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
     }
 
     approvedCount++
+  }
+
+  // Alertas de preço (ver lib/priceAlerts.ts): nunca deixar uma falha aqui
+  // impedir a resposta de sucesso - os preços já foram guardados acima, e
+  // um alerta que falhe a enviar só fica por notificar até à próxima
+  // aprovação deste produto.
+  try {
+    await checkAndSendPriceAlerts(affectedProductIds)
+  } catch (err) {
+    console.error('Falha ao verificar alertas de preço depois de aprovar propostas:', err)
   }
 
   revalidatePath('/admin/precos')
@@ -112,5 +131,41 @@ export async function dismissProposal(proposalId: string): Promise<ActionResult>
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/admin/precos')
+  return { success: true, count: 1 }
+}
+
+// Descontinuar oferta: usa-se quando a loja deixou mesmo de vender o
+// produto. Carimba discontinued_at na oferta (nunca apaga a linha nem o
+// price_history - fica só inativa) e fecha a proposta como dismissed, já
+// que não faz sentido continuar a pedir para confirmar à mão uma oferta que
+// já sabemos que acabou. GET /api/admin/price-check-targets exclui ofertas
+// com discontinued_at preenchido, e a página do produto também as ignora -
+// para reativar por engano, basta limpar discontinued_at diretamente na
+// base de dados (sem botão próprio nesta ronda).
+export async function discontinueOffer(proposalId: string, productOfferId: string): Promise<ActionResult> {
+  const supabase = getServiceClient()
+  if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
+
+  const now = new Date().toISOString()
+
+  const { error: offerError } = await supabase
+    .from('product_offers')
+    .update({ discontinued_at: now })
+    .eq('id', productOfferId)
+
+  if (offerError) return { success: false, error: offerError.message }
+
+  const { error: proposalError } = await supabase
+    .from('price_check_proposals')
+    .update({ status: 'dismissed', reviewed_at: now })
+    .eq('id', proposalId)
+    .eq('status', 'pending')
+
+  if (proposalError) {
+    return { success: false, error: `Oferta descontinuada, mas falhou fechar a proposta: ${proposalError.message}` }
+  }
+
+  revalidatePath('/admin/precos')
+  revalidatePath('/produto/[slug]', 'page')
   return { success: true, count: 1 }
 }

@@ -58,7 +58,7 @@ type GroupedOffer = {
 }
 
 function groupOffers(offers: any[]): GroupedOffer[] {
-  const inStock = offers.filter((o) => o.in_stock)
+  const inStock = offers.filter((o) => o.in_stock && !o.discontinued_at)
   const grouped: Record<string, GroupedOffer> = {}
 
   for (const offer of inStock) {
@@ -85,7 +85,7 @@ function EmptyState({ title, description }: { title: string; description: string
       <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
       <p className="text-gray-500 mt-2">{description}</p>
       <Link
-        href="/"
+        href="/catalogo"
         className="inline-block mt-6 bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
       >
         Ver catálogo
@@ -110,7 +110,7 @@ export default async function CompararPage({
         *,
         brands (*),
         product_offers (
-          id, price, in_stock,
+          id, price, in_stock, discontinued_at,
           stores (name)
         )
       `)
@@ -146,12 +146,12 @@ export default async function CompararPage({
       .select(`
         *,
         brands (*),
-        product_offers (price, in_stock, store_id, size)
+        product_offers (price, in_stock, store_id, size, discontinued_at)
       `)
       .eq('is_active', true)
 
     pickerProducts = (allProducts ?? []).map((p) => {
-      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock)
+      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock && !o.discontinued_at)
       const lowest_price = inStockOffers.length > 0
         ? Math.min(...inStockOffers.map((o: any) => o.price))
         : null
@@ -180,7 +180,7 @@ export default async function CompararPage({
           (localStorage) - restaura-a para o URL em vez de mostrar a página vazia. */}
       {slugs.length === 0 && <CompareRestoreFromStorage />}
 
-      <Link href="/" className="text-gray-500 text-sm hover:underline">
+      <Link href="/catalogo" className="text-gray-500 text-sm hover:underline">
         &larr; Voltar ao catálogo
       </Link>
 
@@ -194,7 +194,7 @@ export default async function CompararPage({
         </p>
       )}
 
-      <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${placeholderCount === 0 ? 'mt-8' : ''}`}>
+      <div className={`flex flex-wrap justify-center gap-6 ${placeholderCount === 0 ? 'mt-8' : ''}`}>
         {ordered.map((product) => {
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
@@ -208,7 +208,7 @@ export default async function CompararPage({
           return (
             <div
               key={product.id}
-              className="relative flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6"
+              className="relative flex w-full flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]"
             >
               <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
 
@@ -296,7 +296,9 @@ export default async function CompararPage({
         })}
 
         {Array.from({ length: placeholderCount }).map((_, i) => (
-          <ComparePicker key={`placeholder-${i}`} allProducts={pickerProducts} currentSlugs={slugs} />
+          <div key={`placeholder-${i}`} className="w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
+            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+          </div>
         ))}
       </div>
     </main>
