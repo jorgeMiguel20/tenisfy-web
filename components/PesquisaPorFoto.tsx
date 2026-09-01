@@ -33,9 +33,6 @@ export default function PesquisaPorFoto() {
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent"
         />
-        <span className="absolute bottom-4 left-4 right-4 bg-white/95 rounded-xl px-3 py-2.5 text-xs font-semibold text-gray-900">
-          Exemplo — a funcionalidade já está disponível na pesquisa acima
-        </span>
       </div>
     </section>
   )
