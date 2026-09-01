@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function HomeBanner() {
   return (
-    <section className="relative overflow-hidden rounded-3xl mb-10 min-h-[280px] flex items-center">
+    <section className="relative overflow-hidden rounded-3xl mb-10 aspect-[21/9] min-h-[220px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/banner-bg.jpg"
