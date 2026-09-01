@@ -169,6 +169,13 @@ export default async function CompararPage({
     }).map(({ label }) => label)
   )
 
+  // Preço mais baixo entre os produtos em comparação (só faz sentido
+  // destacar quando há mais do que um produto real a comparar).
+  const comparablePrices = ordered
+    .map((p) => groupOffers(p.product_offers ?? [])[0]?.price ?? null)
+    .filter((price): price is number => price != null)
+  const cheapestPrice = comparablePrices.length > 1 ? Math.min(...comparablePrices) : null
+
   return (
     <main className={`${containerMaxWidth} mx-auto px-6 py-10`}>
       {/* Só sincroniza a seleção partilhada quando o URL traz um ?produtos=
@@ -198,6 +205,7 @@ export default async function CompararPage({
         {ordered.map((product) => {
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
+          const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
 
           const specs = SPEC_DEFS.map(({ key, label }) => ({ label, value: product[key] })).filter(
             (spec) => spec.value
@@ -228,7 +236,14 @@ export default async function CompararPage({
               </div>
 
               {lowestPrice ? (
-                <p className="text-2xl font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                  {isCheapest && (
+                    <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                      Mais barato
+                    </span>
+                  )}
+                </div>
               ) : (
                 <p className="text-gray-400 text-sm">Sem oferta disponível</p>
               )}
