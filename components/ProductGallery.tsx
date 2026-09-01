@@ -28,6 +28,7 @@ export default function ProductGallery({
   const scrollerRef = useRef<HTMLDivElement>(null)
   const dragState = useRef<{ startX: number; startScrollLeft: number } | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({})
 
   // Fonte da verdade para navegação intencional (setas/teclado/miniaturas).
   // currentIndex (estado) segue o scroll real e pode ficar temporariamente
@@ -121,15 +122,21 @@ export default function ProductGallery({
       >
         {images.map((src, index) => (
           <div key={src} className="relative h-full w-full shrink-0 snap-start">
+            {!loadedImages[index] && (
+              <div className="absolute inset-0 animate-pulse bg-gray-100" />
+            )}
             <Image
               src={src}
               alt={`${alt} - foto ${index + 1} de ${images.length}`}
               fill
               sizes={sizes}
-              className="object-contain pointer-events-none"
+              className={`object-contain pointer-events-none transition-opacity duration-300 ${
+                loadedImages[index] ? 'opacity-100' : 'opacity-0'
+              }`}
               priority={index === 0}
               loading={index === 0 ? undefined : 'lazy'}
               draggable={false}
+              onLoad={() => setLoadedImages((prev) => (prev[index] ? prev : { ...prev, [index]: true }))}
             />
           </div>
         ))}
@@ -206,7 +213,19 @@ export default function ProductGallery({
                 index === currentIndex ? 'border-gray-900' : 'border-transparent hover:border-gray-300'
               }`}
             >
-              <Image src={src} alt="" fill sizes="64px" className="object-cover" />
+              {!loadedImages[index] && (
+                <div className="absolute inset-0 animate-pulse bg-gray-100" />
+              )}
+              <Image
+                src={src}
+                alt=""
+                fill
+                sizes="64px"
+                className={`object-cover transition-opacity duration-300 ${
+                  loadedImages[index] ? 'opacity-100' : 'opacity-0'
+                }`}
+                onLoad={() => setLoadedImages((prev) => (prev[index] ? prev : { ...prev, [index]: true }))}
+              />
             </button>
           ))}
         </div>
