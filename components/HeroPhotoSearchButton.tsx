@@ -18,7 +18,7 @@ export default function HeroPhotoSearchButton({ onClick, loading = false }: Prop
       onClick={onClick}
       disabled={loading}
       aria-label="Pesquisar por foto"
-      className="w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center text-white shrink-0 disabled:opacity-60"
+      className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center text-gray-700 shrink-0 disabled:opacity-60"
     >
       {loading ? (
         <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
