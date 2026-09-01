@@ -36,12 +36,12 @@ export default function Header() {
           onClick={() => setMobileMenuOpen((v) => !v)}
           aria-label="Abrir menu"
           aria-expanded={mobileMenuOpen}
-          className="sm:hidden inline-flex items-center justify-center w-8 h-8 -ml-1 mr-1 shrink-0 text-gray-700 hover:text-orange-600 transition-colors"
+          className="sm:hidden inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="7" x2="20" y2="7" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="17" x2="20" y2="17" />
           </svg>
         </button>
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
