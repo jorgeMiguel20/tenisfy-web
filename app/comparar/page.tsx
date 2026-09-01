@@ -194,7 +194,7 @@ export default async function CompararPage({
         </p>
       )}
 
-      <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${placeholderCount === 0 ? 'mt-8' : ''}`}>
+      <div className={`flex flex-wrap justify-center gap-6 ${placeholderCount === 0 ? 'mt-8' : ''}`}>
         {ordered.map((product) => {
           const offers = groupOffers(product.product_offers ?? [])
           const lowestPrice = offers[0]?.price ?? null
@@ -208,7 +208,7 @@ export default async function CompararPage({
           return (
             <div
               key={product.id}
-              className="relative flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6"
+              className="relative flex w-full flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]"
             >
               <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
 
@@ -296,7 +296,9 @@ export default async function CompararPage({
         })}
 
         {Array.from({ length: placeholderCount }).map((_, i) => (
-          <ComparePicker key={`placeholder-${i}`} allProducts={pickerProducts} currentSlugs={slugs} />
+          <div key={`placeholder-${i}`} className="w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
+            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+          </div>
         ))}
       </div>
     </main>
