@@ -7,6 +7,7 @@ import PesquisaPorFoto from '@/components/PesquisaPorFoto'
 import ComoFunciona from '@/components/ComoFunciona'
 import MaiorPoupancaAgora from '@/components/MaiorPoupancaAgora'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import Link from 'next/link'
 
 function pickRandom<T>(items: T[], count: number): T[] {
   const shuffled = [...items].sort(() => Math.random() - 0.5)
@@ -16,7 +17,7 @@ function pickRandom<T>(items: T[], count: number): T[] {
 // Homepage era totalmente estática (dados presos ao snapshot do build) - com
 // revalidate a Next.js volta a ir buscar dados novos à Supabase de X em X
 // tempo (ISR), sem precisar de um build novo sempre que os preços mudam.
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export default async function Home() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
@@ -76,6 +77,13 @@ export default async function Home() {
         <ComoFunciona showcaseProduct={showcaseProduct} hasNextSection={topDeals.length > 0} />
         <MaiorPoupancaAgora products={topDeals} />
       </div>
+
+      <Link
+        href="/catalogo"
+        className="sm:hidden fixed bottom-4 inset-x-4 z-50 flex items-center justify-center gap-2 rounded-full bg-orange-600 py-3 text-center font-semibold text-white shadow-lg shadow-orange-600/30 active:scale-95 transition-transform"
+      >
+        Ver catálogo
+      </Link>
     </main>
   )
 }
