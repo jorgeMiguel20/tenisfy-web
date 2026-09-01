@@ -14,7 +14,7 @@ type HistoryRow = { price: number; recorded_at: string }
 // Compara o melhor preço (mínimo entre lojas) do dia mais recente com
 // registo contra o do dia anterior a esse - mesma agregação por dia usada no
 // gráfico de histórico da página de produto (ver bestPriceByDate em
-// app/produto/[slug]/page.tsx). Só considera descida se for >= 1€.
+// app/produto/[slug]/page.tsx). Só considera descida se for >= 0,50€.
 export function computePriceDrop(historyRows: HistoryRow[]): PriceDropResult {
   const bestPriceByDate = new Map<string, number>()
   for (const row of historyRows) {
@@ -31,7 +31,7 @@ export function computePriceDrop(historyRows: HistoryRow[]): PriceDropResult {
   const previousPrice = bestPriceByDate.get(dates[dates.length - 2])!
 
   const rawDrop = Math.round((previousPrice - latestPrice) * 100) / 100
-  if (rawDrop < 1) return null
+  if (rawDrop < 0.5) return null
 
   return { amount: rawDrop, asOfDate: latestDate }
 }
