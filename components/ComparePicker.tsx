@@ -81,8 +81,8 @@ export default function ComparePicker({
   }
 
   return (
-    <div className="flex min-h-[280px] h-full flex-col rounded-2xl border-2 border-orange-300 bg-white p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="flex min-h-[280px] h-full flex-col items-center justify-center rounded-2xl border-2 border-orange-300 bg-white p-4">
+      <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}
           type="text"
@@ -112,42 +112,44 @@ export default function ComparePicker({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col gap-1">
-        {query.trim().length < 2 ? null : results.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center mt-6">Nenhum produto encontrado.</p>
-        ) : (
-          results.map((p, index) => (
-            <button
-              key={p.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => selectProduct(p.slug)}
-              onMouseEnter={() => setActiveIndex(index)}
-              className={`flex items-center gap-3 rounded-xl p-2 text-left transition-colors ${
-                index === activeIndex ? 'bg-gray-50' : 'hover:bg-gray-50'
-              }`}
-            >
-              <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-50 overflow-hidden">
-                {p.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+      {query.trim().length >= 2 && (
+        <div className="w-full mt-3 max-h-[180px] overflow-y-auto flex flex-col gap-1">
+          {results.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center mt-6">Nenhum produto encontrado.</p>
+          ) : (
+            results.map((p, index) => (
+              <button
+                key={p.id}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => selectProduct(p.slug)}
+                onMouseEnter={() => setActiveIndex(index)}
+                className={`flex items-center gap-3 rounded-xl p-2 text-left transition-colors ${
+                  index === activeIndex ? 'bg-gray-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-50 overflow-hidden">
+                  {p.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 truncate">
+                    {p.brands?.name}
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{p.model_name}</p>
+                </div>
+                {p.lowest_price != null && (
+                  <span className="text-xs font-semibold text-orange-700 shrink-0">
+                    {formatPrice(p.lowest_price)}
+                  </span>
                 )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 truncate">
-                  {p.brands?.name}
-                </p>
-                <p className="text-sm font-medium text-gray-900 truncate">{p.model_name}</p>
-              </div>
-              {p.lowest_price != null && (
-                <span className="text-xs font-semibold text-orange-700 shrink-0">
-                  {formatPrice(p.lowest_price)}
-                </span>
-              )}
-            </button>
-          ))
-        )}
-      </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }
