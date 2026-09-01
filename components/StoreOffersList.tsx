@@ -75,7 +75,17 @@ function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
 
 const VISIBLE_COUNT = 5
 
-function StoreOfferCard({ offer, isBest }: { offer: StoreOfferForDisplay; isBest: boolean }) {
+function StoreOfferCard({
+  offer,
+  isBest,
+  selectedSize,
+  onSelectSize,
+}: {
+  offer: StoreOfferForDisplay
+  isBest: boolean
+  selectedSize: string | null
+  onSelectSize: (size: string) => void
+}) {
   const shipping = getShippingDisplay(offer)
   const verifiedLabel = formatVerifiedLabel(offer.lastCheckedAt)
 
@@ -107,17 +117,22 @@ function StoreOfferCard({ offer, isBest }: { offer: StoreOfferForDisplay; isBest
         {offer.sizes.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {offer.sizes.map((s) => (
-              <span
+              <button
                 key={s.size}
+                type="button"
+                disabled={!s.inStock}
+                onClick={() => onSelectSize(s.size)}
                 title={s.inStock ? undefined : 'Esgotado nesta loja'}
-                className={`inline-flex items-center justify-center min-w-[2.25rem] h-8 px-2 rounded-md border text-xs font-medium select-none ${
-                  s.inStock
-                    ? 'border-gray-200 text-gray-700 bg-white'
-                    : 'border-gray-100 text-gray-300 bg-gray-50 line-through'
+                className={`inline-flex items-center justify-center min-w-[2.25rem] h-8 px-2 rounded-md border text-xs font-medium transition-colors ${
+                  !s.inStock
+                    ? 'border-gray-100 text-gray-300 bg-gray-50 line-through cursor-not-allowed'
+                    : selectedSize === s.size
+                    ? 'border-orange-500 text-orange-600 bg-orange-50'
+                    : 'border-gray-200 text-gray-700 bg-white hover:border-gray-400'
                 }`}
               >
                 {s.size}
-              </span>
+              </button>
             ))}
           </div>
         )}
@@ -140,6 +155,7 @@ function StoreOfferCard({ offer, isBest }: { offer: StoreOfferForDisplay; isBest
 
 export default function StoreOffersList({ offers }: { offers: StoreOfferForDisplay[] }) {
   const [expanded, setExpanded] = useState(false)
+  const [selectedSize, setSelectedSize] = useState<string | null>(null)
 
   // A lista já vem ordenada da mais barata para a mais cara (ver
   // app/produto/[slug]/page.tsx) - aqui só decide quantas mostrar.
@@ -149,7 +165,13 @@ export default function StoreOffersList({ offers }: { offers: StoreOfferForDispl
   return (
     <div className="flex flex-col gap-3">
       {visibleOffers.map((offer, index) => (
-        <StoreOfferCard key={offer.store} offer={offer} isBest={index === 0 && offers.length > 1} />
+        <StoreOfferCard
+          key={offer.store}
+          offer={offer}
+          isBest={index === 0 && offers.length > 1}
+          selectedSize={selectedSize}
+          onSelectSize={(size) => setSelectedSize((prev) => (prev === size ? null : size))}
+        />
       ))}
 
       {hasMore && !expanded && (
