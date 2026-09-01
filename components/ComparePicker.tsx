@@ -113,9 +113,7 @@ export default function ComparePicker({
       </div>
 
       <div className="flex-1 overflow-y-auto flex flex-col gap-1">
-        {query.trim().length < 2 ? (
-          <p className="text-xs text-gray-400 text-center mt-6">Escreve pelo menos 2 letras.</p>
-        ) : results.length === 0 ? (
+        {query.trim().length < 2 ? null : results.length === 0 ? (
           <p className="text-xs text-gray-400 text-center mt-6">Nenhum produto encontrado.</p>
         ) : (
           results.map((p, index) => (
