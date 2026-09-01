@@ -1,7 +1,7 @@
 // components/ComoFunciona.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
@@ -13,7 +13,7 @@ const STEPS = [
     image: '/marketing/step-search.jpg',
   },
   {
-    title: 'Compara lojas',
+    title: 'Compara preços entre lojas',
     text: 'Só tamanhos que existem mesmo em stock, sem letras pequenas — vês o preço final, com portes incluídos quando aplicável.',
     image: '/marketing/step-compare.jpg',
   },
@@ -53,6 +53,13 @@ export default function ComoFunciona({
 }) {
   const [active, setActive] = useState(0)
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % STEPS.length)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [active])
+
   const storeRows = showcaseProduct ? bestPricePerStore(showcaseProduct) : []
   const hasCompareData = storeRows.length >= 2
   const hasBuyData = !!showcaseProduct?.lowest_price && !!showcaseProduct?.savings
@@ -82,9 +89,29 @@ export default function ComoFunciona({
 
       <div className="grid sm:grid-cols-2 rounded-2xl overflow-hidden shadow-lg mb-4">
         <div className="relative aspect-[4/3] sm:aspect-auto sm:min-h-[280px] bg-gray-50">
+          <button
+            type="button"
+            onClick={() => setActive((i) => (i - 1 + STEPS.length) % STEPS.length)}
+            aria-label="Passo anterior"
+            className="absolute left-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow hover:bg-white transition-colors"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActive((i) => (i + 1) % STEPS.length)}
+            aria-label="Passo seguinte"
+            className="absolute right-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow hover:bg-white transition-colors"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
           {active === 0 && (
             <div className="relative h-full w-full">
-              <Image src={STEPS[0].image} alt={STEPS[0].title} fill className="object-cover" />
+              <Image src={STEPS[0].image} alt={STEPS[0].title} fill className="object-cover object-[30%_center]" />
               {/* Sugere "análise em curso" sem fingir que reconhece o modelo
                   exato em tempo real sobre esta foto estática - a pesquisa
                   por foto de verdade só corre depois de a imagem ser
