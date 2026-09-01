@@ -3,7 +3,7 @@ import HeroSearchBar from './HeroSearchBar'
 
 export default function HomeHero() {
   return (
-    <section className="relative w-full overflow-hidden rounded-3xl mb-10 aspect-[16/9] min-h-[320px] flex items-center">
+    <section className="relative w-full overflow-hidden rounded-3xl mb-10 sm:aspect-[16/9] sm:min-h-[320px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/hero-bg.jpg"
@@ -16,7 +16,7 @@ export default function HomeHero() {
         className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10"
       />
 
-      <div className="relative px-6 py-14 sm:px-12 sm:py-20 max-w-xl">
+      <div className="relative px-6 py-8 sm:px-12 sm:py-20 max-w-xl">
         <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
           Encontra o par certo.
           <br />
