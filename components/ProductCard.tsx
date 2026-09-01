@@ -56,7 +56,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
       <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
         {product.brands?.name}
       </p>
-      <p className="font-semibold text-gray-900 mt-0.5 mb-2 line-clamp-2 min-h-[2.5rem]">{product.model_name}</p>
+      <h3 className="font-semibold text-gray-900 mt-0.5 mb-2 line-clamp-2 min-h-[2.5rem]">{product.model_name}</h3>
       {lowestPrice ? (
         <div>
           <div className="flex items-baseline gap-2">
