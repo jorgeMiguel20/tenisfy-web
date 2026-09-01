@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { closeSearchModal, consumeAutoTriggerFile, useSearchModalAutoTriggerFile, useSearchModalOpen } from '@/lib/searchModal'
+import { closeSearchModal, consumePendingImageFile, usePendingImageFile, useSearchModalOpen } from '@/lib/searchModal'
 import { getImageEmbedding } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
@@ -28,7 +28,7 @@ const SUGGESTIONS = ['Air Force 1', 'Samba', 'New Balance 550']
 // HeaderSearchButton.tsx, HeroPhotoSearchButton.tsx e PesquisaPorFotoButton.tsx.
 export default function SearchModal() {
   const open = useSearchModalOpen()
-  const autoTriggerFile = useSearchModalAutoTriggerFile()
+  const pendingImageFile = usePendingImageFile()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -57,11 +57,12 @@ export default function SearchModal() {
   // "Experimenta a Pesquisa por Foto" (ver PesquisaPorFotoButton.tsx), em
   // vez de mostrar primeiro a barra de texto.
   useEffect(() => {
-    if (open && autoTriggerFile) {
-      fileInputRef.current?.click()
-      consumeAutoTriggerFile()
+    if (open && pendingImageFile) {
+      processImageFile(pendingImageFile)
+      consumePendingImageFile()
     }
-  }, [open, autoTriggerFile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pendingImageFile])
 
   if (!open) return null
 
@@ -85,10 +86,7 @@ export default function SearchModal() {
     router.push(`/catalogo?q=${encodeURIComponent(term)}`)
   }
 
-  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  async function processImageFile(file: File) {
     setImageLoading(true)
     setImageError(null)
     setImageResults(null)
@@ -113,8 +111,14 @@ export default function SearchModal() {
       setImageError('Não foi possível analisar a imagem. Tenta outra vez.')
     } finally {
       setImageLoading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await processImageFile(file)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   return (
