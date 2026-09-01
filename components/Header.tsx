@@ -1,6 +1,7 @@
 // components/Header.tsx
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import CompareNavLink from './CompareNavLink'
 import FavoritesNavLink from './FavoritesNavLink'
@@ -21,6 +22,7 @@ export default function Header() {
   // no próprio cabeçalho - ver components/HeaderSearchBar.tsx - em vez de
   // abrir um modal ou painel flutuante por cima da página.
   const searchOpen = useSearchModalOpen()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
@@ -29,6 +31,19 @@ export default function Header() {
         {/* Link nativo (não o <Link> do Next.js) para garantir sempre
             uma recarga completa - reset total da pesquisa, filtros e
             género selecionado, mesmo se já estivermos na homepage. */}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen((v) => !v)}
+          aria-label="Abrir menu"
+          aria-expanded={mobileMenuOpen}
+          className="sm:hidden inline-flex items-center justify-center w-8 h-8 -ml-1 mr-1 shrink-0 text-gray-700 hover:text-orange-600 transition-colors"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gray-900 shrink-0">
           Parjusto
@@ -94,6 +109,28 @@ export default function Header() {
           </>
         )}
       </div>
+
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-2">
+          <nav className="flex flex-col">
+            <Link
+              href="/catalogo"
+              prefetch={false}
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+            >
+              Marcas
+            </Link>
+            <Link
+              href="/#promocoes"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+            >
+              Promoções
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
