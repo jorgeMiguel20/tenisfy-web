@@ -856,8 +856,10 @@ export default function ProductGrid({
         </aside>
 
         <div className="flex-1 min-w-0">
-          {/* Barra de controlos - mobile (sem barra lateral para alinhar, mantém-se aqui) */}
-          <div className="flex lg:hidden items-center justify-between gap-2 mb-6">
+          {/* Barra de controlos - mobile (sem barra lateral para alinhar, mantém-se aqui).
+              Sticky (como a barra de filtros da Lacoste) para nunca desaparecer ao
+              fazer scroll da grelha - fica logo abaixo do cabeçalho fixo do site. */}
+          <div className="sticky top-16 z-30 flex lg:hidden items-center justify-between gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
             <p className="text-sm text-gray-500 shrink-0">
               {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
             </p>
