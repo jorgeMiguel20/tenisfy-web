@@ -122,17 +122,17 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-2">
           <nav className="flex flex-col">
-            {/* Ação de destaque "Ver catálogo" - antes era um botão
-                flutuante sobre a página (tapava conteúdo, incl. os ícones
-                de um card vizinho no mobile); o Jorge pediu para tirar o
-                botão flutuante e mover a mesma ação para aqui dentro do
-                menu hamburger, mantendo o estilo em destaque (pill laranja)
-                para não perder a força visual que tinha antes. */}
+            {/* "Ver catálogo" - antes era um botão flutuante sobre a página
+                (tapava conteúdo, incl. os ícones de um card vizinho no
+                mobile); o Jorge pediu para tirar o botão flutuante e mover a
+                mesma ação para aqui dentro do menu hamburger, com o mesmo
+                estilo simples dos restantes links (o destaque em pill
+                laranja ficava feio, segundo o Jorge). */}
             <Link
               href="/catalogo"
               prefetch={false}
               onClick={() => setMobileMenuOpen(false)}
-              className="mb-1 inline-flex items-center justify-center rounded-full bg-orange-600 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 transition-colors"
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
             >
               Ver catálogo
             </Link>
