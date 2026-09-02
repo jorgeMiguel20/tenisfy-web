@@ -40,6 +40,13 @@ export default function NewSizesSection({ sizes }: { sizes: NewSizeRow[] }) {
     })
   }
 
+  // Checkbox "selecionar tudo" no cabeçalho da tabela (desktop) e no topo da
+  // lista de cards (mobile) - alterna entre selecionar todos os tamanhos
+  // visíveis e limpar a seleção. Mesmo padrão de ProposalsSection.tsx.
+  function toggleAll() {
+    setSelected((prev) => (prev.size === sizes.length ? new Set() : new Set(sizes.map((s) => s.id))))
+  }
+
   function approve(ids: string[]) {
     setMessage(null)
     startTransition(async () => {
@@ -71,11 +78,13 @@ export default function NewSizesSection({ sizes }: { sizes: NewSizeRow[] }) {
     )
   }
 
+  const allSelected = selected.size === sizes.length && sizes.length > 0
+
   return (
     <section className="mt-10 text-left">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900">Novos tamanhos encontrados ({sizes.length})</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={isPending || selected.size === 0}
@@ -102,11 +111,22 @@ export default function NewSizesSection({ sizes }: { sizes: NewSizeRow[] }) {
 
       {message && <p className="text-sm text-gray-600 mb-3">{message}</p>}
 
-      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+      {/* Desktop/tablet: tabela com checkbox "selecionar tudo" no cabeçalho.
+          Escondida em mobile (ver cards abaixo) - a tabela com 6 colunas não
+          cabe numa faixa de 375-390px sem overflow horizontal. */}
+      <div className="hidden sm:block border border-gray-100 rounded-2xl overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-left bg-gray-50">
-              <th className="p-3 w-8"></th>
+              <th className="p-3 w-8">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label="Selecionar todos os tamanhos"
+                  className="h-4 w-4"
+                />
+              </th>
               <th className="p-3 font-medium text-gray-500">Produto</th>
               <th className="p-3 font-medium text-gray-500">Loja</th>
               <th className="p-3 font-medium text-gray-500">Preço</th>
@@ -146,6 +166,48 @@ export default function NewSizesSection({ sizes }: { sizes: NewSizeRow[] }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: cards empilhados em vez da tabela, cada um com o seu
+          checkbox - mesma seleção partilhada com a tabela/botões acima. */}
+      <div className="flex sm:hidden flex-col gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleAll}
+            aria-label="Selecionar todos os tamanhos"
+            className="h-4 w-4"
+          />
+          Selecionar tudo
+        </label>
+        {sizes.map((s) => (
+          <div key={s.id} className="border border-gray-100 rounded-2xl p-3 flex gap-3">
+            <input
+              type="checkbox"
+              checked={selected.has(s.id)}
+              onChange={() => toggle(s.id)}
+              className="h-4 w-4 mt-1 shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 break-words">
+                {s.productName}
+                <span className="text-gray-400 font-normal"> · tam. {s.size}</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{s.storeName}</p>
+              <div className="mt-1.5 text-sm"><PriceCell price={s.price} /></div>
+              <div className="mt-1 text-sm"><StockCell inStock={s.inStock} /></div>
+              <button
+                type="button"
+                disabled={isPending && busyId === s.id}
+                onClick={() => reject(s.id)}
+                className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-40"
+              >
+                Rejeitar
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   )
