@@ -87,26 +87,28 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           <img
             src={photos[photoIndex]}
             alt={product.model_name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
           />
         )}
 
         {/* Pontinhos (estilo Armani): só no mobile e só quando há mais de
             uma foto. */}
         {photos.length > 1 && (
-          <div className="absolute inset-x-0 bottom-2 z-10 flex items-center justify-center gap-1.5 sm:hidden">
-            {photos.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={(e) => selectPhoto(index, e)}
-                aria-label={`Ver foto ${index + 1} de ${photos.length}`}
-                aria-current={index === photoIndex}
-                className={`h-1.5 rounded-full transition-all ${
-                  index === photoIndex ? 'w-4 bg-gray-900' : 'w-1.5 bg-white/80'
-                }`}
-              />
-            ))}
+          <div className="absolute inset-x-0 bottom-2 z-10 flex items-center justify-center sm:hidden">
+            <div className="flex items-center gap-1.5 rounded-full bg-black/20 backdrop-blur-sm px-2 py-1">
+              {photos.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={(e) => selectPhoto(index, e)}
+                  aria-label={`Ver foto ${index + 1} de ${photos.length}`}
+                  aria-current={index === photoIndex}
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === photoIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/60'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
