@@ -134,6 +134,27 @@ export async function dismissProposal(proposalId: string): Promise<ActionResult>
   return { success: true, count: 1 }
 }
 
+// Marcar várias como resolvidas de uma vez (seleção em bloco na secção
+// "Precisa da tua atenção") - mesma lógica de dismissProposal, sem tocar em
+// product_offers.
+export async function dismissProposals(proposalIds: string[]): Promise<ActionResult> {
+  if (proposalIds.length === 0) return { success: true, count: 0 }
+
+  const supabase = getServiceClient()
+  if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
+
+  const { error } = await supabase
+    .from('price_check_proposals')
+    .update({ status: 'dismissed', reviewed_at: new Date().toISOString() })
+    .in('id', proposalIds)
+    .eq('status', 'pending')
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath('/admin/precos')
+  return { success: true, count: proposalIds.length }
+}
+
 // Descontinuar oferta: usa-se quando a loja deixou mesmo de vender o
 // produto. Carimba discontinued_at na oferta (nunca apaga a linha nem o
 // price_history - fica só inativa) e fecha a proposta como dismissed, já
