@@ -1,7 +1,8 @@
 // components/PriceAlertButton.tsx
 'use client'
 
-import { useState, type FormEvent, type MouseEvent } from 'react'
+import { useEffect, useId, useState, useSyncExternalStore, type FormEvent, type MouseEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { createPriceAlert } from '@/app/produto/[slug]/priceAlertActions'
 
 function BellIcon({ className = 'h-4 w-4' }: { className?: string }) {
@@ -13,12 +14,29 @@ function BellIcon({ className = 'h-4 w-4' }: { className?: string }) {
   )
 }
 
+// Só um modal de "Avisa-me quando descer" pode estar aberto de cada vez em
+// toda a página (as grelhas têm muitos cards, cada um com o seu próprio
+// botão) - store module-level simples fora do React, mais leve do que um
+// Context a atravessar todas as grelhas/páginas que usam este botão.
+let activeAlertId: string | null = null
+const listeners = new Set<() => void>()
+
+function setActiveAlert(id: string | null) {
+  activeAlertId = id
+  listeners.forEach((listener) => listener())
+}
+
+function subscribeActiveAlert(listener: () => void) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
 // Versão compacta do "Avisa-me quando o preço descer" (ver PriceAlertForm.tsx,
 // na página do produto) para usar em cima dos cards da grelha/catálogo/
-// favoritos. Fica fechado por defeito (só o sino) e abre um popup ali mesmo
-// no card, sem navegar para a página do produto - por isso todo o clique
-// aqui (incluindo dentro do formulário) precisa de parar a propagação, já
-// que o card inteiro é um <Link>.
+// favoritos. Fica fechado por defeito (só o sino) e abre um modal centrado
+// com fundo escurecido, via portal para <body> - assim bloqueia mesmo o
+// resto da página (incl. os cards vizinhos, que são <Link>) até o
+// utilizador terminar ou cancelar, e nunca há mais que um aberto.
 export default function PriceAlertButton({
   productId,
   currentPrice,
@@ -28,15 +46,35 @@ export default function PriceAlertButton({
   currentPrice: number | null
   className?: string
 }) {
-  const [open, setOpen] = useState(false)
+  const id = useId()
+  const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
+  const open = activeId === id
+
+  const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState('')
   const [targetPrice, setTargetPrice] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
 
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setActiveAlert(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open])
+
   function stopNav(e: MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+  }
+
+  function close(e?: MouseEvent) {
+    if (e) stopNav(e)
+    setActiveAlert(null)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -66,7 +104,7 @@ export default function PriceAlertButton({
         type="button"
         onClick={(e) => {
           stopNav(e)
-          setOpen((o) => !o)
+          setActiveAlert(open ? null : id)
         }}
         aria-pressed={open}
         aria-label="Avisa-me quando o preço descer"
@@ -77,84 +115,73 @@ export default function PriceAlertButton({
         <BellIcon className={`h-4 w-4 ${open ? 'text-white' : 'text-gray-400'}`} />
       </button>
 
-      {open && (
-        <>
-          {/* Fundo semi-transparente só no mobile: transforma o popup num
-              "bottom sheet" fixo ao ecrã e permite fechar tocando fora. Sem
-              isto, o popup ficava ancorado (right-0) ao próprio botão, e em
-              cards estreitos perto da margem esquerda do ecrã (ex: coluna da
-              esquerda na grelha de 2 colunas do mobile) a largura fixa do
-              popup ultrapassava a borda esquerda do ecrã, cortando o campo
-              de email. */}
-          <div
-            onClick={(e) => {
-              stopNav(e)
-              setOpen(false)
-            }}
-            className="fixed inset-0 z-10 bg-black/30 sm:hidden"
-            aria-hidden="true"
-          />
-          <div
-            onClick={stopNav}
-            className="fixed inset-x-4 bottom-4 z-20 rounded-xl border border-gray-100 bg-white p-3 shadow-lg sm:absolute sm:inset-x-auto sm:inset-y-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-56"
-          >
-          {status === 'done' ? (
-            <p className="text-xs text-green-700">{message}</p>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
-                <BellIcon className="h-3.5 w-3.5 text-gray-400" />
-                Avisa-me quando descer
-              </p>
-              <input
-                type="email"
-                required
-                placeholder="o-teu-email@exemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onClick={stopNav}
-                className="w-full rounded-full border border-gray-200 px-3 py-1.5 text-xs outline-none focus:border-gray-400"
-          />
-              <div className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5">
-                <span className="text-xs text-gray-400 whitespace-nowrap">abaixo de</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  required
-                  placeholder={currentPrice != null ? String(Math.max(1, Math.round(currentPrice * 0.9))) : '50'}
-                  value={targetPrice}
-                  onChange={(e) => setTargetPrice(e.target.value)}
-                  onClick={stopNav}
-                  className="w-12 text-xs outline-none"
-                />
-                <span className="text-xs text-gray-400">€</span>
-              </div>
-
-              {status === 'error' && <p className="text-[11px] text-red-600">{message}</p>}
-
-              <div className="flex items-center gap-2 mt-0.5">
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="flex-1 bg-gray-900 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
-                >
-                  {status === 'loading' ? 'A criar...' : 'Criar alerta'}
-                </button>
+      {mounted && open && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={close}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        >
+          <div onClick={stopNav} className="w-full max-w-xs rounded-2xl bg-white p-4 shadow-xl">
+            {status === 'done' ? (
+              <>
+                <p className="text-sm text-green-700">{message}</p>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    stopNav(e)
-                    setOpen(false)
-                  }}
-                  className="text-xs text-gray-400 hover:text-gray-600"
+                  onClick={close}
+                  className="mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
                 >
-                  Cancelar
+                  Fechar
                 </button>
-              </div>
-            </form>
-          )}
+              </>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                  <BellIcon className="h-4 w-4 text-gray-400" />
+                  Avisa-me quando descer
+                </p>
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  placeholder="o-teu-email@exemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                />
+                <div className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-2">
+                  <span className="text-sm text-gray-400 whitespace-nowrap">abaixo de</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    required
+                    placeholder={currentPrice != null ? String(Math.max(1, Math.round(currentPrice * 0.9))) : '50'}
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    className="w-14 text-sm outline-none"
+                  />
+                  <span className="text-sm text-gray-400">€</span>
+                </div>
+
+                {status === 'error' && <p className="text-xs text-red-600">{message}</p>}
+
+                <div className="flex items-center gap-2 mt-0.5">
+                  <button
+                    type="submit"
+                    disabled={status === 'loading'}
+                    className="flex-1 bg-gray-900 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  >
+                    {status === 'loading' ? 'A criar...' : 'Criar alerta'}
+                  </button>
+                  <button type="button" onClick={close} className="text-sm text-gray-400 hover:text-gray-600">
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
-        </>
+        </div>,
+        document.body
       )}
     </div>
   )
