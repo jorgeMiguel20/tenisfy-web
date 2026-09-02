@@ -42,31 +42,33 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
             <Link
               key={product.id}
               href={`/produto/${product.slug}`}
-              className="block rounded-2xl border border-gray-100 p-5 shadow-[0_1px_2px_rgba(17,24,39,0.04),0_8px_20px_rgba(17,24,39,0.06)] hover:shadow-lg hover:-translate-y-1 transition-all"
+              className="group block overflow-hidden rounded-2xl bg-white transition-shadow hover:shadow-lg"
             >
-              <div className="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden">
+              <div className="relative aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden">
                 {product.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={product.image_url}
                     alt={product.model_name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
               </div>
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                {product.brands?.name}
-                {product.store_count ? ` · ${product.store_count} ${product.store_count === 1 ? 'loja' : 'lojas'}` : ''}
-              </p>
-              <h3 className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</h3>
-              {sizeRange && <p className="text-xs text-gray-400 mb-3">{sizeRange}</p>}
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                  -{percentOff}%
-                </span>
-                <span className="text-gray-400 line-through text-sm">{formatPrice(previousPrice)}</span>
+              <div className="p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  {product.brands?.name}
+                  {product.store_count ? ` · ${product.store_count} ${product.store_count === 1 ? 'loja' : 'lojas'}` : ''}
+                </p>
+                <h3 className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</h3>
+                {sizeRange && <p className="text-xs text-gray-400 mb-3">{sizeRange}</p>}
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                    -{percentOff}%
+                  </span>
+                  <span className="text-gray-400 line-through text-sm">{formatPrice(previousPrice)}</span>
+                </div>
+                <p className="text-xl font-extrabold text-orange-600 mt-0.5">{formatPrice(currentPrice)}</p>
               </div>
-              <p className="text-xl font-extrabold text-orange-600 mt-0.5">{formatPrice(currentPrice)}</p>
             </Link>
           )
         })}
