@@ -1,7 +1,7 @@
 // components/ComoFunciona.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
@@ -52,6 +52,21 @@ export default function ComoFunciona({
   hasNextSection?: boolean
 }) {
   const [active, setActive] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+
+  // Permite trocar de passo por swipe no mobile, para alem do avanco
+  // automatico e do toque nos indicadores - as tres formas coexistem.
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current == null) return
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current
+    touchStartX.current = null
+    if (deltaX > 30) setActive((i) => (i - 1 + STEPS.length) % STEPS.length)
+    else if (deltaX < -30) setActive((i) => (i + 1) % STEPS.length)
+  }
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -88,7 +103,11 @@ export default function ComoFunciona({
       <p className="text-center text-sm text-gray-500 mb-8">Desliza pelos 3 passos</p>
 
       <div className="grid sm:grid-cols-2 rounded-2xl overflow-hidden shadow-lg mb-4">
-        <div className="relative aspect-[4/3] sm:aspect-auto sm:min-h-[280px] bg-gray-50">
+        <div
+          className="relative aspect-[4/3] sm:aspect-auto sm:min-h-[280px] bg-gray-50"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <button
             type="button"
             onClick={() => setActive((i) => (i - 1 + STEPS.length) % STEPS.length)}
