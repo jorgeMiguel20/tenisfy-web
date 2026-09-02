@@ -858,8 +858,12 @@ export default function ProductGrid({
         <div className="flex-1 min-w-0">
           {/* Barra de controlos - mobile (sem barra lateral para alinhar, mantém-se aqui).
               Sticky (como a barra de filtros da Lacoste) para nunca desaparecer ao
-              fazer scroll da grelha - fica logo abaixo do cabeçalho fixo do site. */}
-          <div className="sticky top-16 z-30 flex lg:hidden items-center justify-between gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
+              fazer scroll da grelha - fica logo abaixo do cabeçalho fixo do site.
+              top-20 (80px) em vez de top-16 (64px): o cabeçalho (Header.tsx, também
+              sticky) tem quase 80px de altura real, não 64px - com top-16 esta barra
+              ficava tapada por baixo do cabeçalho ao fazer scroll, dando a sensação
+              de ter desaparecido. */}
+          <div className="sticky top-20 z-30 flex lg:hidden items-center justify-between gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
             <p className="text-sm text-gray-500 shrink-0">
               {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
             </p>
