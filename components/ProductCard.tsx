@@ -57,10 +57,10 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white transition-shadow hover:shadow-lg"
+      className="group relative flex h-full flex-col overflow-hidden bg-white transition-shadow hover:shadow-lg"
     >
       <div
-        className="relative aspect-[4/5] bg-gray-50 overflow-hidden rounded-2xl"
+        className="relative aspect-[4/5] bg-gray-50 overflow-hidden"
         onTouchStart={photos.length > 1 ? handleTouchStart : undefined}
         onTouchEnd={photos.length > 1 ? handleTouchEnd : undefined}
       >
@@ -87,7 +87,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           <img
             src={photos[photoIndex]}
             alt={product.model_name}
-            className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           />
         )}
 
