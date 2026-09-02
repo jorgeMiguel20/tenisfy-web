@@ -63,6 +63,13 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
     })
   }
 
+  // Checkbox "selecionar tudo" no cabeçalho da tabela (desktop) e no topo da
+  // lista de cards (mobile) - alterna entre selecionar todas as propostas
+  // visíveis e limpar a seleção.
+  function toggleAll() {
+    setSelected((prev) => (prev.size === proposals.length ? new Set() : new Set(proposals.map((p) => p.id))))
+  }
+
   function approve(ids: string[]) {
     setMessage(null)
     startTransition(async () => {
@@ -94,11 +101,13 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
     )
   }
 
+  const allSelected = selected.size === proposals.length && proposals.length > 0
+
   return (
     <section className="mt-10 text-left">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <h2 className="text-lg font-semibold text-gray-900">Alterações propostas ({proposals.length})</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={isPending || selected.size === 0}
@@ -120,11 +129,22 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
 
       {message && <p className="text-sm text-gray-600 mb-3">{message}</p>}
 
-      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+      {/* Desktop/tablet: tabela com checkbox "selecionar tudo" no cabeçalho.
+          Escondida em mobile (ver cards abaixo) - a tabela com 6 colunas não
+          cabe numa faixa de 375-390px sem overflow horizontal. */}
+      <div className="hidden sm:block border border-gray-100 rounded-2xl overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-left bg-gray-50">
-              <th className="p-3 w-8"></th>
+              <th className="p-3 w-8">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  aria-label="Selecionar todas as propostas"
+                  className="h-4 w-4"
+                />
+              </th>
               <th className="p-3 font-medium text-gray-500">Produto</th>
               <th className="p-3 font-medium text-gray-500">Loja</th>
               <th className="p-3 font-medium text-gray-500">Preço</th>
@@ -164,6 +184,48 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: cards empilhados em vez da tabela, cada um com o seu
+          checkbox - mesma seleção partilhada com a tabela/botões acima. */}
+      <div className="flex sm:hidden flex-col gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-600 px-1">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleAll}
+            aria-label="Selecionar todas as propostas"
+            className="h-4 w-4"
+          />
+          Selecionar tudo
+        </label>
+        {proposals.map((p) => (
+          <div key={p.id} className="border border-gray-100 rounded-2xl p-3 flex gap-3">
+            <input
+              type="checkbox"
+              checked={selected.has(p.id)}
+              onChange={() => toggle(p.id)}
+              className="h-4 w-4 mt-1 shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 break-words">
+                {p.productName}
+                <span className="text-gray-400 font-normal"> · tam. {p.size}</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{p.storeName}</p>
+              <div className="mt-1.5 text-sm"><PriceDiff previous={p.previousPrice} checked={p.checkedPrice} /></div>
+              <div className="mt-1 text-sm"><StockDiff previous={p.previousInStock} checked={p.checkedAvailable} /></div>
+              <button
+                type="button"
+                disabled={isPending && busyId === p.id}
+                onClick={() => reject(p.id)}
+                className="mt-2 text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-40"
+              >
+                Rejeitar
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   )
