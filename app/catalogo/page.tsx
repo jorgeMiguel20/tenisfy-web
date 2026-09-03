@@ -20,7 +20,7 @@ export default async function CatalogoPage() {
 
   if (error) {
     return (
-      <main className="max-w-7xl mx-auto px-6 py-10">
+      <main className="w-full py-10">
         <p className="text-red-600">Erro ao carregar produtos: {error}</p>
       </main>
     )
@@ -32,7 +32,12 @@ export default async function CatalogoPage() {
 
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-10">
+    // Edge-to-edge, à imagem do Lacoste: antes tínhamos max-w-7xl mx-auto
+    // px-6, que limitava a largura e criava uma margem lateral grande em
+    // ecrãs largos. Agora a página usa a largura toda do ecrã, sem margem
+    // lateral nenhuma - título, breadcrumb, barra de filtros e grelha
+    // ficam todos coincidentes com a borda, tal como no Lacoste.
+    <main className="w-full py-10">
       <CatalogoBackBar />
 
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
