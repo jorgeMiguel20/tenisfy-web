@@ -57,7 +57,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden bg-white transition-shadow hover:shadow-lg"
+      className="group relative flex h-full flex-col overflow-hidden bg-white border-r border-b border-black transition-shadow hover:shadow-lg"
     >
       <div
         className="relative aspect-[4/5] bg-gray-50 overflow-hidden"
