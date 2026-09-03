@@ -120,20 +120,6 @@ function Checkbox({ active }: { active: boolean }) {
   )
 }
 
-// Indicador redondo (radio) para a secção "Ordenar por" do drawer, para se
-// distinguir visualmente das checkboxes quadradas dos filtros de multi-seleção.
-function RadioDot({ active }: { active: boolean }) {
-  return (
-    <span
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-        active ? 'border-white' : 'border-gray-300'
-      }`}
-    >
-      {active && <span className="h-2 w-2 rounded-full bg-white" />}
-    </span>
-  )
-}
-
 // Grupo de filtro de seleção múltipla (Marca, Género, Categoria, Tamanho, Cor).
 // Quando collapsible=true (sidebar), começa fechado e é preciso clicar no
 // título para ver as opções. Quando collapsible=false (drawer), está sempre aberto.
@@ -821,82 +807,63 @@ export default function ProductGrid({
           já não há um atalho de pesquisa por foto aqui no meio da página. */}
       {belowSearch}
 
-      {/* Barra partilhada (só desktop), ACIMA das duas colunas: filtros
-          ativos + "Ordenar por" ficam aqui, fora da coluna da grelha, para
-          que o topo da barra lateral ("Marca") e o topo da grelha de
-          produtos fiquem sempre à mesma altura - haja ou não filtros
-          selecionados. Antes, esta barra vivia só na coluna da direita, o
-          que desalinhava as duas colunas (mais ainda quando havia chips de
-          filtros ativos). */}
-      <div className="hidden lg:flex items-center justify-between gap-3 mb-6">
-        <div className="flex flex-wrap gap-2">{renderActiveChips()}</div>
-        <SortDropdown
-          options={SORT_OPTIONS}
-          selected={sortOrder}
-          onSelect={(value) => setSortOrder(value as SortOrder)}
-        />
-      </div>
+      {/* Barra de filtros única, para todos os tamanhos de ecrã - estilo
+          Lacoste: nada de filtros abertos por defeito (a barra lateral
+          antiga foi removida), só um botão "Filtros" que abre o painel
+          (FilterDrawer), os chips do que já está ativo, e "Limpar tudo".
+          Sticky para nunca desaparecer ao fazer scroll da grelha - fica
+          logo abaixo do cabeçalho fixo do site. top-20 (80px) e não
+          top-16 (64px): o cabeçalho (Header.tsx, também sticky) tem quase
+          80px de altura real, não 64px - com top-16 esta barra ficava
+          tapada por baixo do cabeçalho ao fazer scroll. */}
+      <div className="sticky top-20 z-30 flex flex-wrap items-center gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
+        <button
+          type="button"
+          onClick={openDrawer}
+          className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors shrink-0"
+        >
+          <FilterIcon className="h-4 w-4" />
+          Filtros{hasActiveFilters ? ` (${activeChips.length})` : ''}
+        </button>
 
-      <div className="lg:flex lg:items-start lg:gap-10">
-        <aside className="hidden lg:block lg:w-64 lg:shrink-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-2">
-          {renderFilterGroups('sidebar')}
+        {renderActiveChips()}
 
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="w-full flex items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors border-t border-gray-100 pt-4"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Limpar
-            </button>
-          )}
-        </aside>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 underline underline-offset-2 transition-colors shrink-0"
+          >
+            Limpar tudo
+          </button>
+        )}
 
-        <div className="flex-1 min-w-0">
-          {/* Barra de controlos - mobile (sem barra lateral para alinhar, mantém-se aqui).
-              Sticky (como a barra de filtros da Lacoste) para nunca desaparecer ao
-              fazer scroll da grelha - fica logo abaixo do cabeçalho fixo do site.
-              top-20 (80px) em vez de top-16 (64px): o cabeçalho (Header.tsx, também
-              sticky) tem quase 80px de altura real, não 64px - com top-16 esta barra
-              ficava tapada por baixo do cabeçalho ao fazer scroll, dando a sensação
-              de ter desaparecido. */}
-          <div className="sticky top-20 z-30 flex lg:hidden items-center justify-between gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
-            <p className="text-sm text-gray-500 shrink-0">
-              {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
-            </p>
-            <button
-              type="button"
-              onClick={openDrawer}
-              className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors"
-            >
-              <FilterIcon className="h-4 w-4" />
-              Filtrar
-            </button>
-          </div>
-
-          {activeChips.length > 0 && (
-            <div className="flex lg:hidden flex-wrap gap-2 mb-6">{renderActiveChips()}</div>
-          )}
-
-          {filteredProducts.length === 0 ? (
-            <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  isSelected={compareSlugs.includes(product.slug)}
-                  onToggleCompare={toggleCompare}
-                />
-              ))}
-            </div>
-          )}
+        <div className="ml-auto flex items-center gap-3 shrink-0">
+          <p className="text-sm text-gray-500 hidden sm:block">
+            {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
+          </p>
+          <SortDropdown
+            options={SORT_OPTIONS}
+            selected={sortOrder}
+            onSelect={(value) => setSortOrder(value as SortOrder)}
+          />
         </div>
       </div>
+
+      {filteredProducts.length === 0 ? (
+        <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              isSelected={compareSlugs.includes(product.slug)}
+              onToggleCompare={toggleCompare}
+            />
+          ))}
+        </div>
+      )}
 
       {compareLimitWarning && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-full shadow-lg">
@@ -951,33 +918,9 @@ export default function ProductGrid({
           </div>
         }
       >
-        {/* Em desktop (lg+) a ordenação já está disponível no SortDropdown fora do
-            drawer, por isso esconde-se aqui para não duplicar; no mobile/tablet é
-            a única forma de ordenar, por isso mantém-se visível. */}
-        <div className="mb-6 lg:hidden">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
-            Ordenar por
-          </p>
-          <div className="flex flex-col gap-0.5">
-            {SORT_OPTIONS.map((option) => {
-              const active = draftSortOrder === option.value
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setDraftSortOrder(option.value)}
-                  className={sidebarItemClass(active)}
-                >
-                  <RadioDot active={active} />
-                  <span>{option.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
+        {/* A ordenação já está sempre disponível no SortDropdown da barra de
+            filtros (fora do drawer, em qualquer tamanho de ecrã agora), por
+            isso deixou de estar duplicada aqui dentro. */}
         {renderFilterGroups('drawer')}
       </FilterDrawer>
     </div>
