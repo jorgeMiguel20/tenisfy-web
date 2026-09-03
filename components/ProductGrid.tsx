@@ -927,7 +927,7 @@ export default function ProductGrid({
         // consoante o seletor de vista (DesktopGridViewToggle, só desktop);
         // no mobile/tablet mantém-se sempre 2/3 colunas.
         <div
-          className={`grid grid-cols-2 sm:grid-cols-3 gap-px bg-black ${
+          className={`grid grid-cols-2 sm:grid-cols-3 ${
             desktopCols === 3 ? 'xl:grid-cols-3' : desktopCols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'
           }`}
         >
