@@ -32,15 +32,16 @@ export default async function CatalogoPage() {
 
 
   return (
-    // Edge-to-edge, à imagem do Lacoste: antes tínhamos max-w-7xl mx-auto
-    // px-6, que limitava a largura e criava uma margem lateral grande em
-    // ecrãs largos. Agora a página usa a largura toda do ecrã, sem margem
-    // lateral nenhuma - título, breadcrumb, barra de filtros e grelha
-    // ficam todos coincidentes com a borda, tal como no Lacoste.
+    // Edge-to-edge na grelha (tal como no Lacoste) - os cards mantêm-se a
+    // ocupar a largura toda do ecrã. O título e o breadcrumb, esses, levam
+    // um pequeno respiro lateral (px-6) para não ficarem colados à borda,
+    // tal como o "SNEAKERS" no site de referência do Jorge.
     <main className="w-full py-10">
-      <CatalogoBackBar />
+      <div className="px-6">
+        <CatalogoBackBar />
 
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
+      </div>
 
       <Suspense fallback={null}>
         <ProductGrid products={productsWithPrice as any} />
