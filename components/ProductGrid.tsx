@@ -102,6 +102,62 @@ function FilterIcon({ className }: { className?: string }) {
   )
 }
 
+type DesktopGridCols = 3 | 4 | 5
+
+// Ícone com N barras verticais, para representar visualmente cada opção do
+// seletor de vista de grelha (3/4/5 colunas).
+function GridColumnsIcon({ cols, className }: { cols: number; className?: string }) {
+  const gap = 2.5
+  const barWidth = (20 - gap * (cols - 1)) / cols
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none">
+      {Array.from({ length: cols }).map((_, i) => (
+        <rect
+          key={i}
+          x={i * (barWidth + gap)}
+          y={3}
+          width={barWidth}
+          height={14}
+          rx={1}
+          fill="currentColor"
+        />
+      ))}
+    </svg>
+  )
+}
+
+// Seletor de vista de grelha (3/4/5 colunas) - só para desktop (a partir do
+// breakpoint xl), tal como no site de referência do Jorge. No mobile/tablet
+// a grelha mantém sempre 2/3 colunas responsivas, por isso este controlo
+// nem aparece nesses tamanhos de ecrã.
+function DesktopGridViewToggle({
+  value,
+  onChange,
+}: {
+  value: DesktopGridCols
+  onChange: (value: DesktopGridCols) => void
+}) {
+  const options: DesktopGridCols[] = [3, 4, 5]
+  return (
+    <div className="hidden xl:flex items-center gap-1 bg-gray-100 rounded-full p-1">
+      {options.map((cols) => (
+        <button
+          key={cols}
+          type="button"
+          onClick={() => onChange(cols)}
+          aria-label={`Ver em grelha de ${cols} colunas`}
+          aria-pressed={value === cols}
+          className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+            value === cols ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <GridColumnsIcon cols={cols} className="h-4 w-4" />
+        </button>
+      ))}
+    </div>
+  )
+}
+
 type PillOption = { value: string; display: string }
 
 function Checkbox({ active }: { active: boolean }) {
@@ -423,6 +479,11 @@ export default function ProductGrid({
 
   const [search, setSearch] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Nº de colunas da grelha no desktop (xl+): 3/4/5, escolhido pelo
+  // utilizador no seletor de vista (DesktopGridViewToggle). 4 é o valor
+  // por omissão, igual ao comportamento anterior (xl:grid-cols-4).
+  const [desktopCols, setDesktopCols] = useState<DesktopGridCols>(4)
 
   // Seleção de comparação partilhada com o cabeçalho (lib/compare.ts,
   // localStorage): tanto a barra flutuante abaixo como o link "Comparar" no
@@ -842,6 +903,7 @@ export default function ProductGrid({
           <p className="text-sm text-gray-500 hidden sm:block">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
           </p>
+          <DesktopGridViewToggle value={desktopCols} onChange={setDesktopCols} />
           <SortDropdown
             options={SORT_OPTIONS}
             selected={sortOrder}
@@ -853,7 +915,18 @@ export default function ProductGrid({
       {filteredProducts.length === 0 ? (
         <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+        // Linhas finas a separar os cards (em vez do espaço/gap anterior):
+        // o próprio grid fica com um fundo cinzento-claro e gap de 1px
+        // (gap-px) - como cada ProductCard já tem bg-white, esse 1px do
+        // fundo do grid aparece como uma linha fina entre todos os cards,
+        // tal como no site de referência do Jorge. xl:grid-cols-N muda
+        // consoante o seletor de vista (DesktopGridViewToggle, só desktop);
+        // no mobile/tablet mantém-se sempre 2/3 colunas.
+        <div
+          className={`grid grid-cols-2 sm:grid-cols-3 gap-px bg-gray-200 ${
+            desktopCols === 3 ? 'xl:grid-cols-3' : desktopCols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'
+          }`}
+        >
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}
