@@ -877,7 +877,7 @@ export default function ProductGrid({
           top-16 (64px): o cabeçalho (Header.tsx, também sticky) tem quase
           80px de altura real, não 64px - com top-16 esta barra ficava
           tapada por baixo do cabeçalho ao fazer scroll. */}
-      <div className="sticky top-20 z-30 flex flex-wrap items-center gap-2 mb-6 bg-white/95 backdrop-blur-sm py-3 border-b border-gray-100">
+      <div className="sticky top-20 z-30 relative flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-sm py-3 px-6 border-b border-gray-100">
         <button
           type="button"
           onClick={openDrawer}
@@ -899,11 +899,15 @@ export default function ProductGrid({
           </button>
         )}
 
+        {/* Seletor de vista de grelha (3/4/5 colunas) centrado ao meio da barra - pedido do Jorge. Usa position absolute (em vez de flex-1) para ficar sempre no centro exato da barra, independente da largura dos filtros ativos a esquerda ou do texto/dropdown a direita. */}
+        <div className="hidden xl:block absolute left-1/2 -translate-x-1/2">
+          <DesktopGridViewToggle value={desktopCols} onChange={setDesktopCols} />
+        </div>
+
         <div className="ml-auto flex items-center gap-3 shrink-0">
           <p className="text-sm text-gray-500 hidden sm:block">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
           </p>
-          <DesktopGridViewToggle value={desktopCols} onChange={setDesktopCols} />
           <SortDropdown
             options={SORT_OPTIONS}
             selected={sortOrder}
