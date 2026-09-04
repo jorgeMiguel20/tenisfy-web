@@ -134,7 +134,7 @@ export default function ProductGallery({
                 loadedImages[index] ? 'opacity-100' : 'opacity-0'
               }`}
               priority={index === 0}
-              loading={index === 0 ? undefined : 'lazy'}
+              loading={index === 0 ? undefined : 'eager'}
               draggable={false}
               onLoad={() => setLoadedImages((prev) => (prev[index] ? prev : { ...prev, [index]: true }))}
             />
