@@ -134,3 +134,30 @@ async function scrapeOneUrl(url: string, urlTargets: ScraperTarget[]): Promise<S
     return []
   }
 }
+
+// Funcao de diagnostico temporaria - usada so por /api/cron/price-check
+// quando chamado com ?debug=footlocker, para perceber porque um pedido
+// servidor-a-servidor (sem browser) pode ser tratado de forma diferente
+// pela Foot Locker do que um pedido feito a partir de um browser real.
+export async function debugFootLockerUrl(url: string) {
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': USER_AGENT,
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+    },
+    cache: 'no-store',
+  })
+  const html = await res.text()
+  const hasMarker = html.includes('STATE_FROM_SERVER')
+  const state = hasMarker ? extractBalancedJson(html, 'STATE_FROM_SERVER') : null
+  const sizes = state?.api?.productDetails?.getDetails?.data?.sizes
+  return {
+    status: res.status,
+    htmlLength: html.length,
+    hasMarker,
+    stateParsed: !!state,
+    sizesCount: Array.isArray(sizes) ? sizes.length : null,
+    htmlSnippet: html.slice(0, 300),
+  }
+}
