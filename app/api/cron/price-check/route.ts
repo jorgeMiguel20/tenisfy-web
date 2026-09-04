@@ -50,6 +50,32 @@ export async function GET(request: NextRequest) {
   // sem submeter nada a price-check-proposals. Usado so para perceber uma
   // diferenca entre o teste feito a partir do browser e a execucao real.
   const debugMode = request.nextUrl.searchParams.get('debug')
+  if (debugMode === 'raw') {
+    const rawUrl = request.nextUrl.searchParams.get('url')
+    if (!rawUrl) return NextResponse.json({ error: 'Falta o parametro url.' })
+    try {
+      const start = Date.now()
+      const rawRes = await fetch(rawUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+        },
+        cache: 'no-store',
+      })
+      const rawHtml = await rawRes.text()
+      return NextResponse.json({
+        url: rawUrl,
+        status: rawRes.status,
+        ms: Date.now() - start,
+        htmlLength: rawHtml.length,
+        htmlSnippet: rawHtml.slice(0, 200),
+      })
+    } catch (err: any) {
+      return NextResponse.json({ url: rawUrl, error: String(err?.message ?? err) })
+    }
+  }
   if (debugMode === 'footlocker') {
     const apiKeyDebug = process.env.PRICE_SYNC_API_KEY
     if (!apiKeyDebug) {
