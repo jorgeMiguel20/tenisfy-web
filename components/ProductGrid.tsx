@@ -176,6 +176,21 @@ function Checkbox({ active }: { active: boolean }) {
   )
 }
 
+// Indicador redondo (radio) para a secção "Ordenar por" dentro da gaveta de
+// filtros no mobile - visualmente igual ao Checkbox acima, mas redondo para
+// deixar claro que só se pode escolher uma opção de cada vez.
+function RadioDot({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+        active ? 'border-white' : 'border-gray-300'
+      }`}
+    >
+      {active && <span className="h-2 w-2 rounded-full bg-white" />}
+    </span>
+  )
+}
+
 // Grupo de filtro de seleção múltipla (Marca, Género, Categoria, Tamanho, Cor).
 // Quando collapsible=true (sidebar), começa fechado e é preciso clicar no
 // título para ver as opções. Quando collapsible=false (drawer), está sempre aberto.
@@ -798,6 +813,36 @@ export default function ProductGrid({
 
     return (
       <>
+        {/* "Ordenar por" só aparece aqui dentro da gaveta e só no mobile
+            (sm:hidden) - pedido do Jorge: deixa de ser um separador próprio
+            na barra e passa a viver dentro do painel de Filtros. No
+            desktop mantém-se só no SortDropdown da barra, sem duplicar. */}
+        {mode === 'drawer' && (
+          <div className="mb-6 border-b border-gray-100 pb-4 sm:hidden">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
+              Ordenar por
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {SORT_OPTIONS.map((option) => {
+                const active = draftSortOrder === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setDraftSortOrder(option.value)}
+                    className={sidebarItemClass(active)}
+                  >
+                    <RadioDot active={active} />
+                    <span>{option.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <SidebarFilterGroup
           label="Marca"
           options={brandOptions}
@@ -904,7 +949,7 @@ export default function ProductGrid({
           <DesktopGridViewToggle value={desktopCols} onChange={setDesktopCols} />
         </div>
 
-        <div className="ml-auto flex items-center gap-3 shrink-0">
+        <div className="ml-auto hidden sm:flex items-center gap-3 shrink-0">
           <p className="text-sm text-gray-500 hidden sm:block">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
           </p>
