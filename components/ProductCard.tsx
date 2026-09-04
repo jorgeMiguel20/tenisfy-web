@@ -87,6 +87,8 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           <img
             src={photos[photoIndex]}
             alt={product.model_name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           />
         )}
@@ -94,21 +96,23 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
         {/* Pontinhos (estilo Armani): só no mobile e só quando há mais de
             uma foto. */}
         {photos.length > 1 && (
-          <div className="absolute inset-x-0 bottom-2 z-10 flex items-center justify-center sm:hidden">
-            <div className="flex items-center gap-1.5 rounded-full bg-black/20 backdrop-blur-sm px-2 py-1">
-              {photos.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={(e) => selectPhoto(index, e)}
-                  aria-label={`Ver foto ${index + 1} de ${photos.length}`}
-                  aria-current={index === photoIndex}
-                  className={`h-1.5 rounded-full transition-all ${
-                    index === photoIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/60'
-                  }`}
-                />
-              ))}
-            </div>
+          // Pontinhos finos, estilo Armani/referência (pedido do Jorge): sem
+          // fundo/pílula à volta e todos redondos do mesmo tamanho - só a
+          // cor muda entre ativo e inativo, em vez do pontinho ativo esticar
+          // para uma barra.
+          <div className="absolute inset-x-0 bottom-2 z-10 flex items-center justify-center gap-1 sm:hidden">
+            {photos.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={(e) => selectPhoto(index, e)}
+                aria-label={`Ver foto ${index + 1} de ${photos.length}`}
+                aria-current={index === photoIndex}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                  index === photoIndex ? 'bg-gray-900' : 'bg-gray-300'
+                }`}
+              />
+            ))}
           </div>
         )}
       </div>
