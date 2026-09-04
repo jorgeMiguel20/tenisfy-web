@@ -64,9 +64,14 @@ function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
   const diffHours = diffMs / (1000 * 60 * 60)
   if (diffHours < 1) return 'Verificado há menos de 1 hora'
 
-  if (diffHours < 24) {
-    const hours = Math.round(diffHours)
-    return `Verificado há ${hours} ${hours === 1 ? 'hora' : 'horas'}`
+  // Arredondar primeiro e só depois decidir horas vs. dias - antes
+  // arredondava só dentro do "if (diffHours < 24)", e algo como 23.6h
+  // arredondava para "24 horas" em vez de passar a "1 dia" (por isso é
+  // que apareciam ofertas quase com a mesma idade, uma em "horas" e outra
+  // já em "dias") - inconsistente. Ver pedido do Jorge.
+  const roundedHours = Math.round(diffHours)
+  if (roundedHours < 24) {
+    return `Verificado há ${roundedHours} ${roundedHours === 1 ? 'hora' : 'horas'}`
   }
 
   const days = Math.round(diffHours / 24)
