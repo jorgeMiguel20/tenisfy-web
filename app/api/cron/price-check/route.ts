@@ -16,12 +16,25 @@
 // em vez de duplicar a logica de acesso a base de dados.
 //
 // Cada loja tem o seu proprio "scraper" em lib/priceScrapers/. Lojas sem
-// scraper ainda implementado sao simplesmente ignoradas nesta ronda (ver
-// summary devolvido) - nunca se inventa um preco para uma loja que ainda
-// nao sabemos ler.
+// scraper ainda implementado, ou cuja pagina bloqueia pedidos vindos de um
+// servidor (ver nota sobre a Foot Locker abaixo), sao simplesmente
+// ignoradas nesta ronda (ver summary devolvido) - nunca se inventa um
+// preco para uma loja que ainda nao sabemos ler com confianca.
+//
+// Nota sobre a Foot Locker: o scraper existe e foi validado manualmente,
+// mas um pedido feito a partir do servidor da Vercel foi bloqueado pela
+// Foot Locker (HTTP 429), mesmo tendo funcionado perfeitamente a partir de
+// um browser real. Fica registado no scraper por si (pode voltar a
+// funcionar, ou passar a funcionar com outra abordagem no futuro), mas por
+// agora resolve sempre 0 resultados - o mesmo se aplica a Asics, New
+// Balance, Vans, adidas e Zalando, que bloqueiam pedidos de servidor logo
+// a primeira tentativa.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { runFootLockerScraper, debugFootLockerUrl } from '@/lib/priceScrapers/footlocker'
+import { runFootLockerScraper } from '@/lib/priceScrapers/footlocker'
+import { runAboutYouScraper } from '@/lib/priceScrapers/aboutyou'
+import { runCollectKicksScraper } from '@/lib/priceScrapers/collectkicks'
+import { runNikeScraper } from '@/lib/priceScrapers/nike'
 import type { ScraperTarget, ScraperResult } from '@/lib/priceScrapers/types'
 
 export const runtime = 'nodejs'
@@ -29,6 +42,13 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 const SITE_URL = 'https://www.parjusto.pt'
+
+const SCRAPERS: Record<string, (targets: ScraperTarget[]) => Promise<ScraperResult[]>> = {
+  'Foot Locker': runFootLockerScraper,
+  'About You': runAboutYouScraper,
+  CollectKicks: runCollectKicksScraper,
+  'Nike Oficial': runNikeScraper,
+}
 
 function isCronAuthorized(request: NextRequest): boolean {
   const expected = process.env.CRON_SECRET
@@ -43,55 +63,6 @@ type StoreSummary = { attempted: number; resolved: number; note?: string }
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Nao autorizado.' }, { status: 401 })
-  }
-
-  // Modo de diagnostico temporario: /api/cron/price-check?debug=footlocker
-  // devolve o estado bruto de um pedido servidor-a-servidor a Foot Locker,
-  // sem submeter nada a price-check-proposals. Usado so para perceber uma
-  // diferenca entre o teste feito a partir do browser e a execucao real.
-  const debugMode = request.nextUrl.searchParams.get('debug')
-  if (debugMode === 'raw') {
-    const rawUrl = request.nextUrl.searchParams.get('url')
-    if (!rawUrl) return NextResponse.json({ error: 'Falta o parametro url.' })
-    try {
-      const start = Date.now()
-      const rawRes = await fetch(rawUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
-        },
-        cache: 'no-store',
-      })
-      const rawHtml = await rawRes.text()
-      return NextResponse.json({
-        url: rawUrl,
-        status: rawRes.status,
-        ms: Date.now() - start,
-        htmlLength: rawHtml.length,
-        htmlSnippet: rawHtml.slice(0, 200),
-      })
-    } catch (err: any) {
-      return NextResponse.json({ url: rawUrl, error: String(err?.message ?? err) })
-    }
-  }
-  if (debugMode === 'footlocker') {
-    const apiKeyDebug = process.env.PRICE_SYNC_API_KEY
-    if (!apiKeyDebug) {
-      return NextResponse.json({ error: 'PRICE_SYNC_API_KEY nao configurada.' }, { status: 500 })
-    }
-    const targetsResDebug = await fetch(`${SITE_URL}/api/admin/price-check-targets`, {
-      headers: { Authorization: `Bearer ${apiKeyDebug}` },
-      cache: 'no-store',
-    })
-    const { targets: targetsDebug } = (await targetsResDebug.json()) as { targets: ScraperTarget[] }
-    const flTarget = targetsDebug.find((t) => t.store_name === 'Foot Locker')
-    if (!flTarget) {
-      return NextResponse.json({ error: 'Nenhum alvo da Foot Locker encontrado.' })
-    }
-    const diagnostic = await debugFootLockerUrl(flTarget.url)
-    return NextResponse.json({ url: flTarget.url, diagnostic })
   }
 
   const apiKey = process.env.PRICE_SYNC_API_KEY
@@ -119,17 +90,18 @@ export async function GET(request: NextRequest) {
   const summary: Record<string, StoreSummary> = {}
 
   for (const [storeName, storeTargets] of byStore) {
-    if (storeName === 'Foot Locker') {
-      const results = await runFootLockerScraper(storeTargets)
-      allResults.push(...results)
-      summary[storeName] = { attempted: storeTargets.length, resolved: results.length }
-    } else {
+    const scraper = SCRAPERS[storeName]
+    if (!scraper) {
       summary[storeName] = {
         attempted: storeTargets.length,
         resolved: 0,
         note: 'Scraper ainda nao implementado para esta loja.',
       }
+      continue
     }
+    const results = await scraper(storeTargets)
+    allResults.push(...results)
+    summary[storeName] = { attempted: storeTargets.length, resolved: results.length }
   }
 
   if (allResults.length === 0) {
