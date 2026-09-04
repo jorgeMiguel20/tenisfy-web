@@ -21,7 +21,7 @@
 // nao sabemos ler.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { runFootLockerScraper } from '@/lib/priceScrapers/footlocker'
+import { runFootLockerScraper, debugFootLockerUrl } from '@/lib/priceScrapers/footlocker'
 import type { ScraperTarget, ScraperResult } from '@/lib/priceScrapers/types'
 
 export const runtime = 'nodejs'
@@ -43,6 +43,29 @@ type StoreSummary = { attempted: number; resolved: number; note?: string }
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Nao autorizado.' }, { status: 401 })
+  }
+
+  // Modo de diagnostico temporario: /api/cron/price-check?debug=footlocker
+  // devolve o estado bruto de um pedido servidor-a-servidor a Foot Locker,
+  // sem submeter nada a price-check-proposals. Usado so para perceber uma
+  // diferenca entre o teste feito a partir do browser e a execucao real.
+  const debugMode = request.nextUrl.searchParams.get('debug')
+  if (debugMode === 'footlocker') {
+    const apiKeyDebug = process.env.PRICE_SYNC_API_KEY
+    if (!apiKeyDebug) {
+      return NextResponse.json({ error: 'PRICE_SYNC_API_KEY nao configurada.' }, { status: 500 })
+    }
+    const targetsResDebug = await fetch(`${SITE_URL}/api/admin/price-check-targets`, {
+      headers: { Authorization: `Bearer ${apiKeyDebug}` },
+      cache: 'no-store',
+    })
+    const { targets: targetsDebug } = (await targetsResDebug.json()) as { targets: ScraperTarget[] }
+    const flTarget = targetsDebug.find((t) => t.store_name === 'Foot Locker')
+    if (!flTarget) {
+      return NextResponse.json({ error: 'Nenhum alvo da Foot Locker encontrado.' })
+    }
+    const diagnostic = await debugFootLockerUrl(flTarget.url)
+    return NextResponse.json({ url: flTarget.url, diagnostic })
   }
 
   const apiKey = process.env.PRICE_SYNC_API_KEY
