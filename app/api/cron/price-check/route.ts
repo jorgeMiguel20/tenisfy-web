@@ -34,6 +34,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runFootLockerScraper } from '@/lib/priceScrapers/footlocker'
 import { runCollectKicksScraper } from '@/lib/priceScrapers/collectkicks'
 import { runNikeScraper } from '@/lib/priceScrapers/nike'
+import { runJdSportsScraper } from '@/lib/priceScrapers/jdsports'
 import type { ScraperTarget, ScraperResult } from '@/lib/priceScrapers/types'
 
 export const runtime = 'nodejs'
@@ -51,6 +52,7 @@ const SCRAPERS: Record<string, (targets: ScraperTarget[]) => Promise<ScraperResu
   'Foot Locker': runFootLockerScraper,
   CollectKicks: runCollectKicksScraper,
   'Nike Oficial': runNikeScraper,
+  'JD Sports': runJdSportsScraper,
 }
 
 function isCronAuthorized(request: NextRequest): boolean {
