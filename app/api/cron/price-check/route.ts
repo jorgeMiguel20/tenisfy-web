@@ -79,6 +79,35 @@ export async function GET(request: NextRequest) {
   }
   const { targets } = (await targetsRes.json()) as { targets: ScraperTarget[] }
 
+  // Modo de diagnostico temporario, restrito aos URLs reais da About You
+  // (nunca aceita um URL a escolha de quem chama, para nao abrir uma porta
+  // de SSRF): /api/cron/price-check?debug=aboutyou
+  if (request.nextUrl.searchParams.get('debug') === 'aboutyou') {
+    const ayUrls = [...new Set(targets.filter((t) => t.store_name === 'About You').map((t) => t.url))]
+    const diagnostics = await Promise.all(
+      ayUrls.map(async (u) => {
+        try {
+          const r = await fetch(u, {
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+            },
+            cache: 'no-store',
+          })
+          const h = await r.text()
+          const ldCount = (h.match(/application\/ld\+json/g) || []).length
+          const hasProductGroup = h.includes('ProductGroup')
+          return { url: u, status: r.status, htmlLength: h.length, ldCount, hasProductGroup }
+        } catch (err: any) {
+          return { url: u, error: String(err?.message ?? err) }
+        }
+      })
+    )
+    return NextResponse.json({ diagnostics })
+  }
+
   const byStore = new Map<string, ScraperTarget[]>()
   for (const t of targets) {
     const key = t.store_name ?? 'Desconhecida'
