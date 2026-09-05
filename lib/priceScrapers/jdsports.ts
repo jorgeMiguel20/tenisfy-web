@@ -21,7 +21,15 @@ const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
 function normalizeSize(s: string): string {
-  return s.trim().toLowerCase().replace(',', '.')
+  const trimmed = s.trim().toLowerCase().replace(',', '.')
+  // O indice de pesquisa (Algolia) da JD Sports so lista tamanhos como
+  // numero inteiro, mesmo para tenis vendidos com a notacao de tercos
+  // (ex: "44 2/3", "47 1/3") - la aparecem simplesmente como "44" ou
+  // "47". Sem isto, esses tamanhos nunca davam match e ficavam sempre
+  // marcados como indisponiveis, mesmo quando estavam em stock.
+  const fractionMatch = trimmed.match(/^(\d+)\s+\d+\/\d+$/)
+  if (fractionMatch) return fractionMatch[1]
+  return trimmed
 }
 
 function productRefFromUrl(url: string): string | null {
