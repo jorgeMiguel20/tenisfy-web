@@ -7,7 +7,7 @@ export default function PrivacidadePage() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-10">
       <h1 className="text-2xl font-bold text-gray-900">Política de Privacidade</h1>
-      <p className="text-sm text-gray-400 mt-1">Última atualização: Julho 2026</p>
+      <p className="text-sm text-gray-400 mt-1">Última atualização: Setembro 2026</p>
 
       <div className="mt-8 space-y-6 text-gray-700 leading-relaxed">
         <section>
@@ -23,10 +23,18 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="font-semibold text-gray-900 mb-2">2. Dados que recolhemos</h2>
           <p>
-            Atualmente, o Parjusto não requer registo nem conta de utilizador. Não
-            recolhemos dados pessoais diretamente através do site. Podemos, no
-            futuro, utilizar ferramentas de análise de tráfego anónimo (ex: número
-            de visitas) para melhorar o serviço.
+            O Parjusto não requer registo nem conta de utilizador para navegares
+            ou comparares preços. A única informação pessoal que pedimos é o teu
+            email, e só se decidires ativar um alerta de preço para um produto —
+            nesse caso usamos o email exclusivamente para te avisar quando o
+            preço descer ou o tamanho voltar a ficar disponível. Nunca partilhamos
+            esse email com terceiros nem o usamos para qualquer outro tipo de
+            comunicação.
+          </p>
+          <p className="mt-3">
+            Usamos também o Vercel Analytics para perceber, de forma agregada e
+            anónima, quantas pessoas visitam o site — esta ferramenta não usa
+            cookies nem identifica visitantes individualmente.
           </p>
         </section>
 
@@ -50,11 +58,22 @@ export default function PrivacidadePage() {
         </section>
 
         <section>
-          <h2 className="font-semibold text-gray-900 mb-2">5. Contacto</h2>
+          <h2 className="font-semibold text-gray-900 mb-2">5. Os teus direitos</h2>
+          <p>
+            Podes pedir a qualquer momento para consultarmos, corrigirmos ou
+            apagarmos os dados que temos sobre ti — no caso do Parjusto, isto
+            resume-se ao email associado a um alerta de preço. Podes também
+            cancelar um alerta diretamente através do link incluído em cada
+            email que enviamos, sem precisares de nos contactar.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="font-semibold text-gray-900 mb-2">6. Contacto</h2>
           <p>
             Para questões sobre esta política, contacta-nos através de{' '}
-            <a href="mailto:jorgesantos_09@hotmail.com" className="text-orange-600 hover:underline">
-              jorgesantos_09@hotmail.com
+            <a href="mailto:geral@parjusto.pt" className="text-orange-600 hover:underline">
+              geral@parjusto.pt
             </a>
             .
           </p>
