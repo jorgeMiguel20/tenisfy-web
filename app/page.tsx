@@ -64,7 +64,7 @@ export default async function Home() {
   const showcaseProduct = showcaseCandidates[0] ?? null
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-10">
+    <main className="max-w-7xl mx-auto px-6 pb-10">
       <HomeHero />
 
       <CategoryTiles />
