@@ -83,17 +83,32 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
         </div>
 
         {photos.map((src, index) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <div
             key={src}
-            src={src}
-            alt={index === photoIndex ? product.model_name : ''}
             aria-hidden={index === photoIndex ? undefined : true}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            className={`absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-all duration-300 ${
+            className={`absolute inset-0 transition-opacity duration-300 ${
               index === photoIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
-          />
+          >
+            {/* Fundo desfocado com a propria foto - evita que a margem a volta
+                do produto pareca "outra cor" quando as fotos extra do produto
+                tem fundos diferentes da foto principal (normalizada). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=""
+              aria-hidden="true"
+              loading={index === 0 ? 'eager' : 'lazy'}
+              className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={index === photoIndex ? product.model_name : ''}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              className="absolute inset-0 h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
         ))}
 
         {/* Pontinhos (estilo Armani): só no mobile e só quando há mais de
