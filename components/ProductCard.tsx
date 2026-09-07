@@ -82,16 +82,19 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           </div>
         </div>
 
-        {photos[photoIndex] && (
+        {photos.map((src, index) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={photos[photoIndex]}
-            alt={product.model_name}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            key={src}
+            src={src}
+            alt={index === photoIndex ? product.model_name : ''}
+            aria-hidden={index === photoIndex ? undefined : true}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            className={`absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-all duration-300 ${
+              index === photoIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
           />
-        )}
+        ))}
 
         {/* Pontinhos (estilo Armani): só no mobile e só quando há mais de
             uma foto. */}
