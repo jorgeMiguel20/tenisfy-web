@@ -90,17 +90,20 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               index === photoIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
-            {/* Fundo desfocado com a propria foto - evita que a margem a volta
-                do produto pareca "outra cor" quando as fotos extra do produto
-                tem fundos diferentes da foto principal (normalizada). */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt=""
-              aria-hidden="true"
-              loading={index === 0 ? 'eager' : 'lazy'}
-              className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
-            />
+            {/* Fundo desfocado com a propria foto - so nas fotos extra (index > 0),
+                que sao as fotos originais tal como vieram, com fundos diferentes
+                entre si. A foto principal (index 0) ja vem com o fundo do cartao
+                normalizado, por isso fica exatamente como estava, sem este fundo. */}
+            {index > 0 && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={src}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
+              />
+            )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
