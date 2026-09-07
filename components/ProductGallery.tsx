@@ -121,10 +121,23 @@ export default function ProductGallery({
         }`}
       >
         {images.map((src, index) => (
-          <div key={src} className="relative h-full w-full shrink-0 snap-start">
+          <div key={src} className="relative h-full w-full shrink-0 snap-start overflow-hidden">
             {!loadedImages[index] && (
               <div className="absolute inset-0 animate-pulse bg-gray-100" />
             )}
+            {/* Fundo desfocado com a propria foto - evita que a margem a volta
+                do produto pareca "outra cor" quando as fotos tem fundos
+                diferentes entre si (ex: branco puro vs. cinza de estudio) */}
+            <Image
+              src={src}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes={sizes}
+              className="object-cover scale-110 blur-2xl opacity-60 pointer-events-none"
+              loading={index === 0 ? undefined : 'eager'}
+              draggable={false}
+            />
             <Image
               src={src}
               alt={`${alt} - foto ${index + 1} de ${images.length}`}
