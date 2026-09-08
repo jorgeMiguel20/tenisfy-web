@@ -10,7 +10,7 @@ export default function CatalogoBackBar() {
         href="/"
         className="text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors"
       >
-        Pagina Inicial
+        Página Inicial
       </Link>
     </div>
   )
