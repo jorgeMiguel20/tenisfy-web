@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/formatPrice'
+import { buildOfferUrl } from '@/lib/offerUrl'
 import type { ProductWithPrice } from '@/lib/types'
 
 const STEPS = [
@@ -46,7 +47,10 @@ function storeLogoSrc(domain: string) {
 }
 
 function bestPricePerStore(product: ProductWithPrice) {
-  const grouped = new Map<string, { price: number; domain: string }>()
+  const grouped = new Map<
+    string,
+    { price: number; domain: string; affiliateUrl: string; affiliateUrlTemplate: string | null }
+  >()
   for (const offer of product.product_offers ?? []) {
     if (!offer.in_stock || !offer.stores) continue
     const current = grouped.get(offer.stores.name)
@@ -59,11 +63,22 @@ function bestPricePerStore(product: ProductWithPrice) {
       } catch {
         domain = ''
       }
-      grouped.set(offer.stores.name, { price: offer.price, domain })
+      grouped.set(offer.stores.name, {
+        price: offer.price,
+        domain,
+        affiliateUrl: offer.affiliate_url,
+        affiliateUrlTemplate: offer.stores.affiliate_url_template,
+      })
     }
   }
   return Array.from(grouped.entries())
-    .map(([store, { price, domain }]) => ({ store, price, domain }))
+    .map(([store, { price, domain, affiliateUrl, affiliateUrlTemplate }]) => ({
+      store,
+      price,
+      domain,
+      affiliate_url: affiliateUrl,
+      affiliate_url_template: affiliateUrlTemplate,
+    }))
     .sort((a, b) => a.price - b.price)
 }
 
@@ -219,12 +234,22 @@ export default function ComoFunciona({
                           )}
                         </span>
                       </span>
-                      <span
-                        className={`shrink-0 ${
-                          i === 0 ? 'text-base font-extrabold text-orange-600' : 'text-sm font-semibold text-gray-400'
-                        }`}
-                      >
-                        {formatPrice(row.price)}
+                      <span className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span
+                          className={`${
+                            i === 0 ? 'text-base font-extrabold text-orange-600' : 'text-sm font-semibold text-gray-400'
+                          }`}
+                        >
+                          {formatPrice(row.price)}
+                        </span>
+                        <a
+                          href={buildOfferUrl(row)}
+                          target="_blank"
+                          rel="nofollow sponsored noopener"
+                          className="rounded-full bg-gray-900 px-3 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-gray-700"
+                        >
+                          Ver oferta
+                        </a>
                       </span>
                     </div>
                   ))}
