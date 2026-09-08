@@ -18,7 +18,7 @@ export async function getProductsWithPrice(): Promise<{
     .select(`
       *,
       brands (*),
-      product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
+      product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, discontinued_at, stores (name, base_url, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
     `)
     .eq('is_active', true)
 
