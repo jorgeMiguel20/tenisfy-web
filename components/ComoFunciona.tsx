@@ -234,7 +234,7 @@ export default function ComoFunciona({
                           )}
                         </span>
                       </span>
-                      <span className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="flex shrink-0 items-center gap-3">
                         <span
                           className={`${
                             i === 0 ? 'text-base font-extrabold text-orange-600' : 'text-sm font-semibold text-gray-400'
@@ -246,7 +246,7 @@ export default function ComoFunciona({
                           href={buildOfferUrl(row)}
                           target="_blank"
                           rel="nofollow sponsored noopener"
-                          className="rounded-full bg-gray-900 px-3 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-gray-700"
+                          className="rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-700"
                         >
                           Ver oferta
                         </a>
