@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import { SITE_URL } from "@/lib/siteUrl";
+import CookieBanner from "@/components/CookieBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -48,6 +49,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <Analytics />
+        <CookieBanner />
       </body>
     </html>
   );
