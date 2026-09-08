@@ -28,14 +28,24 @@ const STEPS = [
 // para a mini-tabela do passo 2 - sempre a partir de ofertas reais em stock,
 // nunca os nomes/preços fixos de um mockup.
 function bestPricePerStore(product: ProductWithPrice) {
-  const grouped = new Map<string, number>()
+  const grouped = new Map<string, { price: number; domain: string }>()
   for (const offer of product.product_offers ?? []) {
     if (!offer.in_stock || !offer.stores) continue
     const current = grouped.get(offer.stores.name)
-    if (current == null || offer.price < current) grouped.set(offer.stores.name, offer.price)
+    if (current == null || offer.price < current.price) {
+      // Dominio real da loja (vem de stores.base_url) - usado so para pedir
+      // o favicon oficial do site, nunca inventamos nem guardamos logos.
+      let domain = ''
+      try {
+        domain = new URL(offer.stores.base_url ?? '').hostname.replace(/^www\./, '')
+      } catch {
+        domain = ''
+      }
+      grouped.set(offer.stores.name, { price: offer.price, domain })
+    }
   }
   return Array.from(grouped.entries())
-    .map(([store, price]) => ({ store, price }))
+    .map(([store, { price, domain }]) => ({ store, price, domain }))
     .sort((a, b) => a.price - b.price)
 }
 
@@ -155,21 +165,49 @@ export default function ComoFunciona({
           {active === 1 &&
             (hasCompareData ? (
               <div className="flex h-full w-full items-center p-4 sm:p-6">
-                <div className="w-full divide-y divide-gray-50 overflow-hidden rounded-xl border border-gray-100 bg-white">
+                <div className="w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md shadow-gray-900/5">
                   {storeRows.slice(0, 4).map((row, i) => (
                     <div
                       key={row.store}
-                      className={`flex items-center justify-between gap-3 px-4 py-3 ${i === 0 ? 'bg-orange-50' : ''}`}
+                      className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+                        i === 0 ? 'bg-gradient-to-r from-orange-50 via-orange-50/50 to-white' : 'bg-white'
+                      } ${i > 0 ? 'border-t border-gray-100' : ''}`}
                     >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-gray-900">{row.store}</span>
-                        {i === 0 && (
-                          <span className="shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700">
-                            Melhor preço
-                          </span>
-                        )}
+                      <span className="flex min-w-0 items-center gap-3">
+                        {/* Logo real da loja (favicon do site oficial, a partir do
+                            dominio em stores.base_url) - nunca um logo inventado. */}
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 ring-1 ring-gray-100">
+                          {row.domain ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${row.domain}&sz=64`}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-5 w-5 object-contain"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-400">{row.store.charAt(0)}</span>
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-gray-900">{row.store}</span>
+                          {i === 0 && (
+                            <span className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-green-700">
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+                              </svg>
+                              Melhor preço
+                            </span>
+                          )}
+                        </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-gray-900">{formatPrice(row.price)}</span>
+                      <span
+                        className={`shrink-0 ${
+                          i === 0 ? 'text-base font-extrabold text-orange-600' : 'text-sm font-semibold text-gray-400'
+                        }`}
+                      >
+                        {formatPrice(row.price)}
+                      </span>
                     </div>
                   ))}
                 </div>
