@@ -496,7 +496,7 @@ export default async function ProdutoPage({
 
 
 
-      <nav className="text-sm text-gray-500 mb-2">
+      <nav className="text-sm text-gray-500 mb-4">
 
         <Link href="/" className="hover:underline">Parjusto</Link>
 
@@ -512,7 +512,7 @@ export default async function ProdutoPage({
 
 
 
-      <Link href="/catalogo" className="text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
+      <Link href="/catalogo" className="inline-block py-1 text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
 
 
 
