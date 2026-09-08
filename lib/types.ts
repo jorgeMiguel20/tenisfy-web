@@ -36,6 +36,7 @@ export type ProductOfferWithStore = {
   affiliate_url: string
   stores: {
     name: string
+    base_url: string | null
     shipping_base_fee: number | null
     shipping_free_threshold: number | null
     affiliate_url_template: string | null
