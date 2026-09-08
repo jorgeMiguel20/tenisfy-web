@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function HomeBanner() {
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden mb-10 min-h-[240px] max-h-[280px] sm:aspect-[21/9] sm:min-h-[220px] sm:max-h-none flex items-center">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden mb-10 min-h-[240px] max-h-[280px] sm:aspect-[21/9] sm:min-h-[220px] sm:max-h-[260px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/banner-bg.jpg"
