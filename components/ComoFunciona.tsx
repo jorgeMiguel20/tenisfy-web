@@ -27,6 +27,24 @@ const STEPS = [
 // Melhor preço por loja (mesma ideia de groupOffers em app/comparar/page.tsx),
 // para a mini-tabela do passo 2 - sempre a partir de ofertas reais em stock,
 // nunca os nomes/preços fixos de um mockup.
+// Logo real da marca para as lojas mais conhecidas, a partir da biblioteca
+// aberta Simple Icons (simpleicons.org) - so marcas globais que la existem
+// (Nike, adidas, New Balance, Zalando, etc.). Para as restantes lojas
+// (revendedores mais pequenos/regionais sem logo nessa biblioteca) usamos o
+// favicon do proprio site como alternativa - nunca inventamos um logo.
+const BRAND_ICON_SLUGS: Record<string, string> = {
+  'nike.com': 'nike',
+  'adidas.pt': 'adidas',
+  'newbalance.pt': 'newbalance',
+  'zalando.pt': 'zalando',
+}
+
+function storeLogoSrc(domain: string) {
+  const slug = BRAND_ICON_SLUGS[domain]
+  if (slug) return `https://cdn.simpleicons.org/${slug}`
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+}
+
 function bestPricePerStore(product: ProductWithPrice) {
   const grouped = new Map<string, { price: number; domain: string }>()
   for (const offer of product.product_offers ?? []) {
@@ -176,14 +194,14 @@ export default function ComoFunciona({
                       <span className="flex min-w-0 items-center gap-3">
                         {/* Logo real da loja (favicon do site oficial, a partir do
                             dominio em stores.base_url) - nunca um logo inventado. */}
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 ring-1 ring-gray-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 p-1.5 ring-1 ring-gray-100">
                           {row.domain ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={`https://www.google.com/s2/favicons?domain=${row.domain}&sz=64`}
+                              src={storeLogoSrc(row.domain)}
                               alt=""
                               aria-hidden="true"
-                              className="h-5 w-5 object-contain"
+                              className="h-full w-full object-contain"
                             />
                           ) : (
                             <span className="text-xs font-bold text-gray-400">{row.store.charAt(0)}</span>
