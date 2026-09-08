@@ -197,15 +197,18 @@ export default function ComoFunciona({
 
           {active === 1 &&
             (hasCompareData ? (
-              <div className="flex h-full w-full items-center p-4 sm:p-6">
+              <div className="flex h-full w-full items-center px-11 py-4 sm:px-14 sm:py-6">
                 <div className="w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md shadow-gray-900/5">
                   {storeRows.slice(0, 4).map((row, i) => (
                     <div
                       key={row.store}
-                      className={`flex items-center justify-between gap-3 px-4 py-3.5 ${
+                      className={`relative flex items-center justify-between gap-3 px-4 py-4 ${
                         i === 0 ? 'bg-gradient-to-r from-orange-50 via-orange-50/50 to-white' : 'bg-white'
                       } ${i > 0 ? 'border-t border-gray-100' : ''}`}
                     >
+                      {i === 0 && (
+                        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-orange-500" />
+                      )}
                       <span className="flex min-w-0 items-center gap-3">
                         {/* Logo real da loja (favicon do site oficial, a partir do
                             dominio em stores.base_url) - nunca um logo inventado. */}
@@ -225,11 +228,18 @@ export default function ComoFunciona({
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-gray-900">{row.store}</span>
                           {i === 0 && (
-                            <span className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-green-700">
-                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
-                              </svg>
-                              Melhor preço
+                            <span className="mt-1 flex flex-wrap items-center gap-1">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
+                                <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+                                </svg>
+                                Melhor preço
+                              </span>
+                              {storeRows[1] && storeRows[1].price > row.price && (
+                                <span className="inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+                                  Poupa {formatPrice(storeRows[1].price - row.price)}
+                                </span>
+                              )}
                             </span>
                           )}
                         </span>
@@ -246,7 +256,9 @@ export default function ComoFunciona({
                           href={buildOfferUrl(row)}
                           target="_blank"
                           rel="nofollow sponsored noopener"
-                          className="rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-700"
+                          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold text-white transition-colors ${
+                            i === 0 ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-900 hover:bg-gray-700'
+                          }`}
                         >
                           Ver oferta
                         </a>
