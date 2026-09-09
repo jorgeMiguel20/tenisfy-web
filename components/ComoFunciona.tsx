@@ -40,9 +40,23 @@ const BRAND_ICON_SLUGS: Record<string, string> = {
   'zalando.pt': 'zalando',
 }
 
+// Logo oficial hospedado no proprio site da loja - para lojas mais
+// pequenas/regionais sem entrada no Simple Icons. Encontrado a olho em
+// cada site oficial (cabecalho ou favicon de alta resolucao), nunca
+// inventado. Se o link um dia deixar de funcionar, o onError no <img>
+// abaixo cai para o favicon automaticamente.
+const STORE_LOGO_URLS: Record<string, string> = {
+  'collectkicks.pt': 'https://collectkicks.pt/cdn/shop/files/logo_s_fundo_180x.png?v=1682350995',
+  'footdistrict.com': 'https://footdistrict.com/cdn/shop/files/Logo_7d9512d9-6a65-44bd-b120-1a0ff1b8cbad.png',
+  'vans.com': 'https://assets.vans.eu/image/upload/v1755503693/default.svg',
+  'asics.com': 'https://www.asics.com/us/mobify/bundle/9379/static/img/global/favicon_512x512.png',
+}
+
 function storeLogoSrc(domain: string) {
   const slug = BRAND_ICON_SLUGS[domain]
   if (slug) return `https://cdn.simpleicons.org/${slug}`
+  const direct = STORE_LOGO_URLS[domain]
+  if (direct) return direct
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
 }
 
@@ -257,6 +271,12 @@ export default function ComoFunciona({
                               alt=""
                               aria-hidden="true"
                               className="h-full w-full object-contain"
+                              onError={(e) => {
+                                // Se o logo direto do site da loja alguma vez deixar de
+                                // funcionar, cai para o favicon em vez de ficar partido.
+                                e.currentTarget.onerror = null
+                                e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${row.domain}&sz=128`
+                              }}
                             />
                           ) : (
                             <span className="text-xs font-bold text-gray-400">{row.store.charAt(0)}</span>
