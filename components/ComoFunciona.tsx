@@ -46,38 +46,73 @@ function storeLogoSrc(domain: string) {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
 }
 
+// "Verificado há X" a partir da data real da oferta mais antiga em stock
+// desta loja (pior caso - mesmo criterio "sempre honesto" ja usado no
+// resto do site, ver formatVerifiedLabel em StoreOffersList.tsx) - nunca
+// um numero inventado.
+function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
+  if (!lastCheckedAt) return null
+
+  const diffMs = Date.now() - new Date(lastCheckedAt).getTime()
+  if (diffMs < 0) return 'Verificado agora mesmo'
+
+  const diffHours = diffMs / (1000 * 60 * 60)
+  if (diffHours < 1) return 'Verificado há menos de 1 hora'
+
+  const roundedHours = Math.round(diffHours)
+  if (roundedHours < 24) {
+    return `Verificado há ${roundedHours} ${roundedHours === 1 ? 'hora' : 'horas'}`
+  }
+
+  const days = Math.round(diffHours / 24)
+  return `Verificado há ${days} ${days === 1 ? 'dia' : 'dias'}`
+}
+
 function bestPricePerStore(product: ProductWithPrice) {
   const grouped = new Map<
     string,
-    { price: number; domain: string; affiliateUrl: string; affiliateUrlTemplate: string | null }
+    {
+      price: number
+      domain: string
+      affiliateUrl: string
+      affiliateUrlTemplate: string | null
+      oldestCheckedAt: string | null
+    }
   >()
   for (const offer of product.product_offers ?? []) {
     if (!offer.in_stock || !offer.stores) continue
     const current = grouped.get(offer.stores.name)
-    if (current == null || offer.price < current.price) {
-      // Dominio real da loja (vem de stores.base_url) - usado so para pedir
-      // o favicon oficial do site, nunca inventamos nem guardamos logos.
-      let domain = ''
+    // Dominio real da loja (vem de stores.base_url) - usado so para pedir
+    // o favicon oficial do site, nunca inventamos nem guardamos logos.
+    let domain = current?.domain ?? ''
+    if (!current) {
       try {
         domain = new URL(offer.stores.base_url ?? '').hostname.replace(/^www\./, '')
       } catch {
         domain = ''
       }
-      grouped.set(offer.stores.name, {
-        price: offer.price,
-        domain,
-        affiliateUrl: offer.affiliate_url,
-        affiliateUrlTemplate: offer.stores.affiliate_url_template,
-      })
     }
+    const isCheaper = current == null || offer.price < current.price
+    const oldestCheckedAt =
+      current?.oldestCheckedAt == null || offer.last_checked_at < current.oldestCheckedAt
+        ? offer.last_checked_at
+        : current.oldestCheckedAt
+    grouped.set(offer.stores.name, {
+      price: isCheaper ? offer.price : current!.price,
+      domain,
+      affiliateUrl: isCheaper ? offer.affiliate_url : current!.affiliateUrl,
+      affiliateUrlTemplate: offer.stores.affiliate_url_template,
+      oldestCheckedAt,
+    })
   }
   return Array.from(grouped.entries())
-    .map(([store, { price, domain, affiliateUrl, affiliateUrlTemplate }]) => ({
+    .map(([store, { price, domain, affiliateUrl, affiliateUrlTemplate, oldestCheckedAt }]) => ({
       store,
       price,
       domain,
       affiliate_url: affiliateUrl,
       affiliate_url_template: affiliateUrlTemplate,
+      lastCheckedAt: oldestCheckedAt,
     }))
     .sort((a, b) => a.price - b.price)
 }
@@ -199,7 +234,9 @@ export default function ComoFunciona({
             (hasCompareData ? (
               <div className="flex h-full w-full items-center px-11 py-4 sm:px-14 sm:py-6">
                 <div className="w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md shadow-gray-900/5">
-                  {storeRows.slice(0, 4).map((row, i) => (
+                  {storeRows.slice(0, 4).map((row, i) => {
+                    const verifiedLabel = i === 0 ? formatVerifiedLabel(row.lastCheckedAt) : null
+                    return (
                     <div
                       key={row.store}
                       className={`relative flex items-center justify-between gap-3 px-4 py-4 ${
@@ -228,19 +265,24 @@ export default function ComoFunciona({
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-semibold text-gray-900">{row.store}</span>
                           {i === 0 && (
-                            <span className="mt-1 flex flex-wrap items-center gap-1">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
-                                <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
-                                </svg>
-                                Melhor preço
-                              </span>
-                              {storeRows[1] && storeRows[1].price > row.price && (
-                                <span className="inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
-                                  Poupa {formatPrice(storeRows[1].price - row.price)}
+                            <>
+                              <span className="mt-1 flex flex-wrap items-center gap-1">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
+                                  <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+                                  </svg>
+                                  Melhor preço
                                 </span>
+                                {storeRows[1] && storeRows[1].price > row.price && (
+                                  <span className="inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+                                    Poupa {formatPrice(storeRows[1].price - row.price)}
+                                  </span>
+                                )}
+                              </span>
+                              {verifiedLabel && (
+                                <span className="mt-1 block text-[10px] text-gray-400">{verifiedLabel}</span>
                               )}
-                            </span>
+                            </>
                           )}
                         </span>
                       </span>
@@ -264,7 +306,8 @@ export default function ComoFunciona({
                         </a>
                       </span>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ) : (
