@@ -9,10 +9,38 @@ import { buildOfferUrl } from '@/lib/offerUrl'
 // antiga, um por loja. Ver pedido do Jorge ("Redesenhar a lista de lojas na
 // página de produto") - mockup de referência aprovado por ele.
 
+// Logo real da loja - mesma logica e mesmas fontes ja usadas e verificadas
+// em components/ComoFunciona.tsx (Simple Icons para marcas globais, logo
+// oficial hospedado no proprio site para lojas mais pequenas, favicon como
+// ultimo recurso). Duplicado aqui de proposito em vez de partilhado, para
+// nao arriscar mexer no ComoFunciona.tsx que ja esta validado em producao.
+const BRAND_ICON_SLUGS: Record<string, string> = {
+  'nike.com': 'nike',
+  'adidas.pt': 'adidas',
+  'newbalance.pt': 'newbalance',
+  'zalando.pt': 'zalando',
+}
+
+const STORE_LOGO_URLS: Record<string, string> = {
+  'collectkicks.pt': 'https://collectkicks.pt/cdn/shop/files/logo_s_fundo_180x.png?v=1682350995',
+  'footdistrict.com': 'https://footdistrict.com/cdn/shop/files/Logo_7d9512d9-6a65-44bd-b120-1a0ff1b8cbad.png',
+  'vans.com': 'https://assets.vans.eu/image/upload/v1755503693/default.svg',
+  'asics.com': 'https://www.asics.com/us/mobify/bundle/9379/static/img/global/favicon_512x512.png',
+}
+
+function storeLogoSrc(domain: string) {
+  const slug = BRAND_ICON_SLUGS[domain]
+  if (slug) return `https://cdn.simpleicons.org/${slug}`
+  const direct = STORE_LOGO_URLS[domain]
+  if (direct) return direct
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+}
+
 export type StoreOfferSize = { size: string; inStock: boolean }
 
 export type StoreOfferForDisplay = {
   store: string
+  domain: string
   price: number
   affiliate_url: string
   affiliate_url_template: string | null
@@ -98,6 +126,23 @@ function StoreOfferCard({
     <div className="rounded-2xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 p-1 ring-1 ring-gray-100">
+            {offer.domain ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={storeLogoSrc(offer.domain)}
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.onerror = null
+                  e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${offer.domain}&sz=128`
+                }}
+              />
+            ) : (
+              <span className="text-[10px] font-bold text-gray-400">{offer.store.charAt(0)}</span>
+            )}
+          </span>
           <span className="font-semibold text-gray-900">{offer.store}</span>
           {isBest && (
             <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
