@@ -233,7 +233,7 @@ export default async function ProdutoPage({
 
         id, size, price, currency, affiliate_url, in_stock, last_checked_at, discontinued_at,
 
-        stores (name, shipping_info, shipping_base_fee, shipping_free_threshold, affiliate_url_template)
+        stores (name, base_url, shipping_info, shipping_base_fee, shipping_free_threshold, affiliate_url_template)
 
       )
 
@@ -332,6 +332,7 @@ export default async function ProdutoPage({
   // preço mostrado, o "Melhor preço" ou o "Portes Grátis".
   type StoreGroupAccumulator = {
     store: string
+    domain: string
     sizes: Map<string, boolean> // tamanho -> em stock nesta loja
     price: number | null
     affiliate_url: string | null
@@ -348,8 +349,15 @@ export default async function ProdutoPage({
     const storeName = offer.stores?.name ?? 'Loja'
 
     if (!grouped[storeName]) {
+      let domain = ''
+      try {
+        domain = new URL(offer.stores?.base_url ?? '').hostname.replace(/^www\./, '')
+      } catch {
+        domain = ''
+      }
       grouped[storeName] = {
         store: storeName,
+        domain,
         sizes: new Map(),
         price: null,
         affiliate_url: null,
@@ -388,6 +396,7 @@ export default async function ProdutoPage({
     .filter((g): g is StoreGroupAccumulator & { price: number; affiliate_url: string } => g.price != null && g.affiliate_url != null)
     .map((g) => ({
       store: g.store,
+      domain: g.domain,
       price: g.price,
       affiliate_url: g.affiliate_url,
       affiliate_url_template: g.affiliate_url_template,
