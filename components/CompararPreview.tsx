@@ -73,10 +73,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
       .map(({ label }) => label)
   )
 
+  // max-w-5xl (era max-w-3xl) - a coluna de texto teve de crescer para o
+  // titulo caber numa so linha, e isso so tinha espaco sem espremer os
+  // cartoes se a seccao toda ficasse mais larga
   return (
-    {/* max-w-5xl (era max-w-3xl) - a coluna de texto teve de crescer para o
-        titulo caber numa so linha, e isso so tinha espaco sem espremer os
-        cartoes se a seccao toda ficasse mais larga */}
     <section className="mb-16 sm:mb-20 max-w-5xl mx-auto">
       {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
           (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
