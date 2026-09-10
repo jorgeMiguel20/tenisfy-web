@@ -67,7 +67,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   )
 
   return (
-    <section className="mb-12">
+    <section className="mb-12 max-w-3xl mx-auto">
       <div className="mb-6 max-w-xl">
         {/* orange-700 em vez de orange-600 neste texto pequeno e a negrito:
             orange-600 sobre branco fica perto de 3.6:1, abaixo do mínimo de
