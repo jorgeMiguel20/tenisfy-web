@@ -75,7 +75,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
   return (
     <section className="mb-16 sm:mb-20 max-w-3xl mx-auto">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+      {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
+          (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
+          lado a lado, que era onde o Jorge achava que estava muito junto */}
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-40">
         {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
         <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-52">
           {/* Etiqueta em texto simples (nao badge/pill) - mesmo padrao usado nas
