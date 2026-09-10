@@ -111,7 +111,7 @@ export default function PriceAlertBanner({ product }: { product: ProductWithPric
                 style={{ opacity: step === 1 ? 1 : 0 }}
                 aria-hidden={step !== 1}
               >
-                <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-50 text-yellow-500">
                   <BellIcon className="h-5 w-5" />
                 </span>
                 <p className="text-lg font-bold text-gray-900">Alerta ativado!</p>
