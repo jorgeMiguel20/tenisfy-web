@@ -90,6 +90,22 @@ export default async function Home() {
     })
   const showcaseProduct = showcaseCandidates[0] ?? null
 
+  // Produto para a seccao de alertas de preco: evita repetir o que ja
+  // aparece no "Como funciona" ou no "Maior poupanca agora", para a
+  // homepage nao mostrar sempre o mesmo tenis em varios sitios (reparado
+  // pelo Jorge). So cai para topDeals[0]/showcaseProduct se mesmo assim
+  // nao sobrar nenhum candidato diferente.
+  const usedProductIds = new Set(
+    [showcaseProduct?.id, ...topDeals.map((p) => p.id)].filter((id): id is string => Boolean(id))
+  )
+  const alertProduct =
+    productsWithPrice
+      .filter((p) => p.priceDrop && p.gender !== 'crianca' && !usedProductIds.has(p.id))
+      .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)[0] ??
+    topDeals[0] ??
+    showcaseProduct ??
+    null
+
   return (
     <main className="max-w-7xl mx-auto px-6 pb-10">
       <HomeHero />
@@ -105,7 +121,7 @@ export default async function Home() {
             (pedido do Jorge, saiu do Hero) - a mesma prioridade do "Como
             funciona": preferir quem tem descida de preco recente, com o
             showcase do "Como funciona" como recurso se nao houver nenhum. */}
-        <PriceAlertBanner product={topDeals[0] ?? showcaseProduct} />
+        <PriceAlertBanner product={alertProduct} />
       </div>
     </main>
   )
