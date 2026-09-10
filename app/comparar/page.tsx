@@ -162,9 +162,13 @@ export default async function CompararPage({
   }
 
   // Specs cujo valor difere entre os produtos apresentados (para destacar)
+  // Conta tambem como "diferente" quando pelo menos um produto nao tem o
+  // dado preenchido - antes o valor em falta era ignorado na comparacao,
+  // por isso essa diferenca ficava sem destaque (ao contrario de quando os
+  // produtos tinham valores diferentes, esse sim, sempre destacado).
   const differingLabels = new Set(
     SPEC_DEFS.filter(({ key }) => {
-      const values = ordered.map((p) => p[key]).filter(Boolean)
+      const values = ordered.map((p) => p[key] ?? null)
       return new Set(values).size > 1
     }).map(({ label }) => label)
   )
