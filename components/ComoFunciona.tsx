@@ -170,6 +170,14 @@ export default function ComoFunciona({
   const storeRows = showcaseProduct ? bestPricePerStore(showcaseProduct) : []
   const hasCompareData = storeRows.length >= 2
   const hasBuyData = !!showcaseProduct?.lowest_price && !!showcaseProduct?.savings
+  // CTA de poupanca do passo 3: liga a oferta real da loja mais barata
+  // (por nome, a partir de storeRows ja calculado acima) - nunca inventa
+  // um link; se por algum motivo o nome nao bater certo com nenhuma loja
+  // de storeRows, cai para um <span> sem link em vez de arriscar um href
+  // errado.
+  const cheapestOfferForSavings = showcaseProduct?.savings
+    ? storeRows.find((row) => row.store === showcaseProduct.savings!.store) ?? null
+    : null
 
   return (
     <section className={hasNextSection ? 'mb-12' : ''}>
@@ -355,9 +363,20 @@ export default function ComoFunciona({
                   <p className="mt-1 text-xl font-extrabold text-orange-600">
                     {formatPrice(showcaseProduct!.lowest_price!)}
                   </p>
-                  <span className="mt-1.5 inline-block rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700">
-                    Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
-                  </span>
+                  {cheapestOfferForSavings ? (
+                    <a
+                      href={buildOfferUrl(cheapestOfferForSavings)}
+                      target="_blank"
+                      rel="nofollow sponsored noopener"
+                      className="mt-2 inline-block rounded-full bg-orange-600 px-4 py-2 text-xs font-extrabold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-lg"
+                    >
+                      Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
+                    </a>
+                  ) : (
+                    <span className="mt-2 inline-block rounded-full bg-orange-600 px-4 py-2 text-xs font-extrabold text-white shadow-md">
+                      Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
+                    </span>
+                  )}
                 </div>
               </div>
             ) : (
