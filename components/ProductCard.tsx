@@ -59,8 +59,14 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
       href={`/produto/${product.slug}`}
       className="group relative flex h-full flex-col overflow-hidden bg-white border-r border-b border-black transition-shadow hover:shadow-lg"
     >
+      {/* aspect-[16/10] (era aspect-[4/5]) - mesma correcao aplicada em
+          MaiorPoupancaAgora.tsx: as fotos sao um quadrado com o tenis so a
+          ocupar a faixa central, por isso uma caixa vertical deixava muito
+          espaco vazio a volta. Uma caixa mais larga do que alta faz o
+          object-cover cortar esse espaco vazio em cima/baixo em vez dos
+          lados, e o tenis fica maior. */}
       <div
-        className="relative aspect-[4/5] bg-gray-50 overflow-hidden"
+        className="relative aspect-[16/10] bg-gray-50 overflow-hidden"
         onTouchStart={photos.length > 1 ? handleTouchStart : undefined}
         onTouchEnd={photos.length > 1 ? handleTouchEnd : undefined}
       >
