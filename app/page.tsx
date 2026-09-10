@@ -5,6 +5,7 @@ import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
 import ComoFunciona from '@/components/ComoFunciona'
 import MaiorPoupancaAgora from '@/components/MaiorPoupancaAgora'
+import PriceAlertBanner from '@/components/PriceAlertBanner'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 
 function pickRandom<T>(items: T[], count: number): T[] {
@@ -100,6 +101,11 @@ export default async function Home() {
         <PesquisaPorFoto />
         <ComoFunciona showcaseProduct={showcaseProduct} hasNextSection={topDeals.length > 0} />
         <MaiorPoupancaAgora products={topDeals} />
+        {/* Produto real usado como exemplo na nova seccao de alertas de preco
+            (pedido do Jorge, saiu do Hero) - a mesma prioridade do "Como
+            funciona": preferir quem tem descida de preco recente, com o
+            showcase do "Como funciona" como recurso se nao houver nenhum. */}
+        <PriceAlertBanner product={topDeals[0] ?? showcaseProduct} />
       </div>
     </main>
   )
