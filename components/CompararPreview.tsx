@@ -40,6 +40,9 @@ const SPEC_DEFS = [
 
 // Mostra 2 produtos reais do catálogo (escolhidos em app/page.tsx) como
 // prévia da funcionalidade de Comparar — nunca dados de exemplo inventados.
+// Layout em 2 colunas: bloco de texto/CTA fixo à esquerda, grelha de
+// comparação (2 cartões) à direita - pedido explícito do Jorge com imagem
+// de referência.
 export default function CompararPreview({ products }: { products: ProductWithPrice[] }) {
   if (products.length < 2) return null
   const [a, b] = products as any[]
@@ -68,87 +71,84 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
   return (
     <section className="mb-12 max-w-3xl mx-auto">
-      <div className="mb-6 max-w-xl">
-        {/* orange-700 em vez de orange-600 neste texto pequeno e a negrito:
-            orange-600 sobre branco fica perto de 3.6:1, abaixo do mínimo de
-            4.5:1 (WCAG AA) para texto normal - orange-700 já passa. */}
-        <span className="text-orange-700 text-xs font-bold uppercase tracking-wide">Comparar</span>
-        <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">Vê os ténis lado a lado</h2>
-        <p className="text-gray-500">
-          Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
-        </p>
-      </div>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+        {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
+        <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-52">
+          <span className="w-fit rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-normal uppercase tracking-wide text-white">
+            Comparar
+          </span>
+          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Vê os ténis lado a lado</h2>
+          <p className="text-sm leading-relaxed text-gray-500">
+            Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
+          </p>
+          <Link
+            href="/comparar"
+            className="mt-1 inline-flex w-fit items-center justify-center rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+          >
+            Ir para o Comparar
+          </Link>
+        </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {[a, b].map((product) => {
-          const offers = groupOffers(product.product_offers ?? [])
-          const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
-          const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
+        {/* Coluna direita: grelha de comparacao com os 2 cartoes */}
+        <div className="grid flex-1 grid-cols-2 gap-4">
+          {[a, b].map((product) => {
+            const offers = groupOffers(product.product_offers ?? [])
+            const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
+            const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
 
-          return (
-            <div
-              key={product.id}
-              className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
-            >
-              <ProductGallery
-                images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
-                alt={product.model_name}
-                compact
-                imageBoxClassName="aspect-square"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
+            return (
+              <div key={product.id} className="flex flex-col gap-2">
+                <ProductGallery
+                  images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
+                  alt={product.model_name}
+                  compact
+                  imageBoxClassName="aspect-[3/2]"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
 
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
-                <h3 className="font-semibold text-gray-900 mt-0.5">{product.model_name}</h3>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
+                  <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
+                </div>
+
+                {lowestPrice != null ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-lg font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                    {isCheapest && (
+                      <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                        Mais barato
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">Sem oferta disponível</p>
+                )}
+
+                {specRows.length > 0 && (
+                  <div className="mt-0.5 space-y-1 text-xs">
+                    {specRows.map(({ key, label }) => {
+                      const value = product[key]
+                      const isDifferent = differingLabels.has(label)
+                      return (
+                        <p
+                          key={label}
+                          className={isDifferent ? 'rounded-md bg-orange-50 px-1.5 py-1' : 'px-1.5 py-1'}
+                        >
+                          <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
+                            {label}:
+                          </span>{' '}
+                          <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
+                            {value ?? '—'}
+                          </span>
+                        </p>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-
-              {lowestPrice != null ? (
-                <div className="flex items-center gap-2">
-                  <p className="text-2xl font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
-                  {isCheapest && (
-                    <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                      Mais barato
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm">Sem oferta disponível</p>
-              )}
-
-              {specRows.length > 0 && (
-                <div className="space-y-1.5 text-sm">
-                  {specRows.map(({ key, label }) => {
-                    const value = product[key]
-                    const isDifferent = differingLabels.has(label)
-                    return (
-                      <p
-                        key={label}
-                        className={isDifferent ? '-mx-2 rounded-md bg-orange-50 px-2 py-1' : ''}
-                      >
-                        <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
-                          {label}:
-                        </span>{' '}
-                        <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
-                          {value ?? '—'}
-                        </span>
-                      </p>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="mt-6">
-        <Link
-          href="/comparar"
-          className="inline-block bg-gray-900 text-white font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-800 transition-colors"
-        >
-          Ir para o Comparar
-        </Link>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
