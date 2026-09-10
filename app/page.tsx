@@ -41,11 +41,17 @@ export default async function Home() {
 
 
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
-  // inventados) - com foto e preço.
-  const compareProducts = pickRandom(
-    productsWithPrice.filter((p) => p.image_url && p.lowest_price != null),
-    2
-  )
+  // inventados) - com foto e preço. Nunca compara calçado de criança com
+  // adulto (pedido do Jorge): os 2 vêm sempre do mesmo grupo - mesma regra
+  // já aplicada ao destaque "Maior poupança agora" acima.
+  const compareCandidates = productsWithPrice.filter((p) => p.image_url && p.lowest_price != null)
+  const compareGroups = [
+    compareCandidates.filter((p) => p.gender !== 'crianca'),
+    compareCandidates.filter((p) => p.gender === 'crianca'),
+  ].filter((group) => group.length >= 2)
+  const compareProducts = compareGroups.length > 0
+    ? pickRandom(compareGroups[Math.floor(Math.random() * compareGroups.length)], 2)
+    : []
 
   // Produto real usado nos passos 2 e 3 do "Como funciona" (tabela de preços
   // por loja + cartão de poupança - ver components/ComoFunciona.tsx). Nunca
