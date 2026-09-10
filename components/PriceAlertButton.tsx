@@ -130,7 +130,7 @@ export default function PriceAlertButton({
           alerta ainda nao esta aberto. */}
       {variant === 'large' && !open && (
         <span
-          className="alert-pulse-ring pointer-events-none absolute inset-0 rounded-full bg-white/50"
+          className="alert-pulse-ring pointer-events-none absolute inset-0 rounded-full bg-gray-900/10"
           aria-hidden="true"
         />
       )}
@@ -145,7 +145,7 @@ export default function PriceAlertButton({
         className={
           variant === 'large'
             ? `relative inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors ${
-                open ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+                open ? 'bg-gray-700 text-white' : 'bg-gray-900 text-white hover:bg-gray-800'
               }`
             : `inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
                 open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
@@ -153,9 +153,7 @@ export default function PriceAlertButton({
         }
       >
         <BellIcon
-          className={`h-4 w-4 ${
-            variant === 'large' ? (open ? 'text-white' : 'text-orange-600') : open ? 'text-white' : 'text-gray-400'
-          }`}
+          className={`h-4 w-4 ${variant === 'large' || open ? 'text-white' : 'text-gray-400'}`}
         />
         {variant === 'large' && 'Criar alerta grátis'}
       </button>
