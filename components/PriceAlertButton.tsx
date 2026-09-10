@@ -57,8 +57,24 @@ export default function PriceAlertButton({
   const [targetPrice, setTargetPrice] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
+  // Dica de "toque" ocasional no botao grande (seccao de alertas da
+  // homepage) - aparece uns segundos a cada 9s para dar vida ao botao,
+  // sem ser um efeito continuo/chamativo (pedido do Jorge: nada a "piscar").
+  const [showTapHint, setShowTapHint] = useState(false)
 
   useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (variant !== 'large' || open) {
+      setShowTapHint(false)
+      return
+    }
+    const interval = setInterval(() => {
+      setShowTapHint(true)
+      setTimeout(() => setShowTapHint(false), 1800)
+    }, 9000)
+    return () => clearInterval(interval)
+  }, [variant, open])
 
   useEffect(() => {
     if (!open) return
@@ -106,6 +122,18 @@ export default function PriceAlertButton({
           um botao cheio com texto, em vez do circulo pequeno so com o sino
           usado nos cards do catalogo - a logica do alerta em si (modal,
           submissao) e sempre a mesma, so muda o aspeto do botao. */}
+      {/* Pedido do Jorge: dar "vida" ao botao grande sem parecer amador -
+          nada de piscar (aparecer/desaparecer). Em vez disso, um anel de luz
+          suave que cresce e desvanece (como o aviso de notificacoes do
+          WhatsApp/Instagram) e, de vez em quando, uma seta a simular um
+          toque - nunca em continuo. So na variante "large" e so enquanto o
+          alerta ainda nao esta aberto. */}
+      {variant === 'large' && !open && (
+        <span
+          className="alert-pulse-ring pointer-events-none absolute inset-0 rounded-full bg-white/50"
+          aria-hidden="true"
+        />
+      )}
       <button
         type="button"
         onClick={(e) => {
@@ -116,17 +144,59 @@ export default function PriceAlertButton({
         aria-label="Avisa-me quando o preço descer"
         className={
           variant === 'large'
-            ? `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
-                open ? 'bg-gray-700 text-white' : 'bg-orange-600 text-white hover:bg-orange-700'
+            ? `relative inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors ${
+                open ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
               }`
             : `inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
                 open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
               }`
         }
       >
-        <BellIcon className={`h-4 w-4 ${variant === 'large' || open ? 'text-white' : 'text-gray-400'}`} />
+        <BellIcon
+          className={`h-4 w-4 ${
+            variant === 'large' ? (open ? 'text-white' : 'text-orange-600') : open ? 'text-white' : 'text-gray-400'
+          }`}
+        />
         {variant === 'large' && 'Criar alerta grátis'}
       </button>
+      {variant === 'large' && (
+        <span
+          className={`pointer-events-none absolute -bottom-2 -right-3 transition-opacity duration-700 ${
+            showTapHint ? 'opacity-100' : 'opacity-0'
+          }`}
+          aria-hidden="true"
+        >
+          <span className="relative flex h-6 w-6 items-center justify-center">
+            <span className="alert-tap-ripple absolute inline-flex h-full w-full rounded-full bg-orange-400/50" />
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="white"
+              stroke="#111827"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+              className="relative drop-shadow-sm"
+            >
+              <path d="M3 2.5L19 9.5L11.5 11L9 19.5L3 2.5Z" />
+            </svg>
+          </span>
+        </span>
+      )}
+      {variant === 'large' && (
+        <style>{`
+          @keyframes alertPulseRing {
+            0% { transform: scale(1); opacity: 0.55; }
+            70%, 100% { transform: scale(1.4); opacity: 0; }
+          }
+          .alert-pulse-ring { animation: alertPulseRing 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+          @keyframes alertTapRipple {
+            0% { transform: scale(0.7); opacity: 0.6; }
+            100% { transform: scale(1.9); opacity: 0; }
+          }
+          .alert-tap-ripple { animation: alertTapRipple 1.1s ease-out infinite; }
+        `}</style>
+      )}
 
       {mounted && open && createPortal(
         <div
