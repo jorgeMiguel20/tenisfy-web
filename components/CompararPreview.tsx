@@ -33,14 +33,28 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           <div key={product.id} className="flex items-center gap-4 sm:gap-6">
             {i === 1 && <span className="text-xs font-semibold text-gray-400">vs</span>}
             <div className="flex flex-col items-center gap-2 w-24 sm:w-28">
-              <div className="flex w-full aspect-square items-center justify-center overflow-hidden">
+              <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-gray-50">
                 {product.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.image_url}
-                    alt={product.model_name}
-                    className="h-full w-full object-contain"
-                  />
+                  <>
+                    {/* Fundo desfocado com a propria foto - mesma tecnica ja
+                        usada em ProductGallery.tsx (pagina /comparar e pagina
+                        de produto), para a foto encher o quadrado com um
+                        fundo suave que acompanha as suas proprias cores, em
+                        vez de uma caixa cinzenta lisa por baixo. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={product.image_url}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-2xl opacity-60"
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={product.image_url}
+                      alt={product.model_name}
+                      className="relative h-full w-full object-contain"
+                    />
+                  </>
                 )}
               </div>
               <span className="text-xs font-semibold text-gray-900 text-center line-clamp-2">
