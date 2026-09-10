@@ -33,7 +33,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           <div key={product.id} className="flex items-center gap-4 sm:gap-6">
             {i === 1 && <span className="text-xs font-semibold text-gray-400">vs</span>}
             <div className="flex flex-col items-center gap-2 w-24 sm:w-28">
-              <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-gray-50">
+              <div className="relative w-full aspect-square overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
                 {product.image_url && (
                   <>
                     {/* Fundo desfocado com a propria foto - mesma tecnica ja
