@@ -50,7 +50,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                   muito espaco vazio a volta do tenis. Uma caixa mais larga
                   do que alta faz o object-cover cortar esse espaco vazio
                   em cima/baixo, em vez dos lados, e o tenis fica maior. */}
-              <div className="relative aspect-[16/10] bg-gray-50 rounded-2xl overflow-hidden">
+              <div className="relative aspect-[16/10] bg-[#f3f0ea] border border-[#e7e2d9] rounded-2xl overflow-hidden">
                 {product.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
