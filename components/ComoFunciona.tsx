@@ -336,7 +336,7 @@ export default function ComoFunciona({
 
           {active === 2 &&
             (hasBuyData ? (
-              <div className="flex h-full w-full items-center gap-4 p-4 sm:p-6">
+              <div className="flex h-full w-full items-center gap-4 px-11 py-4 sm:px-14 sm:py-6">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50 sm:h-24 sm:w-24">
                   {showcaseProduct!.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -351,11 +351,11 @@ export default function ComoFunciona({
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                     {showcaseProduct!.brands?.name}
                   </p>
-                  <p className="truncate font-semibold text-gray-900">{showcaseProduct!.model_name}</p>
+                  <p className="truncate font-bold text-black">{showcaseProduct!.model_name}</p>
                   <p className="mt-1 text-xl font-extrabold text-orange-600">
                     {formatPrice(showcaseProduct!.lowest_price!)}
                   </p>
-                  <span className="mt-1.5 inline-block rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white">
+                  <span className="mt-1.5 inline-block rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700">
                     Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
                   </span>
                 </div>
