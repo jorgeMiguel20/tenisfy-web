@@ -1,5 +1,4 @@
 // app/page.tsx
-import CategoryTiles from '@/components/CategoryTiles'
 import HomeHero from '@/components/HomeHero'
 import HomeBanner from '@/components/HomeBanner'
 import CompararPreview from '@/components/CompararPreview'
@@ -94,7 +93,6 @@ export default async function Home() {
     <main className="max-w-7xl mx-auto px-6 pb-10">
       <HomeHero />
 
-      <CategoryTiles />
       <HomeBanner />
 
       <div className="pt-2">
