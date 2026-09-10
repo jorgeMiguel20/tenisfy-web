@@ -33,13 +33,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           <div key={product.id} className="flex items-center gap-4 sm:gap-6">
             {i === 1 && <span className="text-xs font-semibold text-gray-400">vs</span>}
             <div className="flex flex-col items-center gap-2 w-24 sm:w-28">
-              <div className="w-full aspect-square bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center">
+              <div className="flex w-full aspect-square items-center justify-center overflow-hidden">
                 {product.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={product.image_url}
                     alt={product.model_name}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 )}
               </div>
