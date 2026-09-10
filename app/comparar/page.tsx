@@ -19,13 +19,6 @@ function parseSlugs(produtos?: string): string[] {
     .slice(0, 3)
 }
 
-// Nunca compara calçado de criança com adulto (pedido do Jorge) - fonte
-// única desta regra nesta página, reutilizada abaixo para filtrar a seleção
-// e o seletor "+ Adicionar produto".
-function isKidsProduct(product: { gender?: string | null }): boolean {
-  return product?.gender === 'crianca'
-}
-
 export async function generateMetadata({
   searchParams,
 }: {
@@ -137,20 +130,6 @@ export default async function CompararPage({
     }
   }
 
-  // Nunca compara calçado de criança com adulto (pedido do Jorge): se a
-  // seleção trouxer os dois grupos (ex.: vinda do seletor de vários catálogos
-  // ou de um link partilhado à mão), fica só o grupo do primeiro produto e
-  // os restantes são removidos - avisamos o utilizador mais abaixo.
-  let droppedForAgeMismatch = false
-  if (ordered.length > 1) {
-    const anchorIsKids = isKidsProduct(ordered[0])
-    const sameGroup = ordered.filter((p) => isKidsProduct(p) === anchorIsKids)
-    if (sameGroup.length !== ordered.length) {
-      droppedForAgeMismatch = true
-      ordered = sameGroup
-    }
-  }
-
   // Com menos de 3 produtos reais, preenche os lugares em falta com
   // placeholders "+ Adicionar produto" (grid mantém-se sempre a 3 colunas)
   // e contém a página numa largura mais estreita, centrada.
@@ -180,13 +159,6 @@ export default async function CompararPage({
       const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
       return { ...p, lowest_price, store_count: distinctStores.size, sizes }
     })
-
-    // Nunca oferece calçado de criança ao lado de adulto (e vice-versa) no
-    // seletor "+ Adicionar produto" - mesma regra aplicada acima.
-    if (ordered.length > 0) {
-      const anchorIsKids = isKidsProduct(ordered[0])
-      pickerProducts = pickerProducts.filter((p) => isKidsProduct(p) === anchorIsKids)
-    }
   }
 
   // Specs cujo valor difere entre os produtos apresentados (para destacar)
@@ -222,12 +194,6 @@ export default async function CompararPage({
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mt-4 mb-2">
         Comparar produtos
       </h1>
-
-      {droppedForAgeMismatch && (
-        <p className="text-sm text-orange-700 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 mb-6">
-          Removemos um ou mais produtos da comparação: não é possível comparar calçado de criança com calçado de adulto.
-        </p>
-      )}
 
       {placeholderCount > 0 && (
         <p className="text-sm text-gray-500 mb-8">
