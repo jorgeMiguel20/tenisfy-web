@@ -87,7 +87,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               das vizinhas. */}
           <span className="text-blue-600 text-xs font-bold uppercase tracking-wide">Comparar</span>
           <h2 className="font-display text-2xl font-bold text-gray-900 sm:text-3xl">Vê os ténis lado a lado</h2>
-          <p className="text-sm leading-relaxed text-gray-500">
+          {/* Sem text-sm (era mais pequeno que o texto da Pesquisa por foto,
+              que usa o tamanho base) - agora o paragrafo fica do mesmo
+              tamanho que o da seccao vizinha. */}
+          <p className="text-gray-500 leading-relaxed">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
           <Link
