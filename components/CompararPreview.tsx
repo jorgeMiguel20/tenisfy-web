@@ -78,10 +78,12 @@ export default function CompararPreview({ products }: { products: ProductWithPri
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
         <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-52">
-          <span className="w-fit rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-normal uppercase tracking-wide text-white">
-            Comparar
-          </span>
-          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Vê os ténis lado a lado</h2>
+          {/* Etiqueta em texto simples (nao badge/pill) - mesmo padrao usado nas
+              outras seccoes da homepage (Pesquisa por foto, Maior poupanca
+              agora, banner de marcas), para a seccao nao destoar visualmente
+              das vizinhas. */}
+          <span className="text-blue-600 text-xs font-bold uppercase tracking-wide">Comparar</span>
+          <h2 className="font-display text-2xl font-bold text-gray-900 sm:text-3xl">Vê os ténis lado a lado</h2>
           <p className="text-sm leading-relaxed text-gray-500">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
@@ -111,7 +113,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                   images={firstImage ? [firstImage] : []}
                   alt={product.model_name}
                   compact
-                  imageBoxClassName="aspect-[3/2]"
+                  imageBoxClassName="aspect-square"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
 
