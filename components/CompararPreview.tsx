@@ -74,13 +74,19 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   )
 
   return (
-    <section className="mb-16 sm:mb-20 max-w-3xl mx-auto">
+    {/* max-w-5xl (era max-w-3xl) - a coluna de texto teve de crescer para o
+        titulo caber numa so linha, e isso so tinha espaco sem espremer os
+        cartoes se a seccao toda ficasse mais larga */}
+    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto">
       {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
           (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
           lado a lado, que era onde o Jorge achava que estava muito junto */}
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-40">
         {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
-        <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-52">
+        {/* sm:w-[340px] (era sm:w-52/208px) - largura minima para "Vê os
+            ténis lado a lado" caber numa unica linha no tamanho de letra
+            atual (pedido do Jorge) */}
+        <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-[340px]">
           {/* Etiqueta em texto simples (nao badge/pill) - mesmo padrao usado nas
               outras seccoes da homepage (Pesquisa por foto, Maior poupanca
               agora, banner de marcas), para a seccao nao destoar visualmente
