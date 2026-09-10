@@ -77,7 +77,12 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   // titulo caber numa so linha, e isso so tinha espaco sem espremer os
   // cartoes se a seccao toda ficasse mais larga
   return (
-    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto">
+    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto rounded-2xl bg-[#faf7f2] p-6 sm:p-10">
+      {/* bg-[#faf7f2] (fundo creme muito suave) - a pagina tinha varias
+          seccoes seguidas em branco puro, sem nada a separa-las (pedido do
+          Jorge para dar mais dinamica sem exagerar em cor/laranja). Esta e
+          uma de 2 seccoes que passam a ter um fundo levemente tingido,
+          alternado com seccoes brancas, so para dar ritmo ao scroll. */}
       {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
           (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
           lado a lado, que era onde o Jorge achava que estava muito junto */}
