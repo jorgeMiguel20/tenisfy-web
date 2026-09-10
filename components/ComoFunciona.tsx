@@ -180,7 +180,11 @@ export default function ComoFunciona({
     : null
 
   return (
-    <section className={hasNextSection ? 'mb-12' : ''}>
+    <section className={`rounded-2xl bg-[#f3f0ea] p-6 sm:p-10 ${hasNextSection ? 'mb-12' : ''}`}>
+      {/* bg-[#f3f0ea] (cinza-quente suave) - mesma logica do fundo creme
+          adicionado ao CompararPreview.tsx: dar ritmo ao scroll com fundos
+          alternados muito suaves, sem mudar a estrutura nem abusar do
+          laranja (pedido do Jorge). */}
       <style>{`
         @keyframes scan-sweep {
           0% { transform: translateY(-100%); opacity: 0; }
