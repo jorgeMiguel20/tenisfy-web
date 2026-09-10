@@ -41,10 +41,12 @@ export default function PriceAlertButton({
   productId,
   currentPrice,
   className = '',
+  variant = 'compact',
 }: {
   productId: string
   currentPrice: number | null
   className?: string
+  variant?: 'compact' | 'large'
 }) {
   const id = useId()
   const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
@@ -100,6 +102,10 @@ export default function PriceAlertButton({
 
   return (
     <div className={`relative ${className}`}>
+      {/* variant "large" (usado no PriceAlertBanner.tsx da homepage) mostra
+          um botao cheio com texto, em vez do circulo pequeno so com o sino
+          usado nos cards do catalogo - a logica do alerta em si (modal,
+          submissao) e sempre a mesma, so muda o aspeto do botao. */}
       <button
         type="button"
         onClick={(e) => {
@@ -108,11 +114,18 @@ export default function PriceAlertButton({
         }}
         aria-pressed={open}
         aria-label="Avisa-me quando o preço descer"
-        className={`inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
-          open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
-        }`}
+        className={
+          variant === 'large'
+            ? `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
+                open ? 'bg-gray-700 text-white' : 'bg-orange-600 text-white hover:bg-orange-700'
+              }`
+            : `inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
+                open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
+              }`
+        }
       >
-        <BellIcon className={`h-4 w-4 ${open ? 'text-white' : 'text-gray-400'}`} />
+        <BellIcon className={`h-4 w-4 ${variant === 'large' || open ? 'text-white' : 'text-gray-400'}`} />
+        {variant === 'large' && 'Criar alerta grátis'}
       </button>
 
       {mounted && open && createPortal(
