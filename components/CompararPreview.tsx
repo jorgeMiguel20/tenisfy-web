@@ -63,12 +63,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
   // Specs cujo valor difere entre os 2 produtos (para destacar com fundo
   // suave) - mesma logica de app/comparar/page.tsx.
+  // Conta tambem como "diferente" quando um dos 2 produtos tem o dado e o
+  // outro nao (ex.: "Com atacadores" vs "-") - antes so comparava quando os
+  // 2 tinham valor preenchido, por isso esse caso ficava sem destaque apesar
+  // de ser claramente uma diferenca entre os produtos.
   const differingLabels = new Set(
     specRows
-      .filter(({ key }) => {
-        const values = [a, b].map((p) => p[key]).filter(Boolean)
-        return new Set(values).size > 1
-      })
+      .filter(({ key }) => a[key] !== b[key])
       .map(({ label }) => label)
   )
 
