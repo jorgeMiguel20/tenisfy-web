@@ -345,37 +345,75 @@ export default function ComoFunciona({
           {active === 2 &&
             (hasBuyData ? (
               <div className="flex h-full w-full items-center gap-4 px-11 py-4 sm:px-14 sm:py-6">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50 sm:h-24 sm:w-24">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-sm sm:h-24 sm:w-24">
                   {showcaseProduct!.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={showcaseProduct!.image_url}
                       alt={showcaseProduct!.model_name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain"
                     />
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    {showcaseProduct!.brands?.name}
-                  </p>
+                  {cheapestOfferForSavings ? (
+                    <span className="flex items-center gap-1.5">
+                      {/* Logo real da loja mais barata (mesma logica do passo 2,
+                          a partir do dominio verificado em stores.base_url) -
+                          fecha a historia comecada no passo 2 mostrando onde a
+                          compra acontece de facto; nunca um logo inventado. */}
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 ring-1 ring-gray-100">
+                        {cheapestOfferForSavings.domain ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={storeLogoSrc(cheapestOfferForSavings.domain)}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-full w-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${cheapestOfferForSavings.domain}&sz=128`
+                            }}
+                          />
+                        ) : (
+                          <span className="text-[8px] font-bold text-gray-400">
+                            {cheapestOfferForSavings.store.charAt(0)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="truncate text-[11px] font-semibold text-gray-500">
+                        Compra na <span className="text-gray-700">{cheapestOfferForSavings.store}</span>
+                      </span>
+                    </span>
+                  ) : (
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                      {showcaseProduct!.brands?.name}
+                    </p>
+                  )}
                   <p className="truncate font-bold text-black">{showcaseProduct!.model_name}</p>
                   <p className="mt-1 text-xl font-extrabold text-orange-600">
                     {formatPrice(showcaseProduct!.lowest_price!)}
                   </p>
-                  {cheapestOfferForSavings ? (
+                  {/* Poupanca = diferenca real entre a oferta mais barata e a
+                      mais cara (ver computeSavings em lib/savings.ts) - por
+                      isso o texto compara com "a oferta mais cara", nunca com
+                      um numero de ofertas ou posicao inventados. */}
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Poupas{' '}
+                    <span className="font-semibold text-orange-700">
+                      {formatPrice(showcaseProduct!.savings!.amount)}
+                    </span>{' '}
+                    face à oferta mais cara
+                  </p>
+                  {cheapestOfferForSavings && (
                     <a
                       href={buildOfferUrl(cheapestOfferForSavings)}
                       target="_blank"
                       rel="nofollow sponsored noopener"
                       className="mt-2 inline-block rounded-full bg-orange-600 px-4 py-2 text-xs font-extrabold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-lg"
                     >
-                      Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
+                      Ver oferta na {cheapestOfferForSavings.store}
                     </a>
-                  ) : (
-                    <span className="mt-2 inline-block rounded-full bg-orange-600 px-4 py-2 text-xs font-extrabold text-white shadow-md">
-                      Poupa {formatPrice(showcaseProduct!.savings!.amount)} escolhendo {showcaseProduct!.savings!.store}
-                    </span>
                   )}
                 </div>
               </div>
