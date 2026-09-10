@@ -44,7 +44,13 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
               href={`/produto/${product.slug}`}
               className="group block overflow-hidden rounded-2xl bg-white transition-shadow hover:shadow-lg"
             >
-              <div className="relative aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden">
+              {/* aspect-[16/10] (era aspect-[4/5]) - as fotos dos produtos
+                  sao um quadrado com o tenis so a ocupar a faixa central
+                  (~38-44% da altura), por isso uma caixa vertical deixava
+                  muito espaco vazio a volta do tenis. Uma caixa mais larga
+                  do que alta faz o object-cover cortar esse espaco vazio
+                  em cima/baixo, em vez dos lados, e o tenis fica maior. */}
+              <div className="relative aspect-[16/10] bg-gray-50 rounded-2xl overflow-hidden">
                 {product.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
