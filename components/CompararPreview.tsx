@@ -80,7 +80,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           <span className="w-fit rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-normal uppercase tracking-wide text-white">
             Comparar
           </span>
-          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Eê os ténis lado a lado</h2>
+          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Vê os ténis lado a lado</h2>
           <p className="text-sm leading-relaxed text-gray-500">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
