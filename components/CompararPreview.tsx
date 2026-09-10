@@ -51,6 +51,9 @@ export default function CompararPreview({ products }: { products: ProductWithPri
     .map((p) => groupOffers(p.product_offers ?? [])[0]?.price ?? p.lowest_price ?? null)
     .filter((price): price is number => price != null)
   const cheapestPrice = cheapestPrices.length > 1 ? Math.min(...cheapestPrices) : null
+  // Diferença entre os 2 preços, só quando temos os 2 (para o badge "Mais
+  // barato" mostrar quanto se poupa, não só qual é mais barato).
+  const priceDiff = cheapestPrices.length === 2 ? Math.abs(cheapestPrices[0] - cheapestPrices[1]) : null
 
   // So mostra uma linha de especificacao quando pelo menos um dos 2
   // produtos tem esse dado - e a mesma lista de linhas (pela mesma ordem)
@@ -70,14 +73,14 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   )
 
   return (
-    <section className="mb-12 max-w-3xl mx-auto">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+    <section className="mb-16 sm:mb-20 max-w-3xl mx-auto">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
         {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
         <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-52">
           <span className="w-fit rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-normal uppercase tracking-wide text-white">
             Comparar
           </span>
-          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Vê os ténis lado a lado</h2>
+          <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">Eê os ténis lado a lado</h2>
           <p className="text-sm leading-relaxed text-gray-500">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
@@ -96,10 +99,15 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
             const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
 
+            // Só a primeira foto: isto é uma prévia, não a galeria completa
+            // (essa fica para a página /comparar) - uma imagem estática fica
+            // mais limpa aqui do que um carrossel com setas e pontos.
+            const firstImage = product.image_url ?? product.image_urls?.[0] ?? null
+
             return (
               <div key={product.id} className="flex flex-col gap-2">
                 <ProductGallery
-                  images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
+                  images={firstImage ? [firstImage] : []}
                   alt={product.model_name}
                   compact
                   imageBoxClassName="aspect-[3/2]"
@@ -116,7 +124,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                     <p className="text-lg font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
                     {isCheapest && (
                       <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                        Mais barato
+                        Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
                       </span>
                     )}
                   </div>
