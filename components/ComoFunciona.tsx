@@ -36,7 +36,7 @@ export default function ComoFunciona() {
 
       <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:grid-cols-2 sm:items-center sm:gap-16 sm:px-12 sm:py-24">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wide text-white/50">Como funciona</span>
+          <span className="text-xs font-bold uppercase tracking-wide text-orange-500">Como funciona</span>
           <h2 className="font-display mt-3 text-3xl sm:text-4xl font-bold leading-tight text-white">
             Três passos.
             <br />
@@ -47,7 +47,7 @@ export default function ComoFunciona() {
         <div>
           {STEPS.map((step, i) => (
             <div key={step.title} className={`py-5 ${i > 0 ? 'border-t border-white/15' : ''}`}>
-              <span className="text-xs font-bold text-white/50">{String(i + 1).padStart(2, '0')}</span>
+              <span className="text-xs font-bold text-orange-500">{String(i + 1).padStart(2, '0')}</span>
               <h3 className="mt-1 text-base font-bold text-white">{step.title}</h3>
               <p className="mt-1 text-sm text-white/60">{step.text}</p>
             </div>
