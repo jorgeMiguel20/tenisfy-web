@@ -14,7 +14,7 @@ export default function HomeMarquee({ brands }: { brands: string[] }) {
     <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden border-y border-gray-100 bg-white py-4">
       <div className="marquee-track flex w-max items-center gap-10">
         {items.map((name, i) => (
-          <span key={`${name}-${i}`} className="text-sm font-bold uppercase tracking-wide text-gray-300">
+          <span key={`${name}-${i}`} className="text-sm font-bold uppercase tracking-wide text-gray-900">
             {name}
           </span>
         ))}
