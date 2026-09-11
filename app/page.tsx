@@ -2,7 +2,6 @@
 import HomeHero from '@/components/HomeHero'
 import HomeMarquee from '@/components/HomeMarquee'
 import DiferencaPrecos from '@/components/DiferencaPrecos'
-import HomeBanner from '@/components/HomeBanner'
 import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
 import ComoFunciona from '@/components/ComoFunciona'
@@ -107,16 +106,6 @@ export default async function Home() {
     showcaseProduct ??
     null
 
-  // Atalhos de pesquisa "Populares" no Hero: os 3 modelos reais com mais
-  // lojas comparaveis agora, nunca uma lista fixa (ideia do redesign que o
-  // Jorge preparou no Claude Design, adaptada a dados verdadeiros).
-  const popularSearches = [...productsWithPrice]
-    .filter((p) => (p.store_count ?? 0) > 0)
-    .sort((a, b) => (b.store_count ?? 0) - (a.store_count ?? 0))
-    .filter((p, i, arr) => arr.findIndex((x) => x.model_name === p.model_name) === i)
-    .slice(0, 3)
-    .map((p) => ({ label: p.model_name, href: `/catalogo?q=${encodeURIComponent(p.model_name)}` }))
-
   // Faixa de marcas reais para o HomeMarquee - so marcas que existem mesmo
   // no catalogo carregado agora (nunca uma lista generica inventada).
   const marqueeBrands = Array.from(
@@ -125,13 +114,12 @@ export default async function Home() {
 
   return (
     <main className="max-w-7xl mx-auto px-6 pb-10">
-      <HomeHero popularSearches={popularSearches} />
+      <HomeHero />
 
       <HomeMarquee brands={marqueeBrands} />
 
       <DiferencaPrecos product={showcaseProduct} />
 
-      <HomeBanner />
 
       <div className="pt-2">
         <CompararPreview products={compareProducts} />
