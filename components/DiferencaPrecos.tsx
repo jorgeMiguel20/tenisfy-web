@@ -11,6 +11,11 @@ import type { ProductWithPrice } from '@/lib/types'
 // pequeno carrossel automatico que percorre as linhas - nunca lojas ou
 // precos inventados, so ofertas reais em stock do produto recebido.
 //
+// Paleta ajustada para bater certo com o mockup (foto 2 do feedback do
+// Jorge): tom quente/laranja em vez do cinza/branco da primeira versao -
+// fundo quase preto com um brilho quente subtil por baixo da lista de
+// lojas, etiqueta e poupanca em laranja.
+//
 // Mesma logica de bestPricePerStore/formatVerifiedLabel de ComoFunciona.tsx,
 // duplicada aqui de proposito (secao independente, para nao arriscar mexer
 // no componente existente).
@@ -79,10 +84,20 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   const verifiedLabel = formatVerifiedLabel(activeRow.lastCheckedAt)
 
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-gray-950 py-16 sm:py-20">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#0e0e0d] py-16 sm:py-20">
+      {/* Brilho quente subtil no canto onde fica a lista de lojas - so
+          decorativo, para o fundo nao ficar plano/preto puro como na
+          primeira versao (pedido do Jorge, comparando com o mockup). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: 'radial-gradient(ellipse 70% 60% at 82% 70%, rgba(194,65,12,0.22), transparent 70%)',
+        }}
+      />
       <div className="relative mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-2 sm:items-center sm:gap-16 sm:px-12">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wide text-white/50">
+          <span className="text-xs font-bold uppercase tracking-wide text-orange-500">
             O mesmo ténis, {COUNT_WORDS[storeRows.length] ?? storeRows.length} preços
           </span>
           <h2 className="font-display mt-3 text-3xl sm:text-4xl font-bold leading-tight text-white">
@@ -95,7 +110,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
           <p className="mt-6 text-4xl sm:text-5xl font-extrabold text-white">
             {formatPrice(activeRow.price)}
             {savings > 0 && (
-              <span className="ml-3 align-middle text-base font-bold text-white/50">
+              <span className="ml-3 align-middle text-base font-bold text-orange-400">
                 poupas {formatPrice(savings)}
               </span>
             )}
@@ -106,16 +121,16 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-white/10">
+        <div className="overflow-hidden rounded-2xl border border-orange-900/20">
           {storeRows.map((row, i) => (
             <div
               key={row.store}
               className={`flex items-center justify-between gap-3 px-5 py-4 transition-colors ${
-                i === active ? 'bg-white/10' : ''
+                i === active ? 'bg-orange-950/40' : ''
               } ${i > 0 ? 'border-t border-white/10' : ''}`}
             >
               <span className="flex items-center gap-3">
-                <span className={`text-xs font-bold ${i === active ? 'text-white' : 'text-white/40'}`}>
+                <span className={`text-xs font-bold ${i === active ? 'text-orange-400' : 'text-white/40'}`}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className={`text-sm ${i === active ? 'font-bold text-white' : 'text-white/60'}`}>
