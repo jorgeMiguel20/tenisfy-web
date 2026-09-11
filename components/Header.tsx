@@ -52,7 +52,7 @@ export default function Header() {
             género selecionado, mesmo se já estivermos na homepage. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gray-900 shrink-0">
-          Parjusto<span className="text-orange-600">.</span>
+          Parjusto
         </a>
 
         {searchOpen ? (
