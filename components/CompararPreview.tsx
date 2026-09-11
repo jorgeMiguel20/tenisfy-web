@@ -113,78 +113,89 @@ export default function CompararPreview({ products }: { products: ProductWithPri
         </div>
 
         {/* Coluna direita: grelha de comparacao com os 2 cartoes */}
-        <div className="relative grid flex-1 grid-cols-2 gap-4">
-              {/* Badge "vs" a meio dos 2 cartoes - pequeno toque visual do
-                  redesign que o Jorge preparou no Claude Design, sem mudar
-                  nada na logica de comparacao. */}
-              <span
-                aria-hidden="true"
-                className="absolute left-1/2 top-1/2 z-10 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-[10px] font-bold uppercase text-gray-400 shadow-sm"
-              >
-                vs
-              </span>
-          {[a, b].map((product) => {
-            const offers = groupOffers(product.product_offers ?? [])
-            const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
-            const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
-
-            // Só a primeira foto: isto é uma prévia, não a galeria completa
-            // (essa fica para a página /comparar) - uma imagem estática fica
-            // mais limpa aqui do que um carrossel com setas e pontos.
-            const firstImage = product.image_url ?? product.image_urls?.[0] ?? null
-
-            return (
-              <div key={product.id} className="flex flex-col gap-2">
+        <div className="flex-1">
+          {/* Fotos dos 2 ténis, num grid a parte so para elas - o badge "vs"
+              fica ancorado so a esta linha (nao ao cartao todo, texto e
+              specs incluidos), para ficar mesmo junto as fotos e nao a
+              flutuar a meio do cartao (pedido do Jorge, comparando com o
+              mockup: cor preta e posicao junto as fotos). */}
+          <div className="relative grid grid-cols-2 gap-4">
+            <span
+              aria-hidden="true"
+              className="absolute left-1/2 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold uppercase text-white shadow-md ring-2 ring-white"
+            >
+              vs
+            </span>
+            {[a, b].map((product) => {
+              // Só a primeira foto: isto é uma prévia, não a galeria completa
+              // (essa fica para a página /comparar) - uma imagem estática fica
+              // mais limpa aqui do que um carrossel com setas e pontos.
+              const firstImage = product.image_url ?? product.image_urls?.[0] ?? null
+              return (
                 <ProductGallery
+                  key={product.id}
                   images={firstImage ? [firstImage] : []}
                   alt={product.model_name}
                   compact
                   imageBoxClassName="aspect-square"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
+              )
+            })}
+          </div>
 
-                <div>
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
-                  <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
+          {/* Nome, preço e specs - grid separado, por baixo das fotos. */}
+          <div className="mt-2 grid grid-cols-2 gap-4">
+            {[a, b].map((product) => {
+              const offers = groupOffers(product.product_offers ?? [])
+              const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
+              const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
+
+              return (
+                <div key={product.id} className="flex flex-col gap-2">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
+                    <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
+                  </div>
+
+                  {lowestPrice != null ? (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-lg font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                      {isCheapest && (
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                          Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">Sem oferta disponível</p>
+                  )}
+
+                  {specRows.length > 0 && (
+                    <div className="mt-0.5 space-y-1 text-xs">
+                      {specRows.map(({ key, label }) => {
+                        const value = product[key]
+                        const isDifferent = differingLabels.has(label)
+                        return (
+                          <p
+                            key={label}
+                            className={isDifferent ? 'rounded-md bg-orange-50 px-1.5 py-1' : 'px-1.5 py-1'}
+                          >
+                            <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
+                              {label}:
+                            </span>{' '}
+                            <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
+                              {value ?? '—'}
+                            </span>
+                          </p>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-
-                {lowestPrice != null ? (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="text-lg font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
-                    {isCheapest && (
-                      <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                        Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400">Sem oferta disponível</p>
-                )}
-
-                {specRows.length > 0 && (
-                  <div className="mt-0.5 space-y-1 text-xs">
-                    {specRows.map(({ key, label }) => {
-                      const value = product[key]
-                      const isDifferent = differingLabels.has(label)
-                      return (
-                        <p
-                          key={label}
-                          className={isDifferent ? 'rounded-md bg-orange-50 px-1.5 py-1' : 'px-1.5 py-1'}
-                        >
-                          <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
-                            {label}:
-                          </span>{' '}
-                          <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
-                            {value ?? '—'}
-                          </span>
-                        </p>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </div>
     </section>
