@@ -1,6 +1,7 @@
 // app/page.tsx
 import HomeHero from '@/components/HomeHero'
 import HomeMarquee from '@/components/HomeMarquee'
+import DiferencaPrecos from '@/components/DiferencaPrecos'
 import HomeBanner from '@/components/HomeBanner'
 import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
@@ -128,12 +129,14 @@ export default async function Home() {
 
       <HomeMarquee brands={marqueeBrands} />
 
+      <DiferencaPrecos product={showcaseProduct} />
+
       <HomeBanner />
 
       <div className="pt-2">
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
-        <ComoFunciona showcaseProduct={showcaseProduct} hasNextSection={topDeals.length > 0} />
+        <ComoFunciona />
         <MaiorPoupancaAgora products={topDeals} />
         {/* Produto real usado como exemplo na nova seccao de alertas de preco
             (pedido do Jorge, saiu do Hero) - a mesma prioridade do "Como
