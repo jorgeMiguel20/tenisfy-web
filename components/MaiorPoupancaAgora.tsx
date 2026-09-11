@@ -59,6 +59,9 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
+              <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-green-700 shadow-sm">
+                -{percentOff}%
+              </span>
               </div>
               <div className="p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -67,12 +70,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                 </p>
                 <h3 className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</h3>
                 {sizeRange && <p className="text-xs text-gray-400 mb-3">{sizeRange}</p>}
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                    -{percentOff}%
-                  </span>
-                  <span className="text-gray-400 line-through text-sm">{formatPrice(previousPrice)}</span>
-                </div>
+                <p className="text-gray-400 line-through text-sm">{formatPrice(previousPrice)}</p>
                 <p className="text-xl font-extrabold text-orange-600 mt-0.5">{formatPrice(currentPrice)}</p>
               </div>
             </Link>
