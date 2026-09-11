@@ -42,7 +42,7 @@ export default function HomeHero({ popularSearches = [] }: { popularSearches?: P
             Encontra o par certo.
             <br />
             Ao preço{' '}
-            <span className="underline decoration-orange-500 decoration-4 underline-offset-[7px]">
+            <span className="underline decoration-white decoration-4 underline-offset-[7px]">
               certo
             </span>
             .
