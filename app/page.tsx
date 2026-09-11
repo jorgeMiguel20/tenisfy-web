@@ -1,5 +1,6 @@
 // app/page.tsx
 import HomeHero from '@/components/HomeHero'
+import HomeMarquee from '@/components/HomeMarquee'
 import HomeBanner from '@/components/HomeBanner'
 import CompararPreview from '@/components/CompararPreview'
 import PesquisaPorFoto from '@/components/PesquisaPorFoto'
@@ -59,7 +60,6 @@ export default async function Home() {
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
     .slice(0, 4)
 
-
   // 2 produtos reais para a prévia do "Comparar" (nunca dados de exemplo
   // inventados) - com foto e preço. Nunca compara calçado de criança com
   // adulto (pedido do Jorge): os 2 vêm sempre do mesmo grupo - mesma regra
@@ -106,9 +106,27 @@ export default async function Home() {
     showcaseProduct ??
     null
 
+  // Atalhos de pesquisa "Populares" no Hero: os 3 modelos reais com mais
+  // lojas comparaveis agora, nunca uma lista fixa (ideia do redesign que o
+  // Jorge preparou no Claude Design, adaptada a dados verdadeiros).
+  const popularSearches = [...productsWithPrice]
+    .filter((p) => (p.store_count ?? 0) > 0)
+    .sort((a, b) => (b.store_count ?? 0) - (a.store_count ?? 0))
+    .filter((p, i, arr) => arr.findIndex((x) => x.model_name === p.model_name) === i)
+    .slice(0, 3)
+    .map((p) => ({ label: p.model_name, href: `/catalogo?q=${encodeURIComponent(p.model_name)}` }))
+
+  // Faixa de marcas reais para o HomeMarquee - so marcas que existem mesmo
+  // no catalogo carregado agora (nunca uma lista generica inventada).
+  const marqueeBrands = Array.from(
+    new Set(productsWithPrice.map((p) => p.brands?.name).filter((name): name is string => Boolean(name)))
+  ).sort((a, b) => a.localeCompare(b))
+
   return (
     <main className="max-w-7xl mx-auto px-6 pb-10">
-      <HomeHero />
+      <HomeHero popularSearches={popularSearches} />
+
+      <HomeMarquee brands={marqueeBrands} />
 
       <HomeBanner />
 
