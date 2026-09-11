@@ -113,7 +113,16 @@ export default function CompararPreview({ products }: { products: ProductWithPri
         </div>
 
         {/* Coluna direita: grelha de comparacao com os 2 cartoes */}
-        <div className="grid flex-1 grid-cols-2 gap-4">
+        <div className="relative grid flex-1 grid-cols-2 gap-4">
+              {/* Badge "vs" a meio dos 2 cartoes - pequeno toque visual do
+                  redesign que o Jorge preparou no Claude Design, sem mudar
+                  nada na logica de comparacao. */}
+              <span
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 z-10 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-100 bg-white text-[10px] font-bold uppercase text-gray-400 shadow-sm"
+              >
+                vs
+              </span>
           {[a, b].map((product) => {
             const offers = groupOffers(product.product_offers ?? [])
             const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
