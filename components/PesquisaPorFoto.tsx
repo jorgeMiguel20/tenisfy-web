@@ -10,7 +10,7 @@ export default function PesquisaPorFoto() {
   return (
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
       <div>
-        {/* orange-700 (não orange-600) por contraste - ver nota em CompararPreview.tsx */}
+        {/* orange-700 (não orange-600) por contraste - ver nota abaixo */}
         <span className="text-orange-700 text-xs font-bold uppercase tracking-wide">Pesquisa por foto</span>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">
           Viste uns ténis na rua? Tira uma foto.
@@ -33,6 +33,32 @@ export default function PesquisaPorFoto() {
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent"
         />
+
+        {/* Barra de scanner animada - ilustra visualmente a pesquisa por
+            foto a "ler" a imagem, tal como no mockup v2 do Jorge (foto 7 do
+            feedback). Puramente decorativa (aria-hidden), CSS puro via
+            <style> aqui dentro para nao depender de nenhuma configuracao
+            extra do Tailwind. */}
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 bottom-0 overflow-hidden">
+          <div className="pjt-scan-line absolute inset-x-0 h-12 -top-12" />
+        </div>
+        <style>{`
+          @keyframes pjt-scan {
+            0% { top: -3rem; }
+            50% { top: 100%; }
+            100% { top: -3rem; }
+          }
+          .pjt-scan-line {
+            background: linear-gradient(
+              to bottom,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.85) 50%,
+              rgba(255, 255, 255, 0) 100%
+            );
+            box-shadow: 0 0 16px 2px rgba(255, 255, 255, 0.55);
+            animation: pjt-scan 2.6s ease-in-out infinite;
+          }
+        `}</style>
       </div>
     </section>
   )
