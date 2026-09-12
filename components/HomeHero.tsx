@@ -12,7 +12,7 @@ import HomeHeroButtons from './HomeHeroButtons'
 // pesquisa no cabecalho.
 export default function HomeHero() {
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden sm:aspect-[16/9] sm:min-h-[320px] sm:max-h-[440px] flex items-center">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden sm:min-h-[85vh] sm:max-h-[840px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/hero-bg.jpg"
