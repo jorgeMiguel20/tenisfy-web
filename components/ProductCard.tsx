@@ -152,7 +152,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
         {lowestPrice ? (
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-extrabold text-orange-600">
+              <span className="text-xl font-extrabold text-gray-900">
                 {formatPrice(lowestPrice)}
               </span>
               {storeCount > 0 && (
