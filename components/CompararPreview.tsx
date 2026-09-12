@@ -160,7 +160,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
                   {lowestPrice != null ? (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-lg font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                      <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
                       {isCheapest && (
                         <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
                           Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
