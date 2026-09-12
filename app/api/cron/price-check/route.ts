@@ -31,6 +31,7 @@
 // a primeira tentativa.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { runFootLockerScraper } from '@/lib/priceScrapers/footlocker'
 import { runCollectKicksScraper } from '@/lib/priceScrapers/collectkicks'
 import { runNikeScraper } from '@/lib/priceScrapers/nike'
@@ -65,9 +66,32 @@ function isCronAuthorized(request: NextRequest): boolean {
 
 type StoreSummary = { attempted: number; resolved: number; note?: string }
 
+// Apaga alertas de preço cujo prazo de "Expiração" (1 ou 2 meses, escolhido
+// pelo utilizador ao criar o alerta - ver app/produto/[slug]/priceAlertActions.ts)
+// já passou. Reaproveita este cron diário em vez de criar um agendamento
+// novo só para isto. Nunca deixa uma falha aqui impedir a verificação de
+// preços em si, que é o trabalho principal deste endpoint.
+async function deleteExpiredPriceAlerts(): Promise<void> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) return
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey)
+  const { error } = await supabase.from('price_alerts').delete().lt('expires_at', new Date().toISOString())
+  if (error) {
+    console.error('Falha ao apagar alertas de preço expirados:', error)
+  }
+}
+
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Nao autorizado.' }, { status: 401 })
+  }
+
+  try {
+    await deleteExpiredPriceAlerts()
+  } catch (err) {
+    console.error('Falha ao apagar alertas de preço expirados:', err)
   }
 
   const apiKey = process.env.PRICE_SYNC_API_KEY
