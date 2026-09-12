@@ -34,7 +34,10 @@ export default function PriceAlertForm({
     const price = parseFloat(targetPrice.replace(',', '.'))
     setStatus('loading')
 
-    const result = await createPriceAlert(productId, email, price)
+    // Este formulário não tem seletor de "Expiração" (parece não estar em uso
+  // em lado nenhum do site - ver PriceAlertButton.tsx para o modal real com
+  // essa opção), por isso usa sempre o valor mínimo (1 mês) por omissão.
+  const result = await createPriceAlert(productId, email, price, 1)
 
     if (result.success) {
       setStatus('done')
