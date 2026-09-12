@@ -131,47 +131,75 @@ function EmptyState({ title, description }: { title: string; description: string
 // aparece na grelha partilhada mais abaixo (ver CompararPage), sempre depois
 // das características - tal como no design do Jorge, em vez de logo a
 // seguir ao preço como estava antes.
-function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: string }) {
+function StorePricesBlock({
+  offers,
+  slug,
+  fillHeight = false,
+}: {
+  offers: GroupedOffer[]
+  slug: string
+  // Só usado na grelha partilhada de desktop (ver mais abaixo): estica o
+  // bloco até à altura da linha da grelha (a mesma altura da coluna mais
+  // alta) e empurra o botão "Ver detalhe" para o fundo, para os três botões
+  // ficarem sempre alinhados na mesma fila, mesmo quando um produto tem
+  // mais lojas com stock do que os outros. Em telemóvel/tablet mantém-se o
+  // espaçamento fixo de sempre (mt-3).
+  fillHeight?: boolean
+}) {
+  const storeBox = offers.length > 0 && (
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
+      <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        Preços por loja
+      </p>
+      {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
+          apertado (minmax(0,...)); a coluna do preço fica sempre
+          "auto" pura, sem encolher, para nunca cortar o valor. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
+        {offers.map((offer, offerIndex) => {
+          const isLast = offerIndex === offers.length - 1
+          const cellBorder = isLast ? '' : 'border-b border-gray-50'
+          return (
+            <Fragment key={offer.store}>
+              <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
+              <div className={`p-3 text-center ${cellBorder}`}>
+                {offerIndex === 0 && offers.length > 1 && (
+                  <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                    Melhor preço
+                  </span>
+                )}
+              </div>
+              <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
+                {formatPrice(offer.price)}
+              </div>
+            </Fragment>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  const detailLink = (
+    <Link
+      href={`/produto/${slug}`}
+      className={`${fillHeight ? 'mt-auto' : 'mt-3'} flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors`}
+    >
+      Ver detalhe
+    </Link>
+  )
+
+  if (fillHeight) {
+    return (
+      <div className="flex flex-col h-full">
+        {storeBox}
+        {detailLink}
+      </div>
+    )
+  }
+
   return (
     <>
-      {offers.length > 0 && (
-        <div className="border border-gray-100 rounded-xl overflow-hidden">
-          <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-            Preços por loja
-          </p>
-          {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
-              apertado (minmax(0,...)); a coluna do preço fica sempre
-              "auto" pura, sem encolher, para nunca cortar o valor. */}
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
-            {offers.map((offer, offerIndex) => {
-              const isLast = offerIndex === offers.length - 1
-              const cellBorder = isLast ? '' : 'border-b border-gray-50'
-              return (
-                <Fragment key={offer.store}>
-                  <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
-                  <div className={`p-3 text-center ${cellBorder}`}>
-                    {offerIndex === 0 && offers.length > 1 && (
-                      <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                        Melhor preço
-                      </span>
-                    )}
-                  </div>
-                  <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
-                    {formatPrice(offer.price)}
-                  </div>
-                </Fragment>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      <Link
-        href={`/produto/${slug}`}
-        className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
-      >
-        Ver detalhe
-      </Link>
+      {storeBox}
+      {detailLink}
     </>
   )
 }
@@ -505,7 +533,11 @@ export default async function CompararPage({
               // grelha em vez de uma só, desalinhando tudo a partir do
               // segundo produto.
               <div key={product.id}>
-                <StorePricesBlock offers={compareData[index].offers} slug={product.slug} />
+                {/* fillHeight: estica o bloco até à altura da linha da
+                    grelha (align-items: stretch por omissão), empurrando o
+                    botão "Ver detalhe" para o fundo com mt-auto, para os
+                    três botões ficarem sempre alinhados na mesma fila. */}
+                <StorePricesBlock offers={compareData[index].offers} slug={product.slug} fillHeight />
               </div>
             ))}
           </div>
