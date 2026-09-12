@@ -545,7 +545,13 @@ export default async function ProdutoPage({
             <div className="flex items-center gap-1.5 shrink-0">
               <FavoriteButton slug={product.slug} />
               {groupedOffers.length > 0 && (
-                <PriceAlertButton productId={product.id} currentPrice={groupedOffers[0]?.price ?? null} />
+                <PriceAlertButton
+              productId={product.id}
+              currentPrice={groupedOffers[0]?.price ?? null}
+              imageUrl={product.image_url}
+              brandName={product.brands?.name}
+              modelName={product.model_name}
+            />
               )}
             </div>
           </div>
