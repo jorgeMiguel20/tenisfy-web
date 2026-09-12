@@ -14,7 +14,7 @@ export default function HeaderSearchButton() {
       type="button"
       onClick={() => openSearchModal()}
       aria-label="Pesquisar"
-      className="flex items-center justify-center min-h-[44px] min-w-[44px] text-gray-600 hover:text-orange-600 transition-colors"
+      className="flex items-center justify-center min-h-[44px] min-w-[44px] text-gray-600 hover:text-gray-900 transition-colors"
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="11" cy="11" r="7" />
