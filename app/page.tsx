@@ -118,6 +118,8 @@ export default async function Home() {
 
       <DiferencaPrecos product={showcaseProduct} />
 
+      <MaiorPoupancaAgora products={topDeals} />
+
       <HomeMarquee brands={marqueeBrands} />
 
 
@@ -125,7 +127,6 @@ export default async function Home() {
         <CompararPreview products={compareProducts} />
         <PesquisaPorFoto />
         <ComoFunciona />
-        <MaiorPoupancaAgora products={topDeals} />
         {/* Produto real usado como exemplo na nova seccao de alertas de preco
             (pedido do Jorge, saiu do Hero) - a mesma prioridade do "Como
             funciona": preferir quem tem descida de preco recente, com o
