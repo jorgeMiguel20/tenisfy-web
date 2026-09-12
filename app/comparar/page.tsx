@@ -241,7 +241,7 @@ export default async function CompararPage({
 
               {lowestPrice ? (
                 <div className="flex items-center gap-2">
-                  <p className="text-2xl font-extrabold text-orange-600">{formatPrice(lowestPrice)}</p>
+                  <p className="text-2xl font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
                   {isCheapest && (
                     <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
                       Mais barato
