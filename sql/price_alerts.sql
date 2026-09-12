@@ -28,10 +28,20 @@ create table if not exists price_alerts (
 
   created_at timestamptz not null default now(),
 
+  -- "Expiração" (pedido do Jorge): o utilizador escolhe 1 ou 2 meses ao
+  -- criar o alerta, e o cron diário (app/api/cron/price-check/route.ts)
+  -- apaga o alerta assim que este prazo passa. Adicionado depois da tabela
+  -- já existir - ver comando "alter table" mais abaixo.
+  expires_at timestamptz,
+
   -- Um alerta por combinação produto+e-mail - criar de novo atualiza o
   -- preço-alvo em vez de duplicar.
   unique (product_id, email)
 );
+
+-- Migração aplicada em 2026-09 a uma tabela já existente (o "create table"
+-- acima já inclui expires_at para quem recriar a tabela de raiz):
+-- alter table price_alerts add column if not exists expires_at timestamptz;
 
 -- Acelera a consulta feita depois de cada preço aprovado em
 -- app/admin/precos/proposalActions.ts (só os alertas que ainda podem
