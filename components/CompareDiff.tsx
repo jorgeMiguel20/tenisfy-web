@@ -128,7 +128,17 @@ export function CompareCriteriaTable({ rows, columnCount }: { rows: CompareRowDa
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+          // Espaço entre linhas para a cor branca do fundo (bg-white acima)
+          // aparecer sempre a separar uma característica da seguinte, mesmo
+          // quando as duas têm o mesmo fundo (ex.: duas linhas laranja
+          // seguidas) - pedido do Jorge.
+          rowGap: '6px',
+        }}
+      >
         {visibleRows.flatMap((row) =>
           Array.from({ length: columnCount }, (_, columnIndex) => (
             <div
