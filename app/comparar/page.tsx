@@ -499,7 +499,14 @@ export default async function CompararPage({
             style={{ gridTemplateColumns: `repeat(${ordered.length}, minmax(0, 1fr))` }}
           >
             {ordered.map((product, index) => (
-              <StorePricesBlock key={product.id} offers={compareData[index].offers} slug={product.slug} />
+              // Envolvido num div próprio: o StorePricesBlock devolve dois
+              // elementos (a caixa de lojas + o botão "Ver detalhe"), por
+              // isso sem este wrapper cada produto ocupava DUAS células da
+              // grelha em vez de uma só, desalinhando tudo a partir do
+              // segundo produto.
+              <div key={product.id}>
+                <StorePricesBlock offers={compareData[index].offers} slug={product.slug} />
+              </div>
             ))}
           </div>
         )}
