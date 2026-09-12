@@ -144,7 +144,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             })}
           </div>
 
-          {/* Nome, preço e specs - grid separado, por baixo das fotos. */}
+          {/* Nome e preço - grid separado, por baixo das fotos. min-h no preço
+            para as 2 colunas ficarem à mesma altura mesmo quando só uma
+            tem o selo "Mais barato" - assim as especificações a seguir
+            comecam sempre na mesma linha nas 2 colunas. */}
           <div className="mt-2 grid grid-cols-2 gap-4">
             {[a, b].map((product) => {
               const offers = groupOffers(product.product_offers ?? [])
@@ -158,44 +161,52 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                     <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
                   </div>
 
-                  {lowestPrice != null ? (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
-                      {isCheapest && (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                          Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400">Sem oferta disponível</p>
-                  )}
-
-                  {specRows.length > 0 && (
-                    <div className="mt-0.5 space-y-1 text-xs">
-                      {specRows.map(({ key, label }) => {
-                        const value = product[key]
-                        const isDifferent = differingLabels.has(label)
-                        return (
-                          <p
-                            key={label}
-                            className={isDifferent ? 'rounded-md bg-orange-50 px-1.5 py-1' : 'px-1.5 py-1'}
-                          >
-                            <span className={isDifferent ? 'font-semibold text-gray-900' : 'font-semibold text-gray-700'}>
-                              {label}:
-                            </span>{' '}
-                            <span className={isDifferent ? 'font-medium text-gray-800' : 'text-gray-600'}>
-                              {value ?? '—'}
-                            </span>
-                          </p>
-                        )
-                      })}
-                    </div>
-                  )}
+                  <div className="flex min-h-[26px] flex-wrap items-center gap-1.5">
+                    {lowestPrice != null ? (
+                      <>
+                        <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
+                        {isCheapest && (
+                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                            Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400">Sem oferta disponível</p>
+                    )}
+                  </div>
                 </div>
               )
             })}
           </div>
+
+          {/* Especificações: UMA SÓ grelha CSS com 2 colunas (em vez de 2
+              colunas de texto empilhadas de forma independente) - assim
+              cada característica (Material, Sola, Fecho, Cor) fica sempre
+              à MESMA altura nas 2 colunas, mesmo quando um dos textos é
+              bem mais comprido (ex.: a "Sola" do Gel-Kayano vs a da
+              Ultraboost) - mesma técnica da tabela grande do /comparar.
+              Envolvida numa caixa branca para o espaço entre linhas
+              mostrar sempre branco a sério (não o creme da secção) -
+              pedido do Jorge, confirmado com exemplo. */}
+          {specRows.length > 0 && (
+            <div className="mt-2 rounded-2xl bg-white p-1.5">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                {specRows.flatMap(({ key, label }) => {
+                  const isDifferent = differingLabels.has(label)
+                  return [a, b].map((product) => (
+                    <div
+                      key={`${label}-${product.id}`}
+                      className={`rounded-xl px-3 py-2 text-xs ${isDifferent ? 'bg-orange-50' : 'bg-white'}`}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-black">{label}</p>
+                      <p className="mt-0.5 text-gray-800">{product[key] ?? '—'}</p>
+                    </div>
+                  ))
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>
