@@ -116,9 +116,9 @@ export default async function Home() {
     <main className="max-w-7xl mx-auto px-6 pb-10">
       <HomeHero />
 
-      <HomeMarquee brands={marqueeBrands} />
-
       <DiferencaPrecos product={showcaseProduct} />
+
+      <HomeMarquee brands={marqueeBrands} />
 
 
       <div className="pt-2">
