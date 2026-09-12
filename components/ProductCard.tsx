@@ -83,7 +83,15 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             <span />
           )}
           <div className="flex items-center gap-2">
-            {lowestPrice != null && <PriceAlertButton productId={product.id} currentPrice={lowestPrice} />}
+            {lowestPrice != null && (
+                <PriceAlertButton
+                  productId={product.id}
+                  currentPrice={lowestPrice}
+                  imageUrl={product.image_url}
+                  brandName={product.brands?.name}
+                  modelName={product.model_name}
+                />
+              )}
             <FavoriteButton slug={product.slug} />
           </div>
         </div>
