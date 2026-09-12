@@ -117,7 +117,11 @@ export default function PriceAlertButton({
   }
 
   return (
-    <div className={`relative ${className}`}>
+    // inline-block (em vez de block, que ocupava a largura toda do
+    // container): assim a seta que simula um toque fica sempre encostada
+    // ao canto do botão "Criar alerta grátis" (-bottom-2 -right-3 abaixo),
+    // em vez de aparecer longe do botão, a meio do espaço vazio à direita.
+    <div className={`relative inline-block ${className}`}>
       {/* variant "large" (usado no PriceAlertBanner.tsx da homepage) mostra
           um botao cheio com texto, em vez do circulo pequeno so com o sino
           usado nos cards do catalogo - a logica do alerta em si (modal,
