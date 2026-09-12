@@ -125,6 +125,57 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
+// Bloco "Preços por loja" + botão "Ver detalhe" de um produto. Extraído para
+// ser usado duas vezes com os mesmos dados: em telemóvel/tablet aparece
+// dentro do próprio cartão (depois das características), e a partir de lg
+// aparece na grelha partilhada mais abaixo (ver CompararPage), sempre depois
+// das características - tal como no design do Jorge, em vez de logo a
+// seguir ao preço como estava antes.
+function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: string }) {
+  return (
+    <>
+      {offers.length > 0 && (
+        <div className="border border-gray-100 rounded-xl overflow-hidden">
+          <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Preços por loja
+          </p>
+          {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
+              apertado (minmax(0,...)); a coluna do preço fica sempre
+              "auto" pura, sem encolher, para nunca cortar o valor. */}
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
+            {offers.map((offer, offerIndex) => {
+              const isLast = offerIndex === offers.length - 1
+              const cellBorder = isLast ? '' : 'border-b border-gray-50'
+              return (
+                <Fragment key={offer.store}>
+                  <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
+                  <div className={`p-3 text-center ${cellBorder}`}>
+                    {offerIndex === 0 && offers.length > 1 && (
+                      <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                        Melhor preço
+                      </span>
+                    )}
+                  </div>
+                  <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
+                    {formatPrice(offer.price)}
+                  </div>
+                </Fragment>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <Link
+        href={`/produto/${slug}`}
+        className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
+      >
+        Ver detalhe
+      </Link>
+    </>
+  )
+}
+
 export default async function CompararPage({
   searchParams,
 }: {
@@ -395,58 +446,29 @@ export default async function CompararPage({
                 </div>
 
                 {/* Em telemóvel/tablet (<lg) os cartões ficam empilhados um a
-                    seguir ao outro, por isso as linhas de cada produto
-                    aparecem aqui dentro, na sua própria altura. A partir de
-                    lg os cartões passam a lado a lado e as linhas saem daqui
-                    (ver CompareCriteriaTable mais abaixo) para poderem ficar
-                    alinhadas entre colunas mesmo quando um produto tem um
-                    texto mais comprido nalgum critério. */}
-                {ordered.length > 1 && (
-                  <div className="border-t border-gray-100 lg:hidden">
-                    <CompareRows rows={rows} columnIndex={index} />
+                    seguir ao outro, por isso aqui dentro aparecem primeiro as
+                    características do produto e só depois os preços por loja
+                    - a mesma ordem do design do Jorge. A partir de lg os
+                    cartões passam a lado a lado e tanto as características
+                    como os preços por loja saem daqui para os blocos
+                    partilhados mais abaixo (CompareCriteriaTable e a grelha
+                    de preços por loja), para poderem ficar alinhados entre
+                    colunas mesmo quando um produto tem um texto mais
+                    comprido nalgum critério ou mais lojas com stock. */}
+                {ordered.length > 1 ? (
+                  <>
+                    <div className="border-t border-gray-100 lg:hidden">
+                      <CompareRows rows={rows} columnIndex={index} />
+                    </div>
+                    <div className="p-4 mt-auto border-t border-gray-100 lg:hidden">
+                      <StorePricesBlock offers={data.offers} slug={product.slug} />
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-4 mt-auto">
+                    <StorePricesBlock offers={data.offers} slug={product.slug} />
                   </div>
                 )}
-
-                <div className="p-4 mt-auto">
-                  {data.offers.length > 0 && (
-                    <div className="border border-gray-100 rounded-xl overflow-hidden">
-                      <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                        Preços por loja
-                      </p>
-                      {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
-                          apertado (minmax(0,...)); a coluna do preço fica sempre
-                          "auto" pura, sem encolher, para nunca cortar o valor. */}
-                      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
-                        {data.offers.map((offer, offerIndex) => {
-                          const isLast = offerIndex === data.offers.length - 1
-                          const cellBorder = isLast ? '' : 'border-b border-gray-50'
-                          return (
-                            <Fragment key={offer.store}>
-                              <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
-                              <div className={`p-3 text-center ${cellBorder}`}>
-                                {offerIndex === 0 && data.offers.length > 1 && (
-                                  <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                                    Melhor preço
-                                  </span>
-                                )}
-                              </div>
-                              <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
-                                {formatPrice(offer.price)}
-                              </div>
-                            </Fragment>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <Link
-                    href={`/produto/${product.slug}`}
-                    className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
-                  >
-                    Ver detalhe
-                  </Link>
-                </div>
               </div>
             )
           })}
@@ -463,6 +485,22 @@ export default async function CompararPage({
         {ordered.length > 1 && (
           <div className="hidden lg:block mt-6">
             <CompareCriteriaTable rows={rows} columnCount={ordered.length} />
+          </div>
+        )}
+
+        {/* Espaço a separar as características dos preços por loja (pedido
+            do Jorge, tal como no design dele) e só depois, em coluna com
+            cada produto, os preços por loja + "Ver detalhe" - a mesma ordem
+            de cada cartão em telemóvel/tablet, aqui numa grelha para os 3
+            produtos ficarem lado a lado a partir de lg. */}
+        {ordered.length > 1 && (
+          <div
+            className="hidden lg:grid gap-6 mt-6"
+            style={{ gridTemplateColumns: `repeat(${ordered.length}, minmax(0, 1fr))` }}
+          >
+            {ordered.map((product, index) => (
+              <StorePricesBlock key={product.id} offers={compareData[index].offers} slug={product.slug} />
+            ))}
           </div>
         )}
       </CompareDiffProvider>
