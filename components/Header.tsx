@@ -26,7 +26,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <div className="h-[3px] bg-orange-600" aria-hidden="true" />
+      <div className="h-[4px] bg-orange-600" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 flex items-center gap-1.5 sm:gap-8">
         {/* No mobile o hamburger fica à esquerda e o "Parjusto" centrado -
             esta zona (flex-1) equilibra o espaço com a zona espelho da
@@ -52,7 +52,7 @@ export default function Header() {
             género selecionado, mesmo se já estivermos na homepage. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="font-display text-xl sm:text-2xl font-bold tracking-tight text-gray-900 shrink-0">
-          Parjusto
+          Par<span className="text-orange-600">justo</span>
         </a>
 
         {searchOpen ? (
