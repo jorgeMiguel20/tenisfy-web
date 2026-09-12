@@ -189,7 +189,7 @@ function StoreOfferCard({
       </div>
 
       <div className="flex flex-row items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
-        <span className="text-2xl font-bold text-orange-600">{formatPrice(offer.price)}</span>
+        <span className="text-2xl font-bold text-gray-900">{formatPrice(offer.price)}</span>
         <a
           href={buildOfferUrl(offer)}
           target="_blank"
