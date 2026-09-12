@@ -3,7 +3,9 @@
 
 import { useEffect, useId, useState, useSyncExternalStore, type FormEvent, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { createPriceAlert } from '@/app/produto/[slug]/priceAlertActions'
+import { formatPrice } from '@/lib/formatPrice'
 
 function BellIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -42,11 +44,17 @@ export default function PriceAlertButton({
   currentPrice,
   className = '',
   variant = 'compact',
+  imageUrl = null,
+  brandName = '',
+  modelName = '',
 }: {
   productId: string
   currentPrice: number | null
   className?: string
   variant?: 'compact' | 'large'
+  imageUrl?: string | null
+  brandName?: string
+  modelName?: string
 }) {
   const id = useId()
   const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
@@ -54,7 +62,22 @@ export default function PriceAlertButton({
 
   const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState('')
-  const [targetPrice, setTargetPrice] = useState('')
+  // Slider do "Valor máximo desejado": intervalo entre metade e ~99% do
+  // preço atual, para o utilizador sempre poder escolher um valor abaixo do
+  // preço de hoje (não faria sentido um alerta igual ou acima do preço
+  // atual). Sem preço atual (raro - produto sem oferta), usa um intervalo
+  // genérico.
+  const sliderMin = currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.5)) : 1
+  const sliderMax = currentPrice != null ? Math.max(sliderMin + 1, Math.round(currentPrice * 0.99)) : 100
+  const [targetPrice, setTargetPrice] = useState(() =>
+    currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.9)) : 50
+  )
+  const sliderPercent = Math.min(100, Math.max(0, Math.round(((targetPrice - sliderMin) / (sliderMax - sliderMin)) * 100)))
+  // "Expiração": ao fim de 1 ou 2 meses o alerta é eliminado automaticamente
+  // (ver app/produto/[slug]/priceAlertActions.ts e o cron diário que faz a
+  // limpeza). Pedido do Jorge: mesmo estilo preto/branco do resto do site,
+  // nunca a cor azul/turquesa do mockup original dele.
+  const [durationMonths, setDurationMonths] = useState<1 | 2>(1)
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
   // Dica de "toque" ocasional no botao grande (seccao de alertas da
@@ -98,10 +121,9 @@ export default function PriceAlertButton({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     e.stopPropagation()
-    const price = parseFloat(targetPrice.replace(',', '.'))
     setStatus('loading')
 
-    const result = await createPriceAlert(productId, email, price)
+    const result = await createPriceAlert(productId, email, targetPrice, durationMonths)
 
     if (result.success) {
       setStatus('done')
@@ -115,6 +137,8 @@ export default function PriceAlertButton({
       setMessage(result.error)
     }
   }
+
+  const hasHeaderInfo = Boolean(modelName || imageUrl)
 
   return (
     // inline-block (em vez de block, que ocupava a largura toda do
@@ -200,6 +224,46 @@ export default function PriceAlertButton({
         `}</style>
       )}
 
+      {/* Estilo do slider de "Valor máximo desejado" - input nativo type=range
+          com aparencia customizada (faixa preenchida a preto ate ao ponto
+          escolhido, pega branca com contorno preto), para bater certo com o
+          resto do modal. Fica sempre disponivel (nao depende da variante),
+          por isso e um bloco de estilo aparte do de cima. */}
+      <style>{`
+        .price-alert-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 6px;
+          border-radius: 999px;
+          background: linear-gradient(to right, #111827 0%, #111827 var(--slider-percent), #f3f4f6 var(--slider-percent), #f3f4f6 100%);
+          outline: none;
+        }
+        .price-alert-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 999px;
+          background: #fff;
+          border: 2px solid #111827;
+          cursor: pointer;
+        }
+        .price-alert-slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 999px;
+          background: #fff;
+          border: 2px solid #111827;
+          cursor: pointer;
+        }
+        .price-alert-slider::-moz-range-track {
+          height: 6px;
+          border-radius: 999px;
+          background: transparent;
+        }
+      `}</style>
+
       {mounted && open && createPortal(
         <div
           role="dialog"
@@ -207,54 +271,118 @@ export default function PriceAlertButton({
           onClick={close}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         >
-          <div onClick={stopNav} className="w-full max-w-xs rounded-2xl bg-white p-4 shadow-xl">
+          <div onClick={stopNav} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            {/* Cabeçalho com o produto (foto/marca/nome/preço atual) - pedido
+                do Jorge para o modal deixar claro para que ténis é o alerta,
+                em vez de aparecer "às cegas". */}
+            {hasHeaderInfo && (
+              <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-50">
+                  {imageUrl && (
+                    <Image src={imageUrl} alt={modelName} fill sizes="48px" className="object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    {brandName}
+                  </p>
+                  <p className="truncate text-sm font-semibold text-gray-900">{modelName}</p>
+                  {currentPrice != null && (
+                    <p className="text-xs text-gray-500">Preço atual {formatPrice(currentPrice)}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {status === 'done' ? (
               <>
-                <p className="text-sm text-green-700">{message}</p>
+                <p className={`text-sm text-green-700 ${hasHeaderInfo ? 'mt-4' : ''}`}>{message}</p>
                 <button
                   type="button"
                   onClick={close}
-                  className="mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
+                  className="mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
                 >
                   Fechar
                 </button>
               </>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
-                  <BellIcon className="h-4 w-4 text-gray-400" />
-                  Avisa-me quando descer
-                </p>
-                <input
-                  type="email"
-                  required
-                  autoFocus
-                  placeholder="o-teu-email@exemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-full border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
-                />
-                <div className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-2">
-                  <span className="text-sm text-gray-400 whitespace-nowrap">abaixo de</span>
+              <form onSubmit={handleSubmit} className="flex flex-col">
+                {/* Valor máximo desejado - preço centrado, com slider por
+                    baixo. Nada de input de texto solto (era o antigo campo
+                    "abaixo de ___ €") - fica tudo controlado pelo slider. */}
+                <div className="border-b border-gray-100 py-4 text-center">
+                  <p className="text-xs font-semibold text-gray-900">Valor máximo desejado</p>
+                  <p className="mt-2 inline-block rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-bold text-gray-900">
+                    abaixo de {formatPrice(targetPrice)}
+                  </p>
                   <input
-                    type="text"
-                    inputMode="decimal"
-                    required
-                    placeholder={currentPrice != null ? String(Math.max(1, Math.round(currentPrice * 0.9))) : '50'}
+                    type="range"
+                    min={sliderMin}
+                    max={sliderMax}
+                    step={1}
                     value={targetPrice}
-                    onChange={(e) => setTargetPrice(e.target.value)}
-                    className="w-14 text-sm outline-none"
+                    onChange={(e) => setTargetPrice(Number(e.target.value))}
+                    className="price-alert-slider mt-3"
+                    style={{ ['--slider-percent' as string]: `${sliderPercent}%` }}
+                    aria-label="Valor máximo desejado"
                   />
-                  <span className="text-sm text-gray-400">€</span>
                 </div>
 
-                {status === 'error' && <p className="text-xs text-red-600">{message}</p>}
+                {/* Expiração - elimina o alerta ao fim de 1 ou 2 meses (ver
+                    priceAlertActions.ts). Mesmo estilo preto/branco de
+                    seleção do resto do site - sem a cor azul/turquesa do
+                    mockup original do Jorge, pedido explícito dele. */}
+                <div className="border-b border-gray-100 py-4">
+                  <p className="text-xs font-semibold text-gray-900">Expiração</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Após o período especificado, o alerta será eliminado.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDurationMonths(1)}
+                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                        durationMonths === 1
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-900'
+                      }`}
+                    >
+                      1 mês
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDurationMonths(2)}
+                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                        durationMonths === 2
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white text-gray-900'
+                      }`}
+                    >
+                      2 meses
+                    </button>
+                  </div>
+                </div>
 
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="pt-4">
+                  <p className="text-xs font-semibold text-gray-900">Endereço de e-mail</p>
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    placeholder="o-teu-email@exemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                  />
+                </div>
+
+                {status === 'error' && <p className="mt-2 text-xs text-red-600">{message}</p>}
+
+                <div className="mt-4 flex items-center justify-center gap-3">
                   <button
                     type="submit"
                     disabled={status === 'loading'}
-                    className="flex-1 bg-gray-900 text-white px-3 py-2 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
+                    className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
                   >
                     {status === 'loading' ? 'A criar...' : 'Criar alerta'}
                   </button>
