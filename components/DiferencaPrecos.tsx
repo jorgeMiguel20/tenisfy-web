@@ -104,7 +104,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             A diferença que ninguém te mostra.
           </h2>
           <p className="mt-4 max-w-sm text-sm text-white/60">
-            Percorremos as lojas parceiras todos os dias e alinhamos os preços do mesmo modelo. A tua poupança é a
+            Alinhamos o preço do mesmo modelo nas lojas parceiras. A tua poupança é a
             distância entre a primeira e a última linha.
           </p>
           <p className="mt-6 text-4xl sm:text-5xl font-extrabold text-white">
