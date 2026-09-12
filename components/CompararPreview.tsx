@@ -144,37 +144,40 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             })}
           </div>
 
-          {/* Nome e preço - grid separado, por baixo das fotos. min-h no preço
-            para as 2 colunas ficarem à mesma altura mesmo quando só uma
-            tem o selo "Mais barato" - assim as especificações a seguir
-            comecam sempre na mesma linha nas 2 colunas. */}
-          <div className="mt-2 grid grid-cols-2 gap-4">
+          {/* Nome e preço: nome e preço passam a ser cada um a sua própria linha
+            de grelha, partilhada pelas 2 colunas (mesma técnica das
+            especificações mais abaixo). Sem isto, quando o nome de um
+            produto ocupa 2 linhas e o do outro só 1 (ex.: "Gel-Kayano 14
+            Black Pure Silver" vs "Ultraboost 5"), o preço ficava a
+            alturas diferentes nas 2 colunas - o min-height sozinho não
+            chegava, porque o problema era o nome, não o selo "Mais
+            barato". */}
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+            {[a, b].map((product) => (
+              <div key={`name-${product.id}`}>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
+                <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
+              </div>
+            ))}
             {[a, b].map((product) => {
               const offers = groupOffers(product.product_offers ?? [])
               const lowestPrice = offers[0]?.price ?? product.lowest_price ?? null
               const isCheapest = cheapestPrice != null && lowestPrice === cheapestPrice
 
               return (
-                <div key={product.id} className="flex flex-col gap-2">
-                  <div>
-                    <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
-                    <h3 className="mt-0.5 text-sm font-semibold text-gray-900">{product.model_name}</h3>
-                  </div>
-
-                  <div className="flex min-h-[26px] flex-wrap items-center gap-1.5">
-                    {lowestPrice != null ? (
-                      <>
-                        <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
-                        {isCheapest && (
-                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                            Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <p className="text-xs text-gray-400">Sem oferta disponível</p>
-                    )}
-                  </div>
+                <div key={`price-${product.id}`} className="flex flex-wrap items-center gap-1.5">
+                  {lowestPrice != null ? (
+                    <>
+                      <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
+                      {isCheapest && (
+                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                          Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-400">Sem oferta disponível</p>
+                  )}
                 </div>
               )
             })}
