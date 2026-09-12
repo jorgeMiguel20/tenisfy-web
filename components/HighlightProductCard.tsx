@@ -69,7 +69,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
                 {offers.length} {offers.length === 1 ? 'loja' : 'lojas'}
               </p>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-4xl font-extrabold text-orange-600">{formatPrice(bestOffer.price)}</span>
+                <span className="text-4xl font-extrabold text-gray-900">{formatPrice(bestOffer.price)}</span>
                 <span className="text-sm text-gray-500">melhor preço</span>
               </div>
               {savings && (
