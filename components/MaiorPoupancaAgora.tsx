@@ -71,7 +71,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                 <h3 className="font-semibold text-gray-900 mt-0.5 mb-1">{product.model_name}</h3>
                 {sizeRange && <p className="text-xs text-gray-400 mb-3">{sizeRange}</p>}
                 <p className="text-gray-400 line-through text-sm">{formatPrice(previousPrice)}</p>
-                <p className="text-xl font-extrabold text-orange-600 mt-0.5">{formatPrice(currentPrice)}</p>
+                <p className="text-xl font-extrabold text-gray-900 mt-0.5">{formatPrice(currentPrice)}</p>
               </div>
             </Link>
           )
