@@ -26,7 +26,6 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <div className="h-[4px] bg-orange-600" aria-hidden="true" />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 flex items-center gap-1.5 sm:gap-8">
         {/* No mobile o hamburger fica à esquerda e o "Parjusto" centrado -
             esta zona (flex-1) equilibra o espaço com a zona espelho da
