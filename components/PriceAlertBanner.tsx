@@ -66,7 +66,14 @@ export default function PriceAlertBanner({ product }: { product: ProductWithPric
               </span>
             </div>
             <div className="mt-7">
-              <PriceAlertButton productId={product.id} currentPrice={product.lowest_price} variant="large" />
+              <PriceAlertButton
+                  productId={product.id}
+                  currentPrice={product.lowest_price}
+                  variant="large"
+                  imageUrl={image}
+                  brandName={brand}
+                  modelName={product.model_name}
+                />
             </div>
           </div>
 
