@@ -50,7 +50,8 @@ async function sendConfirmationEmail(email: string, token: string, product: Prod
 export async function createPriceAlert(
   productId: string,
   email: string,
-  targetPrice: number
+  targetPrice: number,
+  durationMonths: 1 | 2
 ): Promise<CreatePriceAlertResult> {
   const trimmedEmail = email.trim().toLowerCase()
 
@@ -60,6 +61,15 @@ export async function createPriceAlert(
   if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
     return { success: false, error: 'Introduz um preço válido.' }
   }
+  if (durationMonths !== 1 && durationMonths !== 2) {
+    return { success: false, error: 'Duração de expiração inválida.' }
+  }
+
+  // "Expiração": data a partir da qual o alerta é eliminado automaticamente
+  // pelo cron diário (ver app/api/cron/price-check/route.ts) - pedido do
+  // Jorge para o utilizador poder escolher 1 ou 2 meses.
+  const expiresAt = new Date()
+  expiresAt.setMonth(expiresAt.getMonth() + durationMonths)
 
   const supabase = getServiceClient()
   if (!supabase) return { success: false, error: 'Configuração em falta no servidor.' }
@@ -82,7 +92,7 @@ export async function createPriceAlert(
   if (existing) {
     const { error: updateError } = await supabase
       .from('price_alerts')
-      .update({ target_price: targetPrice, is_active: true, last_notified_at: null })
+      .update({ target_price: targetPrice, is_active: true, last_notified_at: null, expires_at: expiresAt.toISOString() })
       .eq('id', existing.id)
 
     if (updateError) return { success: false, error: 'Não foi possível atualizar o alerta. Tenta de novo.' }
@@ -98,7 +108,7 @@ export async function createPriceAlert(
 
   const { data: inserted, error: insertError } = await supabase
     .from('price_alerts')
-    .insert({ product_id: productId, email: trimmedEmail, target_price: targetPrice })
+    .insert({ product_id: productId, email: trimmedEmail, target_price: targetPrice, expires_at: expiresAt.toISOString() })
     .select('confirmation_token')
     .single()
 
