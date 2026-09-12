@@ -137,15 +137,18 @@ export function CompareCriteriaTable({ rows, columnCount }: { rows: CompareRowDa
           // quando as duas têm o mesmo fundo (ex.: duas linhas laranja
           // seguidas) - pedido do Jorge.
           rowGap: '6px',
+          // Espaço branco também entre colunas (em vez da linha cinzenta
+          // fina que existia antes) - mesma ideia do rowGap, agora na
+          // horizontal, para separar visualmente os três produtos -
+          // pedido do Jorge, confirmado com exemplo.
+          columnGap: '24px',
         }}
       >
         {visibleRows.flatMap((row) =>
           Array.from({ length: columnCount }, (_, columnIndex) => (
             <div
               key={`${row.key}-${columnIndex}`}
-              className={`px-6 py-3 ${row.different ? 'bg-orange-50' : 'bg-white'} ${
-                columnIndex > 0 ? 'border-l border-gray-100' : ''
-              }`}
+              className={`px-6 py-3 rounded-lg ${row.different ? 'bg-orange-50' : 'bg-white'}`}
             >
               <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{row.label}</p>
               <p className="text-sm font-medium text-gray-900 mt-0.5">
