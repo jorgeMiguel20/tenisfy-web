@@ -8,7 +8,13 @@ import ProductGallery from '@/components/ProductGallery'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
 import CompareRestoreFromStorage from '@/components/CompareRestoreFromStorage'
-import { CompareDiffProvider, CompareDiffToggle, CompareRows, type CompareRowData } from '@/components/CompareDiff'
+import {
+  CompareDiffProvider,
+  CompareDiffToggle,
+  CompareRows,
+  CompareCriteriaTable,
+  type CompareRowData,
+} from '@/components/CompareDiff'
 import type { ProductWithPrice } from '@/lib/types'
 import { formatPrice } from '@/lib/formatPrice'
 import { computePriceDrop } from '@/lib/priceDrop'
@@ -388,8 +394,15 @@ export default async function CompararPage({
                   )}
                 </div>
 
+                {/* Em telemóvel/tablet (<lg) os cartões ficam empilhados um a
+                    seguir ao outro, por isso as linhas de cada produto
+                    aparecem aqui dentro, na sua própria altura. A partir de
+                    lg os cartões passam a lado a lado e as linhas saem daqui
+                    (ver CompareCriteriaTable mais abaixo) para poderem ficar
+                    alinhadas entre colunas mesmo quando um produto tem um
+                    texto mais comprido nalgum critério. */}
                 {ordered.length > 1 && (
-                  <div className="border-t border-gray-100">
+                  <div className="border-t border-gray-100 lg:hidden">
                     <CompareRows rows={rows} columnIndex={index} />
                   </div>
                 )}
@@ -442,6 +455,16 @@ export default async function CompararPage({
             <ComparePicker key={`placeholder-${i}`} allProducts={pickerProducts} currentSlugs={slugs} />
           ))}
         </div>
+
+        {/* A partir de lg (produtos lado a lado): uma única tabela partilhada
+            por todos os produtos, para que cada linha (Sola, Fecho, Cor...)
+            fique sempre à mesma altura em todas as colunas - nunca depende
+            de "sorte" com o tamanho do texto de cada produto. */}
+        {ordered.length > 1 && (
+          <div className="hidden lg:block mt-6">
+            <CompareCriteriaTable rows={rows} columnCount={ordered.length} />
+          </div>
+        )}
       </CompareDiffProvider>
 
       {ordered.length > 1 && (
