@@ -76,7 +76,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             ícones). */}
         <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
           {dropPercent != null ? (
-            <span className="rounded-md bg-orange-600 px-2 py-1 text-xs font-bold text-white">
+            <span className="rounded-md bg-[#1F5F58] px-2 py-1 text-xs font-bold text-white">
               -{dropPercent}%
             </span>
           ) : (
