@@ -27,7 +27,7 @@ export default function FavoriteButton({
     >
       <svg
         viewBox="0 0 24 24"
-        className={`h-4 w-4 transition-colors ${active ? 'text-orange-600' : 'text-gray-400'}`}
+        className={`h-4 w-4 transition-colors ${active ? 'text-[#1F5F58]' : 'text-gray-400'}`}
         fill={active ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth="2"
