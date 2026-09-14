@@ -12,7 +12,7 @@ import {
   CompareDiffProvider,
   CompareDiffToggle,
   CompareRows,
-  CompareCriteriaTable,
+  CompareTable,
   type CompareRowData,
 } from '@/components/CompareDiff'
 import type { ProductWithPrice } from '@/lib/types'
@@ -93,11 +93,11 @@ function rowIsDifferent(values: (string | number | null)[]): boolean {
   return new Set(normalized).size > 1
 }
 
-// Índice do "melhor" valor de uma linha numérica (mais é melhor - lojas com
-// stock, % de descida). Só assinala um vencedor quando há pelo menos dois
-// produtos com valor conhecido, os valores não são todos iguais, e o
+// Índice do "melhor" valor de uma linha numérica onde MAIS é melhor (lojas
+// com stock, % de descida). Só assinala um vencedor quando há pelo menos
+// dois produtos com valor conhecido, os valores não são todos iguais, e o
 // máximo não está empatado entre dois ou mais produtos.
-function bestIndex(values: (number | null)[]): number | null {
+function bestIndexMax(values: (number | null)[]): number | null {
   const present = values
     .map((v, i) => ({ v, i }))
     .filter((x): x is { v: number; i: number } => x.v != null)
@@ -108,6 +108,21 @@ function bestIndex(values: (number | null)[]): number | null {
   const max = Math.max(...present.map((x) => x.v))
   const withMax = present.filter((x) => x.v === max)
   return withMax.length === 1 ? withMax[0].i : null
+}
+
+// Mesma lógica que bestIndexMax mas para linhas onde MENOS é melhor (preço
+// mais barato, limiar de envio grátis mais baixo).
+function bestIndexMin(values: (number | null)[]): number | null {
+  const present = values
+    .map((v, i) => ({ v, i }))
+    .filter((x): x is { v: number; i: number } => x.v != null)
+
+  if (present.length < 2) return null
+  if (new Set(present.map((x) => x.v)).size <= 1) return null
+
+  const min = Math.min(...present.map((x) => x.v))
+  const withMin = present.filter((x) => x.v === min)
+  return withMin.length === 1 ? withMin[0].i : null
 }
 
 function EmptyState({ title, description }: { title: string; description: string }) {
@@ -125,27 +140,12 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
-// Bloco "Preços por loja" + botão "Ver detalhe" de um produto. Extraído para
-// ser usado duas vezes com os mesmos dados: em telemóvel/tablet aparece
-// dentro do próprio cartão (depois das características), e a partir de lg
-// aparece na grelha partilhada mais abaixo (ver CompararPage), sempre depois
-// das características - tal como no design do Jorge, em vez de logo a
-// seguir ao preço como estava antes.
-function StorePricesBlock({
-  offers,
-  slug,
-  fillHeight = false,
-}: {
-  offers: GroupedOffer[]
-  slug: string
-  // Só usado na grelha partilhada de desktop (ver mais abaixo): estica o
-  // bloco até à altura da linha da grelha (a mesma altura da coluna mais
-  // alta) e empurra o botão "Ver detalhe" para o fundo, para os três botões
-  // ficarem sempre alinhados na mesma fila, mesmo quando um produto tem
-  // mais lojas com stock do que os outros. Em telemóvel/tablet mantém-se o
-  // espaçamento fixo de sempre (mt-3).
-  fillHeight?: boolean
-}) {
+// Bloco "Preços por loja" + botão "Ver detalhe" de um produto - usado só em
+// telemóvel/tablet (<lg), dentro do próprio cartão empilhado, depois das
+// características. A partir de lg os preços por loja e o "Ver detalhe"
+// passam a ser uma linha da tabela partilhada (ver CompareTable), em vez
+// de esta caixa repetida por baixo de cada cartão.
+function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: string }) {
   const storeBox = offers.length > 0 && (
     <div className="border border-gray-100 rounded-xl overflow-hidden">
       <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
@@ -163,7 +163,7 @@ function StorePricesBlock({
               <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
               <div className={`p-3 text-center ${cellBorder}`}>
                 {offerIndex === 0 && offers.length > 1 && (
-                  <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                  <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                     Melhor preço
                   </span>
                 )}
@@ -181,20 +181,11 @@ function StorePricesBlock({
   const detailLink = (
     <Link
       href={`/produto/${slug}`}
-      className={`${fillHeight ? 'mt-auto' : 'mt-3'} flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors`}
+      className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
     >
       Ver detalhe
     </Link>
   )
-
-  if (fillHeight) {
-    return (
-      <div className="flex flex-col h-full">
-        {storeBox}
-        {detailLink}
-      </div>
-    )
-  }
 
   return (
     <>
@@ -202,6 +193,36 @@ function StorePricesBlock({
       {detailLink}
     </>
   )
+}
+
+// Frase de resumo no topo da página (ex.: "Nike Dunk Low é 51,00 € mais
+// barato que o Gel-Kayano 14 e está disponível em mais lojas.") - só
+// aparece com 2+ produtos com preço conhecido e uma poupança real (nunca
+// inventa uma comparação a partir de dados em falta ou empatados).
+function buildSummary(withPrice: { name: string; price: number; stock: number }[]) {
+  if (withPrice.length < 2) return null
+
+  const cheapest = withPrice.reduce((a, b) => (b.price < a.price ? b : a))
+  const priciest = withPrice.reduce((a, b) => (b.price > a.price ? b : a))
+  const diff = priciest.price - cheapest.price
+  if (diff <= 0) return null
+
+  const cheapestIsUnique = withPrice.filter((x) => x.price === cheapest.price).length === 1
+  const others = withPrice.filter((x) => x !== cheapest)
+  const stockAdvantage = cheapestIsUnique && cheapest.stock > Math.max(...others.map((x) => x.stock))
+  // Com 3 produtos e um vencedor claro, a frase pode afirmar "é o mais
+  // barato" (comparado com todos); com 2, ou com um empate no preço mais
+  // baixo, mantém-se a comparação direta com o mais caro, sem alegar mais
+  // do que os números garantem.
+  const superlative = withPrice.length > 2 && cheapestIsUnique
+
+  return {
+    cheapestName: cheapest.name,
+    priciestName: priciest.name,
+    diffLabel: formatPrice(diff),
+    stockAdvantage,
+    superlative,
+  }
 }
 
 export default async function CompararPage({
@@ -240,9 +261,6 @@ export default async function CompararPage({
     }
   }
 
-  // Com menos de 3 produtos reais, preenche os lugares em falta com
-  // placeholders "+ Adicionar produto" (grid mantém-se sempre a 3 colunas)
-  // e contém a página numa largura mais estreita, centrada.
   const placeholderCount = Math.max(0, 3 - ordered.length)
   const containerMaxWidth = ordered.length < 3 ? 'max-w-4xl' : 'max-w-5xl'
 
@@ -325,11 +343,19 @@ export default async function CompararPage({
     .map((d) => d.lowestPrice)
     .filter((price): price is number => price != null)
   const cheapestPrice = comparablePrices.length > 1 ? Math.min(...comparablePrices) : null
+  const priceBestIndex = bestIndexMin(compareData.map((d) => d.lowestPrice))
+
+  const summary = buildSummary(
+    ordered
+      .map((p, i) => ({ name: p.model_name as string, price: compareData[i].lowestPrice, stock: compareData[i].storeCount }))
+      .filter((x): x is { name: string; price: number; stock: number } => x.price != null)
+  )
 
   // Linhas da tabela de comparação, uma por critério, com o valor já
   // formatado para cada produto (na mesma ordem de "ordered"). "different"
-  // decide o fundo laranja/se a linha aparece com o toggle ligado; "best"
-  // (quando aplicável) assinala com "✓ melhor" o valor mais vantajoso.
+  // decide se a linha aparece com o toggle "só diferenças" ligado; "best"
+  // (quando aplicável) assinala o valor mais vantajoso, destacado a
+  // verde-petróleo na tabela/cartões.
   const soleValues = ordered.map((p) => p.sole_type ?? null)
   const closureValues = ordered.map((p) => p.closure_type ?? null)
   const colorValues = ordered.map((p) => p.color ?? null)
@@ -372,14 +398,14 @@ export default async function CompararPage({
       label: 'Lojas com stock',
       display: storeCountValues.map((v) => String(v)),
       different: rowIsDifferent(storeCountValues),
-      best: bestIndex(storeCountValues),
+      best: bestIndexMax(storeCountValues),
     },
     {
       key: 'shipping',
       label: 'Envio grátis',
       display: shippingValues.map((v) => (v != null ? `Acima de ${formatPrice(v)}` : '—')),
       different: rowIsDifferent(shippingValues),
-      best: null,
+      best: bestIndexMin(shippingValues),
     },
     {
       key: 'discount',
@@ -391,7 +417,7 @@ export default async function CompararPage({
       label: 'Desceu esta semana',
       display: discountValues.map((v) => (v != null ? `-${v}%` : '—')),
       different: rowIsDifferent(discountValues),
-      best: bestIndex(discountValues),
+      best: bestIndexMax(discountValues),
     },
   ]
 
@@ -414,25 +440,66 @@ export default async function CompararPage({
         <span className="text-gray-500">Comparar</span>
       </nav>
 
-      <h1 className="font-display text-4xl font-bold tracking-tight text-gray-900 mt-3 mb-2">
-        Comparar ténis
-      </h1>
-
-      {placeholderCount > 0 ? (
-        <p className="text-sm text-gray-500 mb-2">
-          Escolhe até 3 produtos no catálogo para comparar.
-        </p>
-      ) : (
-        <p className="text-gray-500 max-w-xl">
-          Três modelos lado a lado, linha a linha. As diferenças ficam marcadas e a melhor opção
-          de cada critério leva um visto.
-        </p>
-      )}
-
       <CompareDiffProvider>
-        {ordered.length > 1 && <CompareDiffToggle />}
+        <div className="flex items-start justify-between gap-4 mt-3">
+          <div>
+            <h1 className="font-display text-4xl font-bold tracking-tight text-gray-900 mb-2">
+              Comparar ténis
+            </h1>
+            {placeholderCount > 0 ? (
+              <p className="text-sm text-gray-500">Escolhe até 3 produtos no catálogo para comparar.</p>
+            ) : (
+              <p className="text-gray-500 max-w-xl">
+                Três modelos lado a lado, linha a linha. As diferenças ficam marcadas e a melhor opção
+                de cada critério fica destacada.
+              </p>
+            )}
+          </div>
+          {ordered.length > 1 && (
+            <div className="pt-2 shrink-0">
+              <CompareDiffToggle />
+            </div>
+          )}
+        </div>
 
-        <div className={`grid gap-6 ${placeholderCount === 0 ? 'mt-8' : 'mt-8'} sm:grid-cols-2 lg:grid-cols-3`}>
+        {summary && (
+          <div className="mt-5 flex items-center gap-3 rounded-xl bg-[#1F5F58]/5 border border-[#1F5F58]/20 px-4 py-3">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="shrink-0 text-[#1F5F58]"
+              aria-hidden="true"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
+            </svg>
+            <p className="text-sm text-gray-800">
+              <span className="font-semibold">{summary.cheapestName}</span>{' '}
+              {summary.superlative ? (
+                <>
+                  é o mais barato — <span className="font-semibold text-[#1F5F58]">{summary.diffLabel} menos</span>{' '}
+                  que {summary.priciestName}
+                </>
+              ) : (
+                <>
+                  é <span className="font-semibold text-[#1F5F58]">{summary.diffLabel} mais barato</span> que{' '}
+                  {summary.priciestName}
+                </>
+              )}
+              {summary.stockAdvantage && ' e está disponível em mais lojas'}.
+            </p>
+          </div>
+        )}
+
+        {/* Telemóvel/tablet (<lg): cada produto continua num cartão próprio,
+            empilhado, com as suas características e preços por loja logo a
+            seguir - mais fácil de ler que uma tabela larga num ecrã
+            estreito. A partir de lg este bloco desaparece por completo e dá
+            lugar ao bloco novo mais abaixo (cartão único com a tabela
+            partilhada). */}
+        <div className="grid gap-6 mt-8 sm:grid-cols-2 lg:hidden items-start">
           {ordered.map((product, index) => {
             const data = compareData[index]
             const isCheapest = cheapestPrice != null && data.lowestPrice === cheapestPrice
@@ -463,7 +530,7 @@ export default async function CompararPage({
                     <div className="flex items-center gap-2 mt-2">
                       <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
                       {isCheapest && (
-                        <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[11px] font-semibold px-2 py-0.5 rounded-full">
                           Mais barato
                         </span>
                       )}
@@ -473,83 +540,125 @@ export default async function CompararPage({
                   )}
                 </div>
 
-                {/* Em telemóvel/tablet (<lg) os cartões ficam empilhados um a
-                    seguir ao outro, por isso aqui dentro aparecem primeiro as
-                    características do produto e só depois os preços por loja
-                    - a mesma ordem do design do Jorge. A partir de lg os
-                    cartões passam a lado a lado e tanto as características
-                    como os preços por loja saem daqui para os blocos
-                    partilhados mais abaixo (CompareCriteriaTable e a grelha
-                    de preços por loja), para poderem ficar alinhados entre
-                    colunas mesmo quando um produto tem um texto mais
-                    comprido nalgum critério ou mais lojas com stock. */}
-                <>
-                    <div className="border-t border-gray-100 lg:hidden">
-                      <CompareRows rows={rows} columnIndex={index} />
-                    </div>
-                    {ordered.length > 1 ? (
-                      <div className="p-4 mt-auto border-t border-gray-100 lg:hidden">
-                        <StorePricesBlock offers={data.offers} slug={product.slug} />
-                      </div>
-                    ) : (
-                      <div className="p-4 mt-auto">
-                        <StorePricesBlock offers={data.offers} slug={product.slug} />
-                      </div>
-                    )}
-                  </>
+                <div className="border-t border-gray-100">
+                  <CompareRows rows={rows} columnIndex={index} />
+                </div>
+                <div className="p-4 mt-auto border-t border-gray-100">
+                  <StorePricesBlock offers={data.offers} slug={product.slug} />
+                </div>
               </div>
             )
           })}
 
-          {Array.from({ length: placeholderCount }).map((_, i) => (
-            <ComparePicker key={`placeholder-${i}`} allProducts={pickerProducts} currentSlugs={slugs} />
-          ))}
+          {placeholderCount > 0 && (
+            <div className="flex items-center justify-center py-6">
+              <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+            </div>
+          )}
         </div>
 
-        {/* A partir de lg (produtos lado a lado): uma única tabela partilhada
-            por todos os produtos, para que cada linha (Sola, Fecho, Cor...)
-            fique sempre à mesma altura em todas as colunas - nunca depende
-            de "sorte" com o tamanho do texto de cada produto. */}
-        <div className="hidden lg:block mt-6">
-          <CompareCriteriaTable rows={rows} columnCount={ordered.length} />
-        </div>
-
-        {/* Espaço a separar as características dos preços por loja (pedido
-            do Jorge, tal como no design dele) e só depois, em coluna com
-            cada produto, os preços por loja + "Ver detalhe" - a mesma ordem
-            de cada cartão em telemóvel/tablet, aqui numa grelha para os 3
-            produtos ficarem lado a lado a partir de lg. */}
-        {ordered.length > 1 && (
-          <div
-            className="hidden lg:grid gap-6 mt-6"
-            style={{ gridTemplateColumns: `repeat(${ordered.length}, minmax(0, 1fr))` }}
-          >
-            {ordered.map((product, index) => (
-              // Envolvido num div próprio: o StorePricesBlock devolve dois
-              // elementos (a caixa de lojas + o botão "Ver detalhe"), por
-              // isso sem este wrapper cada produto ocupava DUAS células da
-              // grelha em vez de uma só, desalinhando tudo a partir do
-              // segundo produto.
-              <div key={product.id}>
-                {/* fillHeight: estica o bloco até à altura da linha da
-                    grelha (align-items: stretch por omissão), empurrando o
-                    botão "Ver detalhe" para o fundo com mt-auto, para os
-                    três botões ficarem sempre alinhados na mesma fila. */}
-                <StorePricesBlock offers={compareData[index].offers} slug={product.slug} fillHeight />
+        {/* Desktop (>=lg): um único cartão com a linha dos produtos (foto,
+            nome, preço) seguida da tabela partilhada - características,
+            lojas e preços, e "Ver detalhe" alinhados por baixo de cada
+            produto, cada característica escrita uma única vez à esquerda. */}
+        {ordered.length > 0 && (
+          <div className="hidden lg:block mt-8 rounded-2xl border border-gray-100 bg-white p-6">
+            <div className="flex items-end gap-0">
+              {/* Tem de ser exactamente a mesma grelha (160px + colunas de
+                  240px) do CompareTable em components/CompareDiff.tsx, para
+                  as fotos ficarem alinhadas com as colunas da tabela por
+                  baixo - se um dia um dos dois lados mudar, o outro tem de
+                  mudar também. */}
+              <div
+                className="grid"
+                style={{ gridTemplateColumns: `160px repeat(${ordered.length}, minmax(0, 240px))` }}
+              >
+                <div />
+                {ordered.map((product, index) => {
+                  const data = compareData[index]
+                  const isCheapest = cheapestPrice != null && data.lowestPrice === cheapestPrice
+                  const remainingSlugs = slugs.filter((s) => s !== product.slug)
+                  return (
+                    <div
+                      key={product.id}
+                      className={`relative pb-4 ${index > 0 ? 'pl-4 border-l border-gray-100' : ''}`}
+                    >
+                      <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
+                      <ProductGallery
+                        images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
+                        alt={product.model_name}
+                        compact
+                        imageBoxClassName="aspect-square"
+                        sizes="240px"
+                      />
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-3">
+                        {product.brands?.name}
+                      </p>
+                      <h2 className="text-sm font-semibold text-gray-900 mt-0.5">{product.model_name}</h2>
+                      {data.lowestPrice != null ? (
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
+                          {isCheapest && (
+                            <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                              Mais barato
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 text-sm mt-2">Sem oferta disponível</p>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            ))}
+
+              {placeholderCount > 0 && (
+                <div className="pb-4 pl-4">
+                  <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-2">
+              <CompareTable
+                rows={rows}
+                columnCount={ordered.length}
+                offersByColumn={compareData.map((d) => d.offers)}
+                priceBestIndex={priceBestIndex}
+                slugs={ordered.map((p) => p.slug)}
+              />
+            </div>
+          </div>
+        )}
+
+        {ordered.length === 0 && (
+          <div className="hidden lg:flex mt-8 rounded-2xl border border-gray-100 bg-white p-10 items-center justify-center">
+            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
           </div>
         )}
       </CompareDiffProvider>
 
       {ordered.length > 1 && (
-        <div className="mt-8">
-          <div className="rounded-2xl bg-gray-50 p-6">
-            <h3 className="font-semibold text-gray-900">Trocar um modelo</h3>
-            <p className="text-sm text-gray-500 mt-1">Remove um dos três e escolhe outro no catálogo.</p>
+        <div className="mt-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 flex items-center gap-4 flex-wrap">
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500" aria-hidden="true">
+                <path
+                  d="M17 2l4 4-4 4M3 12v-2a4 4 0 014-4h14M7 22l-4-4 4-4M21 12v2a4 4 0 01-4 4H3"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <h3 className="font-semibold text-gray-900">Trocar um modelo</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Remove um dos produtos e escolhe outro no catálogo.</p>
+            </div>
             <Link
               href="/catalogo"
-              className="mt-4 inline-flex items-center justify-center rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:border-gray-400 transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:border-gray-400 transition-colors"
             >
               Escolher no catálogo
             </Link>
