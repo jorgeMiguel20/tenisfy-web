@@ -343,7 +343,6 @@ export default async function CompararPage({
     .map((d) => d.lowestPrice)
     .filter((price): price is number => price != null)
   const cheapestPrice = comparablePrices.length > 1 ? Math.min(...comparablePrices) : null
-  const priceBestIndex = bestIndexMin(compareData.map((d) => d.lowestPrice))
 
   const summary = buildSummary(
     ordered
@@ -524,7 +523,13 @@ export default async function CompararPage({
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-3">
                     {product.brands?.name}
                   </p>
-                  <h2 className="font-semibold text-gray-900 mt-0.5">{product.model_name}</h2>
+                  {/* Altura fixa (2 linhas) para o nome - mesmo motivo da
+                      versão de desktop: o preço tem de ficar sempre
+                      alinhado, mesmo quando os produtos ao lado têm nomes
+                      de tamanhos diferentes. */}
+                  <h2 className="font-semibold text-gray-900 mt-0.5 leading-6 min-h-[3rem]">
+                    {product.model_name}
+                  </h2>
 
                   {data.lowestPrice != null ? (
                     <div className="flex items-center gap-2 mt-2">
@@ -558,12 +563,12 @@ export default async function CompararPage({
         </div>
 
         {/* Desktop (>=lg): um único cartão com a linha dos produtos (foto,
-            nome, preço) seguida da tabela partilhada - características,
-            lojas e preços, e "Ver detalhe" alinhados por baixo de cada
-            produto, cada característica escrita uma única vez à esquerda. */}
+            nome, preço) seguida da tabela partilhada - características e
+            "Ver detalhe" alinhados por baixo de cada produto, cada
+            característica escrita uma única vez à esquerda. */}
         {ordered.length > 0 && (
           <div className="hidden lg:block mt-8 rounded-2xl border border-gray-100 bg-white p-6">
-            <div className="flex items-end gap-0">
+            <div className="flex items-start gap-0">
               {/* Tem de ser exactamente a mesma grelha (160px + colunas de
                   240px) do CompareTable em components/CompareDiff.tsx, para
                   as fotos ficarem alinhadas com as colunas da tabela por
@@ -594,7 +599,15 @@ export default async function CompararPage({
                       <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-3">
                         {product.brands?.name}
                       </p>
-                      <h2 className="text-sm font-semibold text-gray-900 mt-0.5">{product.model_name}</h2>
+                      {/* Altura fixa (2 linhas) para o nome do produto -
+                          nomes com tamanhos diferentes ("Dunk Low" vs.
+                          "Gel-Kayano 14 Black Pure Silver") não podem empurrar
+                          o preço para alturas diferentes em cada coluna;
+                          pedido do Jorge, os preços têm de ficar sempre
+                          alinhados. */}
+                      <h2 className="text-sm font-semibold text-gray-900 mt-0.5 leading-5 min-h-[2.5rem]">
+                        {product.model_name}
+                      </h2>
                       {data.lowestPrice != null ? (
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
@@ -623,8 +636,6 @@ export default async function CompararPage({
               <CompareTable
                 rows={rows}
                 columnCount={ordered.length}
-                offersByColumn={compareData.map((d) => d.offers)}
-                priceBestIndex={priceBestIndex}
                 slugs={ordered.map((p) => p.slug)}
               />
             </div>
