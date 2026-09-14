@@ -27,15 +27,15 @@ export default function ComparePicker({
   )
 
   // Antes do primeiro produto o texto convida a escolher; a partir do
-  // primeiro passa a "outro" - o mesmo botÃ£o compacto Ã© reutilizado para
-  // os dois casos, sÃ³ muda a palavra.
+  // primeiro passa a "outro" - o mesmo botão compacto é reutilizado para
+  // os dois casos, só muda a palavra.
   const label = currentSlugs.length > 0 ? 'Adicionar outro produto' : 'Adicionar produto para comparar'
 
   function openPicker() {
     setOpen(true)
     setQuery('')
     setActiveIndex(-1)
-    // O input sÃ³ existe depois deste render; adia o focus para o prÃ³ximo tick.
+    // O input só existe depois deste render; adia o focus para o próximo tick.
     requestAnimationFrame(() => inputRef.current?.focus())
   }
 
@@ -72,8 +72,8 @@ export default function ComparePicker({
     }
   }
 
-  // BotÃ£o compacto - do tamanho do prÃ³prio texto, nÃ£o uma caixa grande com
-  // contorno tracejado a ocupar o espaÃ§o todo (pedido do Jorge, confirmado
+  // Botão compacto - do tamanho do próprio texto, não uma caixa grande com
+  // contorno tracejado a ocupar o espaço todo (pedido do Jorge, confirmado
   // com mockup).
   if (!open) {
     return (
@@ -102,13 +102,13 @@ export default function ComparePicker({
             setActiveIndex(-1)
           }}
           onKeyDown={handleKeyDown}
-          // O fecho ao clicar fora Ã© feito com o mesmo truque de onBlur +
-          // setTimeout usado na pesquisa da homepage (ProductGrid.tsx): dÃ¡
+          // O fecho ao clicar fora é feito com o mesmo truque de onBlur +
+          // setTimeout usado na pesquisa da homepage (ProductGrid.tsx): dá
           // tempo ao onMouseDown/preventDefault de cada resultado disparar
           // antes do input perder o foco.
           onBlur={() => setTimeout(closePicker, 150)}
           placeholder="Pesquisar produto..."
-          aria-label="Pesquisar produto para adicionar Ã  comparaÃ§Ã£o"
+          aria-label="Pesquisar produto para adicionar à comparação"
           className="w-full border border-gray-900 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
         />
         <button
@@ -118,7 +118,7 @@ export default function ComparePicker({
           aria-label="Fechar seletor"
           className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors text-lg leading-none px-1"
         >
-          Ã
+          ×
         </button>
       </div>
 
