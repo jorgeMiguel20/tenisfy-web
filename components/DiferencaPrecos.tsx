@@ -119,19 +119,19 @@ Ver este par
 
 <div className="relative">
 {product.image_url ? (
-<div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100">
+<div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100">
 {/* eslint-disable-next-line @next/next/no-img-element */}
 <img
 src={product.image_url}
 alt={product.model_name}
 loading="lazy"
-className="h-full w-full object-cover"
+className="h-full w-full object-contain"
 />
 </div>
 ) : null}
 
 <div
-className={`overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-black/5 ${
+className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-black/5 ${
 product.image_url
 ? 'mt-6 w-full sm:absolute sm:mt-0 sm:bottom-0 sm:-left-6 sm:w-[80%] sm:max-w-sm'
 : ''
@@ -140,9 +140,9 @@ product.image_url
 {storeRows.map((row, i) => (
 <div
 key={row.store}
-className={`flex items-center justify-between gap-3 px-5 py-4 transition-colors ${
-i === active ? 'bg-gray-900' : ''
-} ${i > 0 ? 'border-t border-gray-100' : ''}`}
+className={`flex items-center justify-between gap-3 px-3.5 py-3.5 transition-colors ${
+i === active ? 'rounded-lg bg-gray-900' : ''
+} ${i > 0 && i !== active && i - 1 !== active ? 'border-t border-gray-100' : ''}`}
 >
 <span className="flex items-center gap-3">
 <span className={`text-xs font-bold ${i === active ? 'text-white/50' : 'text-gray-400'}`}>
