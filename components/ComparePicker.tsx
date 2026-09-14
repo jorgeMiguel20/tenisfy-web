@@ -81,7 +81,7 @@ export default function ComparePicker({
   }
 
   return (
-    <div className="flex min-h-[280px] h-full flex-col items-center justify-center rounded-2xl border-2 border-orange-300 bg-white p-4">
+    <div className="flex min-h-[280px] h-full flex-col items-center justify-center rounded-2xl border-2 border-gray-900 bg-white p-4">
       <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}
@@ -99,7 +99,7 @@ export default function ComparePicker({
           onBlur={() => setTimeout(closePicker, 150)}
           placeholder="Pesquisar produto..."
           aria-label="Pesquisar produto para adicionar à comparação"
-          className="w-full border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="w-full border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
         />
         <button
           type="button"
