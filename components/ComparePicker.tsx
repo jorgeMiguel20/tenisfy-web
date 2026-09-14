@@ -26,11 +26,16 @@ export default function ComparePicker({
     (p) => !currentSlugs.includes(p.slug)
   )
 
+  // Antes do primeiro produto o texto convida a escolher; a partir do
+  // primeiro passa a "outro" - o mesmo botÃ£o compacto Ã© reutilizado para
+  // os dois casos, sÃ³ muda a palavra.
+  const label = currentSlugs.length > 0 ? 'Adicionar outro produto' : 'Adicionar produto para comparar'
+
   function openPicker() {
     setOpen(true)
     setQuery('')
     setActiveIndex(-1)
-    // O input só existe depois deste render; adia o focus para o próximo tick.
+    // O input sÃ³ existe depois deste render; adia o focus para o prÃ³ximo tick.
     requestAnimationFrame(() => inputRef.current?.focus())
   }
 
@@ -67,21 +72,26 @@ export default function ComparePicker({
     }
   }
 
+  // BotÃ£o compacto - do tamanho do prÃ³prio texto, nÃ£o uma caixa grande com
+  // contorno tracejado a ocupar o espaÃ§o todo (pedido do Jorge, confirmado
+  // com mockup).
   if (!open) {
     return (
       <button
         type="button"
         onClick={openPicker}
-        className="flex min-h-[280px] h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-gray-600 hover:border-gray-300 hover:text-gray-900 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-colors"
       >
-        <span className="text-2xl leading-none">+</span>
-        <span className="text-sm font-semibold">Adicionar produto para comparar</span>
+        <span aria-hidden="true" className="text-base leading-none text-gray-400">
+          +
+        </span>
+        {label}
       </button>
     )
   }
 
   return (
-    <div className="flex min-h-[280px] h-full flex-col items-center justify-center rounded-2xl border-2 border-gray-900 bg-white p-4">
+    <div className="w-[300px] max-w-full rounded-xl border border-gray-900 bg-white p-3">
       <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}
@@ -92,14 +102,14 @@ export default function ComparePicker({
             setActiveIndex(-1)
           }}
           onKeyDown={handleKeyDown}
-          // O fecho ao clicar fora é feito com o mesmo truque de onBlur +
-          // setTimeout usado na pesquisa da homepage (ProductGrid.tsx): dá
+          // O fecho ao clicar fora Ã© feito com o mesmo truque de onBlur +
+          // setTimeout usado na pesquisa da homepage (ProductGrid.tsx): dÃ¡
           // tempo ao onMouseDown/preventDefault de cada resultado disparar
           // antes do input perder o foco.
           onBlur={() => setTimeout(closePicker, 150)}
           placeholder="Pesquisar produto..."
-          aria-label="Pesquisar produto para adicionar à comparação"
-          className="w-full border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+          aria-label="Pesquisar produto para adicionar Ã  comparaÃ§Ã£o"
+          className="w-full border border-gray-900 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
         />
         <button
           type="button"
@@ -108,7 +118,7 @@ export default function ComparePicker({
           aria-label="Fechar seletor"
           className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors text-lg leading-none px-1"
         >
-          ×
+          Ã
         </button>
       </div>
 
@@ -141,7 +151,7 @@ export default function ComparePicker({
                   <p className="text-sm font-medium text-gray-900 truncate">{p.model_name}</p>
                 </div>
                 {p.lowest_price != null && (
-                  <span className="text-xs font-semibold text-orange-700 shrink-0">
+                  <span className="text-xs font-semibold text-gray-900 shrink-0">
                     {formatPrice(p.lowest_price)}
                   </span>
                 )}
