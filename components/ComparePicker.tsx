@@ -74,15 +74,13 @@ export default function ComparePicker({
 
   // Botão compacto - do tamanho do próprio texto, não uma caixa grande com
   // contorno tracejado a ocupar o espaço todo (pedido do Jorge, confirmado
-  // com mockup). Fundo cinzento muito suave em vez de contorno - fica mais
-  // "encorpado" ao lado das fotos dos produtos sem pesar visualmente
-  // (pedido do Jorge).
+  // com mockup).
   if (!open) {
     return (
       <button
         type="button"
         onClick={openPicker}
-        className="inline-flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-colors"
       >
         <span aria-hidden="true" className="text-base leading-none text-gray-400">
           +
