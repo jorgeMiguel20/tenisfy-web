@@ -568,7 +568,13 @@ export default async function CompararPage({
             característica escrita uma única vez à esquerda. */}
         {ordered.length > 0 && (
           <div className="hidden lg:block mt-8 rounded-2xl border border-gray-100 bg-white p-6">
-            <div className="flex items-start gap-0">
+            {/* Fixa-se no topo do ecrã enquanto o utilizador percorre a
+                tabela de características mais abaixo, para nunca perder de
+                vista a que produto pertence cada coluna (pedido do Jorge).
+                O nav do site não é sticky, por isso "top-0" chega - se um
+                dia o nav passar a ser sticky, este valor tem de subir para
+                a altura do nav. */}
+            <div className="sticky top-0 z-10 flex items-start gap-0 bg-white pb-4 border-b border-gray-100">
               {/* Tem de ser exactamente a mesma grelha (160px + colunas de
                   240px) do CompareTable em components/CompareDiff.tsx, para
                   as fotos ficarem alinhadas com as colunas da tabela por
