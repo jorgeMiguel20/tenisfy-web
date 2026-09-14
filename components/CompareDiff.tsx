@@ -3,7 +3,6 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { formatPrice } from '@/lib/formatPrice'
 
 // Estado partilhado do toggle "Mostrar só as diferenças" da página
 // /comparar (Provider) - CompareDiffToggle (o interruptor), CompareRows (a
@@ -72,8 +71,7 @@ export function CompareDiffToggle() {
 // (contadores do cabeçalho, coração de favorito, selo de desconto no
 // catálogo) - antes era um "✓ melhor" a verde-normal, agora é sempre a
 // mesma cor e o mesmo tratamento (texto a negrito + fundo da célula
-// ligeiramente colorido), incluindo o preço mais barato e a linha de
-// "Lojas e preços" que antes vivia numa caixa à parte.
+// ligeiramente colorido).
 export type CompareRowData = {
   key: string
   label: string
@@ -105,9 +103,9 @@ export function CompareRows({ rows, columnIndex }: { rows: CompareRowData[]; col
         return (
           <div
             key={row.key}
-            className={`px-6 py-3 ${isBest ? BEST_BG : i % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}
+            className={`px-6 py-3 ${isBest ? BEST_BG : i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{row.label}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-900">{row.label}</p>
             <p className={`text-sm mt-0.5 ${isBest ? BEST_TEXT : 'font-medium text-gray-900'}`}>
               {row.display[columnIndex]}
             </p>
@@ -127,22 +125,19 @@ export type CompareOffer = {
 // de rótulos fixa (Sola, Fecho, Cor, ...) seguida de uma coluna por
 // produto, para que cada característica apareça uma única vez em vez de
 // repetida em cima de cada produto - pedido do Jorge, confirmado com
-// mockup (proposta_comparar_final.html). A mesma tabela também mostra
-// "Lojas e preços" (substitui a caixa "Preços por loja" que existia à
-// parte, repetida por baixo de cada cartão) e o botão "Ver detalhe" de
-// cada produto - ambos sempre visíveis mesmo com o toggle "só diferenças"
-// ligado, tal como já acontecia antes.
+// mockup (proposta_comparar_final.html). Não mostra preços por loja (o
+// preço mais baixo de cada produto já aparece em cima, no cartão do
+// produto - repetir a lista de lojas aqui ficava grande demais com
+// produtos com muitas lojas em stock, pedido do Jorge). O botão "Ver
+// detalhe" de cada produto fica sempre visível mesmo com o toggle "só
+// diferenças" ligado.
 export function CompareTable({
   rows,
   columnCount,
-  offersByColumn,
-  priceBestIndex,
   slugs,
 }: {
   rows: CompareRowData[]
   columnCount: number
-  offersByColumn: CompareOffer[][]
-  priceBestIndex: number | null
   slugs: string[]
 }) {
   const { onlyDifferences } = useCompareDiff()
@@ -155,47 +150,13 @@ export function CompareTable({
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-      {/* Lojas e preços */}
-      <div className="grid items-start" style={{ gridTemplateColumns: gridCols }}>
-        <div className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-          Lojas e preços
-        </div>
-        {Array.from({ length: columnCount }, (_, i) => {
-          const offers = offersByColumn[i] ?? []
-          const isBest = priceBestIndex === i
-          return (
-            <div key={i} className={`px-4 py-3 border-l border-gray-100 text-sm ${isBest ? BEST_BG : ''}`}>
-              {offers.length === 0 ? (
-                <span className="text-gray-400">—</span>
-              ) : (
-                offers.map((offer, oi) => (
-                  <div
-                    key={offer.store}
-                    className={`flex items-center justify-between gap-2 ${oi > 0 ? 'mt-1' : ''}`}
-                  >
-                    <span className={oi === 0 ? 'text-gray-700' : 'text-gray-400 text-xs'}>{offer.store}</span>
-                    <span
-                      className={
-                        oi === 0 ? (isBest ? BEST_TEXT : 'font-semibold text-gray-900') : 'text-gray-400 text-xs'
-                      }
-                    >
-                      {formatPrice(offer.price)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          )
-        })}
-      </div>
-
       {visibleRows.map((row, rowIndex) => (
         <div
           key={row.key}
           className={`grid items-start ${rowIndex % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
           style={{ gridTemplateColumns: gridCols }}
         >
-          <div className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <div className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wide text-gray-900">
             {row.label}
           </div>
           {Array.from({ length: columnCount }, (_, i) => {
