@@ -187,10 +187,10 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               onToggleCompare(product)
             }}
             aria-pressed={isSelected}
-            className={`mt-auto pt-3 inline-flex w-fit self-center items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+            className={`mt-auto pt-3 inline-flex w-fit self-center items-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors ${
               isSelected
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'font-bold bg-white text-black border border-black'
             }`}
           >
             {isSelected ? (
