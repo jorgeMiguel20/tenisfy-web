@@ -586,7 +586,9 @@ export default async function CompararPage({
                   return (
                     <div
                       key={product.id}
-                      className={`relative pb-4 ${index > 0 ? 'pl-4 border-l border-gray-100' : ''}`}
+                      className={`relative pb-4 ${
+                        index > 0 ? 'pl-4 border-l border-gray-100' : 'pr-4 border-r border-transparent'
+                      }`}
                     >
                       <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
                       <ProductGallery
