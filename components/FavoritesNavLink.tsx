@@ -30,7 +30,7 @@ export default function FavoritesNavLink() {
         />
       </svg>
       {count > 0 && (
-        <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-orange-600 text-white text-[11px] font-semibold">
+        <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-[#1F5F58] text-white text-[11px] font-semibold">
           {count}
         </span>
       )}
