@@ -461,7 +461,7 @@ export default async function CompararPage({
 
                   {data.lowestPrice != null ? (
                     <div className="flex items-center gap-2 mt-2">
-                      <p className="text-2xl font-extrabold text-orange-600">{formatPrice(data.lowestPrice)}</p>
+                      <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
                       {isCheapest && (
                         <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
                           Mais barato
@@ -483,20 +483,20 @@ export default async function CompararPage({
                     de preços por loja), para poderem ficar alinhados entre
                     colunas mesmo quando um produto tem um texto mais
                     comprido nalgum critério ou mais lojas com stock. */}
-                {ordered.length > 1 ? (
-                  <>
+                <>
                     <div className="border-t border-gray-100 lg:hidden">
                       <CompareRows rows={rows} columnIndex={index} />
                     </div>
-                    <div className="p-4 mt-auto border-t border-gray-100 lg:hidden">
-                      <StorePricesBlock offers={data.offers} slug={product.slug} />
-                    </div>
+                    {ordered.length > 1 ? (
+                      <div className="p-4 mt-auto border-t border-gray-100 lg:hidden">
+                        <StorePricesBlock offers={data.offers} slug={product.slug} />
+                      </div>
+                    ) : (
+                      <div className="p-4 mt-auto">
+                        <StorePricesBlock offers={data.offers} slug={product.slug} />
+                      </div>
+                    )}
                   </>
-                ) : (
-                  <div className="p-4 mt-auto">
-                    <StorePricesBlock offers={data.offers} slug={product.slug} />
-                  </div>
-                )}
               </div>
             )
           })}
@@ -510,11 +510,9 @@ export default async function CompararPage({
             por todos os produtos, para que cada linha (Sola, Fecho, Cor...)
             fique sempre à mesma altura em todas as colunas - nunca depende
             de "sorte" com o tamanho do texto de cada produto. */}
-        {ordered.length > 1 && (
-          <div className="hidden lg:block mt-6">
-            <CompareCriteriaTable rows={rows} columnCount={ordered.length} />
-          </div>
-        )}
+        <div className="hidden lg:block mt-6">
+          <CompareCriteriaTable rows={rows} columnCount={ordered.length} />
+        </div>
 
         {/* Espaço a separar as características dos preços por loja (pedido
             do Jorge, tal como no design dele) e só depois, em coluna com
@@ -545,7 +543,7 @@ export default async function CompararPage({
       </CompareDiffProvider>
 
       {ordered.length > 1 && (
-        <div className="grid gap-4 sm:grid-cols-2 mt-8">
+        <div className="mt-8">
           <div className="rounded-2xl bg-gray-50 p-6">
             <h3 className="font-semibold text-gray-900">Trocar um modelo</h3>
             <p className="text-sm text-gray-500 mt-1">Remove um dos três e escolhe outro no catálogo.</p>
@@ -555,24 +553,6 @@ export default async function CompararPage({
             >
               Escolher no catálogo
             </Link>
-          </div>
-
-          <div className="rounded-2xl bg-gray-50 p-6">
-            <h3 className="font-semibold text-gray-900">Alerta para os três</h3>
-            <p className="text-sm text-gray-500 mt-1">Define um preço alvo e avisamos-te no primeiro que descer.</p>
-            {/* Ainda por implementar (a pedido do Jorge) - hoje só existe
-                alerta por produto individual (ver PriceAlertForm.tsx na
-                página de cada produto). Fica visível para bater certo com
-                o resto da página, mas inativo até decidirmos como criar
-                os 3 alertas de uma vez. */}
-            <button
-              type="button"
-              disabled
-              title="Brevemente disponível"
-              className="mt-4 inline-flex items-center justify-center rounded-full bg-gray-900 text-white px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
-            >
-              Criar alertas
-            </button>
           </div>
         </div>
       )}
