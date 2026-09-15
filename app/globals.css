@@ -26,6 +26,10 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Corta o transbordo horizontal (~8px) que as seccoes "a toda a largura"
+     (w-screen / -50vw) criam quando a barra de scroll vertical esta
+     presente - 100vw inclui a barra, mas a largura visivel do ecra nao. */
+  overflow-x: hidden;
   /* Antes disto ficava hardcoded a Arial/Helvetica — a variável do
      Tailwind (Geist, agora Inter) nunca chegava a ser aplicada ao body. */
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
