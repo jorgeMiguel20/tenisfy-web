@@ -10,6 +10,13 @@ import HomeHeroButtons from './HomeHeroButtons'
 // botoes de HomeHeroButtons.tsx no lugar da barra de pesquisa/atalhos
 // "Populares" - a pesquisa por texto continua disponivel pelo icone de
 // pesquisa no cabecalho.
+//
+// Foto de fundo trocada a pedido do Jorge (parede de sneakers com
+// modelo, licenca Unsplash - free para uso comercial) para comunicar
+// melhor "muitas marcas, muitas lojas" logo na hero. Imagem
+// pre-recortada em public/marketing/hero-bg.jpg (1920x800, foco na
+// cara/ombros da modelo), por isso object-position passa a ser so
+// "center" nos dois breakpoints - o recorte ja vem enquadrado.
 export default function HomeHero() {
   return (
     <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden sm:min-h-[85vh] sm:max-h-[840px] flex items-center">
@@ -18,7 +25,7 @@ export default function HomeHero() {
         src="/marketing/hero-bg.jpg"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center sm:object-[75%_center]"
+        className="absolute inset-0 w-full h-full object-cover object-center"
       />
       <div
         aria-hidden="true"
