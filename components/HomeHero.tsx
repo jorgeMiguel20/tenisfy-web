@@ -2,32 +2,33 @@
 import HomeHeroButtons from './HomeHeroButtons'
 
 // Hero redesenhado (v2 do Jorge no Claude Design, foto 4/foto 2 do
-// feedback): overlay mais escuro, etiqueta em cima do titulo, "€"
-// decorativo semi transparente no canto superior direito (tal como no
-// mockup), e os 2 botoes de HomeHeroButtons.tsx no lugar da barra de
-// pesquisa/atalhos "Populares" - a pesquisa por texto continua
-// disponivel pelo icone de pesquisa no cabecalho.
+// feedback): overlay mais escuro, etiqueta em cima do titulo, e os 2
+// botoes de HomeHeroButtons.tsx no lugar da barra de pesquisa/atalhos
+// "Populares" - a pesquisa por texto continua disponivel pelo icone de
+// pesquisa no cabecalho.
 //
 // Foto de fundo trocada a pedido do Jorge (parede de sneakers com
 // modelo, licenca Unsplash - free para uso comercial) para comunicar
-// melhor "muitas marcas, muitas lojas" logo na hero. Imagem
-// pre-recortada em public/marketing/hero-bg.jpg (1920x800, foco na
-// cara/ombros da modelo), por isso object-position e so "center" nos
-// dois breakpoints - o recorte ja vem enquadrado.
+// melhor "muitas marcas, muitas lojas" logo na hero.
 //
 // Ajustes pedidos pelo Jorge depois de ver a foto no telemovel:
 // - Secao ganhou uma altura minima tambem no mobile (antes so tinha
-//   min-h a partir do breakpoint sm:, por isso no telemovel a hero
-//   ficava com a altura do texto e a foto aparecia toda esmagada e mal
-//   enquadrada). Agora a proporcao no telemovel fica parecida com a do
-//   desktop.
+//   min-h a partir do breakpoint sm:).
 // - Etiqueta "Preços verificados todos os dias" deixou de ser laranja
 //   e passou a branca, para combinar com o resto do texto da hero.
-// - "€" decorativo removido a pedido do Jorge (ficava sobreposto de
-//   forma estranha em cima da foto, sobretudo no telemovel).
+// - "€" decorativo removido a pedido do Jorge.
+//
+// Recorte da foto atualizado outra vez a pedido do Jorge (queria ver
+// "todos os tenis" da parede e o corpo dela, nao so a cara/ombros):
+// public/marketing/hero-bg.jpg passou a ser um recorte bem mais alto
+// da mesma foto original (praticamente a largura toda, desde o topo da
+// parede ate as maos/anca dela - a opcao "2" que ele escolheu entre 3
+// recortes reais mostrados), por isso a secao ficou consideravelmente
+// mais alta em ambos os breakpoints (antes era uma tira larga e baixa,
+// agora e quase quadrada) para nao cortar demasiado a foto nova.
 export default function HomeHero() {
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[560px] max-h-[720px] sm:min-h-[85vh] sm:max-h-[840px] flex items-center">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[80vh] max-h-[820px] sm:min-h-[90vh] sm:max-h-[1080px] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/hero-bg.jpg"
