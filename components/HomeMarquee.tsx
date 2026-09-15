@@ -6,9 +6,17 @@
 export default function HomeMarquee({ brands }: { brands: string[] }) {
   if (brands.length === 0) return null
 
-  // Duplica a lista para o loop de CSS ficar continuo (quando a primeira
+  // Repete a lista de marcas o suficiente para o "bloco" ficar bem mais
+  // largo do que qualquer ecra, mesmo quando o catalogo so tem poucas
+  // marcas distintas (ex.: 5). Sem isto, um catalogo com poucas marcas
+  // deixava um espaco em branco enorme a seguir a ultima marca, porque as
+  // duas copias juntas nao chegavam a preencher a largura do ecra.
+  const repeatCount = Math.max(1, Math.ceil(24 / brands.length))
+  const block = Array.from({ length: repeatCount }, () => brands).flat()
+
+  // Duplica o bloco para o loop de CSS ficar continuo (quando a primeira
   // copia sai do ecra a segunda ja esta la, sem salto visivel).
-  const items = [...brands, ...brands]
+  const items = [...block, ...block]
 
   return (
     <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden border-y border-gray-100 bg-white py-4">
