@@ -17,36 +17,44 @@ import HomeHeroButtons from './HomeHeroButtons'
 //   e passou a branca.
 // - "€" decorativo removido.
 //
-// Recorte da foto atualizado a pedido do Jorge (queria ver "todos os
-// tenis" da parede e o corpo dela): public/marketing/hero-bg.jpg e um
-// recorte quase quadrado (1600x1538) da mesma foto original, desde o
-// topo da parede ate as maos/anca dela.
-//
-// Altura da secao: no mobile mantem-se por vh (ocupa quase o ecra
-// todo, so corta um pouco os lados da foto - fica bem porque o ecra de
-// telemovel ja e estreito/alto, parecido com a foto). No desktop
-// (sm:) o ecra e muito mais largo que alto, e um limite em vh cortava
-// a foto a meio do peito sem chegar a mostrar as maos - o Jorge pediu
-// para ver a foto toda em vez disso, por isso a partir do sm: a altura
-// passa a ser calculada pela propria proporcao da foto (aspect-ratio),
-// sem limite de altura - a secao fica mais alta do que um ecra normal
-// e o visitante desce um pouco para ver o resto, mas nada da foto e
-// cortado.
+// DUAS fotos de fundo diferentes, uma por tamanho de ecra (pedido do
+// Jorge depois de varias tentativas com uma unica foto):
+// - Mobile (public/marketing/hero-bg.jpg, 1600x1538, quase quadrada):
+//   mostra da parede toda ate as maos/anca dela. No telemovel o ecra e
+//   estreito/alto, por isso o object-cover so corta um pouco dos
+//   lados e mostra a foto quase toda - o Jorge confirmou que "esta
+//   perfeito", por isso NAO MEXER aqui.
+// - Desktop (public/marketing/hero-bg-desktop.jpg, 1920x1086, bem mais
+//   larga): um recorte diferente da mesma foto original, da cabeca ate
+//   as maos dela mas com a largura toda da parede de tenis. A foto
+//   quase quadrada do mobile, num ecra de computador (largo e baixo),
+//   obrigava a hero a ficar mais alta do que 2 ecras - o titulo nem
+//   aparecia sem fazer scroll, e a meio do scroll via-se so os botoes
+//   cortados no topo. Com este recorte mais "deitado" (perde so as 2
+//   filas de tenis que estavam acima da cabeca dela, o resto mantem-se
+//   todo), a hero volta a caber praticamente num ecra normal, sem
+//   scroll estranho.
 //
 // Overlay escurecido: com esta foto (fundo branco/claro), o overlay
-// preto que tinhamos (90/75/50) ficava pesado demais e escurecia a
-// foto toda - o Jorge reparou que estava "muito escura". Aligeirado
-// para 80/50/15 - mantem legibilidade do texto do lado esquerdo (mais
-// escuro) e deixa a foto respirar do lado direito (bem mais claro).
+// preto que tinhamos antes (90/75/50) ficava pesado demais. Aligeirado
+// para 80/50/15 - mantem legibilidade do texto do lado esquerdo e
+// deixa a foto respirar do lado direito.
 export default function HomeHero() {
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[80vh] max-h-[820px] sm:min-h-0 sm:max-h-none sm:aspect-[1600/1538] flex items-center">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[80vh] max-h-[820px] sm:min-h-0 sm:max-h-none sm:aspect-[1920/1086] flex items-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/hero-bg.jpg"
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center"
+        className="absolute inset-0 w-full h-full object-cover object-center sm:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/marketing/hero-bg-desktop.jpg"
+        alt=""
+        aria-hidden="true"
+        className="hidden sm:block absolute inset-0 w-full h-full object-cover object-center"
       />
       <div
         aria-hidden="true"
