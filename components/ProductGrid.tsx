@@ -961,6 +961,12 @@ export default function ProductGrid({
         </div>
       </div>
 
+      {/* H2 visualmente oculto (sr-only) - corrige a hierarquia de titulos
+          desta pagina, que saltava de H1 "Catalogo" direto para H3 (nomes
+          dos produtos) sem nenhum H2 a meio. So para leitores de ecra, sem
+          alterar nada visualmente. */}
+      <h2 className="sr-only">Produtos</h2>
+
       {filteredProducts.length === 0 ? (
         <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
       ) : (
