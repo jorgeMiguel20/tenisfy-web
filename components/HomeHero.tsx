@@ -22,18 +22,22 @@ import HomeHeroButtons from './HomeHeroButtons'
 // - Mobile (public/marketing/hero-bg.jpg, 1600x1538, quase quadrada):
 //   mostra da parede toda ate as maos/anca dela. No telemovel o ecra e
 //   estreito/alto, por isso o object-cover so corta um pouco dos
-//   lados e mostra a foto quase toda - o Jorge confirmou que "esta
-//   perfeito", por isso NAO MEXER aqui.
+//   lados e mostra a foto quase toda - o Jorge confirmou "esta
+//   perfeito", NAO MEXER aqui.
 // - Desktop (public/marketing/hero-bg-desktop.jpg, 1920x1086, bem mais
-//   larga): um recorte diferente da mesma foto original, da cabeca ate
-//   as maos dela mas com a largura toda da parede de tenis. A foto
-//   quase quadrada do mobile, num ecra de computador (largo e baixo),
-//   obrigava a hero a ficar mais alta do que 2 ecras - o titulo nem
-//   aparecia sem fazer scroll, e a meio do scroll via-se so os botoes
-//   cortados no topo. Com este recorte mais "deitado" (perde so as 2
-//   filas de tenis que estavam acima da cabeca dela, o resto mantem-se
-//   todo), a hero volta a caber praticamente num ecra normal, sem
-//   scroll estranho.
+//   larga): recorte da cabeca ate as maos dela mas com a largura toda
+//   da parede de tenis - cabe praticamente num ecra normal, sem o
+//   scroll estranho que a foto quase quadrada do mobile causava num
+//   ecra largo e baixo.
+//
+// Escolha da foto por <picture>+<source media>, nao por CSS
+// hidden/block em duas tags <img> separadas: com duas <img> o
+// navegador ia sempre a buscar as DUAS fotos (uma delas so para a
+// esconder com CSS), gastando mais de 500KB a mais por visita
+// (confirmado - as duas apareciam com complete:true independentemente
+// do ecra). O Jorge pediu para corrigir isto. Com <picture>, o
+// navegador escolhe logo qual das duas fotos pedir, conforme o
+// media query, e so descarrega essa.
 //
 // Overlay escurecido: com esta foto (fundo branco/claro), o overlay
 // preto que tinhamos antes (90/75/50) ficava pesado demais. Aligeirado
@@ -42,20 +46,16 @@ import HomeHeroButtons from './HomeHeroButtons'
 export default function HomeHero() {
   return (
     <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[80vh] max-h-[820px] sm:min-h-0 sm:max-h-none sm:aspect-[1920/1086] flex items-center">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/marketing/hero-bg.jpg"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center sm:hidden"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/marketing/hero-bg-desktop.jpg"
-        alt=""
-        aria-hidden="true"
-        className="hidden sm:block absolute inset-0 w-full h-full object-cover object-center"
-      />
+      <picture>
+        <source media="(min-width: 640px)" srcSet="/marketing/hero-bg-desktop.jpg" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/marketing/hero-bg.jpg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+      </picture>
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/15"
