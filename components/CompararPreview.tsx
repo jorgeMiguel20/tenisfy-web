@@ -108,7 +108,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
       {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
           (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
           lado a lado, que era onde o Jorge achava que estava muito junto */}
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-40">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-40">
         {/* Coluna esquerda: etiqueta, titulo, texto e CTA - fixa, nao encolhe */}
         {/* sm:w-[340px] (era sm:w-52/208px) - largura minima para "Vê os
             ténis lado a lado" caber numa unica linha no tamanho de letra
@@ -143,9 +143,12 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               (pedido do Jorge: "falta aplicares no mobile"), um pouco mais
               pequena do que no desktop para nao ocupar espaco a mais antes
               das fotos dos tenis.
-              Tamanho aumentado (180/220px -> 260/320px) - pedido do Jorge,
-              o texto escrito a mao dentro da imagem nao dava para ler. */}
-          <div className="mt-6 w-[260px] sm:w-[320px]">
+              Tamanho aumentado outra vez (260/320px -> 340/420px) e o risco
+              horizontal que a imagem original tinha foi cortado (pedido do
+              Jorge: "aumenta os ténis e a frase", "tira o risco") - o
+              ficheiro em si (comparar-deco.png) foi substituído por uma
+              versão sem o risco e sem a margem em excesso à volta. */}
+          <div className="mt-6 w-[340px] sm:w-[420px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/marketing/comparar-deco.png"

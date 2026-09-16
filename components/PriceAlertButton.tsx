@@ -72,6 +72,28 @@ export default function PriceAlertButton({
   const [targetPrice, setTargetPrice] = useState(() =>
     currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.9)) : 50
   )
+  // Campo de texto para o utilizador poder escrever o valor diretamente,
+  // além de arrastar o slider (pedido do Jorge: "quero que exista também a
+  // funcionalidade do utilizador poder escrever manualmente"). Guarda-se o
+  // texto em bruto à parte do valor numérico para o utilizador poder
+  // apagar/editar livremente enquanto escreve - só valida e sincroniza com
+  // targetPrice (e por isso com o slider, que usa o mesmo estado) quando o
+  // campo perde o foco ou o utilizador prime Enter.
+  const [targetPriceInput, setTargetPriceInput] = useState(() => String(targetPrice))
+
+  useEffect(() => {
+    setTargetPriceInput(String(targetPrice))
+  }, [targetPrice])
+
+  function commitManualPrice() {
+    const parsed = Number(targetPriceInput.replace(',', '.'))
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setTargetPrice(Math.min(sliderMax, Math.max(sliderMin, Math.round(parsed))))
+    } else {
+      setTargetPriceInput(String(targetPrice))
+    }
+  }
+
   const sliderPercent = Math.min(100, Math.max(0, Math.round(((targetPrice - sliderMin) / (sliderMax - sliderMin)) * 100)))
   // "Expiração": ao fim de 1 ou 2 meses o alerta é eliminado automaticamente
   // (ver app/produto/[slug]/priceAlertActions.ts e o cron diário que faz a
@@ -308,13 +330,32 @@ export default function PriceAlertButton({
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col">
                 {/* Valor máximo desejado - preço centrado, com slider por
-                    baixo. Nada de input de texto solto (era o antigo campo
-                    "abaixo de ___ €") - fica tudo controlado pelo slider. */}
+                    baixo. O valor também pode ser escrito diretamente no
+                    campo (pedido do Jorge) - o slider e o campo de texto
+                    partilham o mesmo estado (targetPrice), por isso ficam
+                    sempre sincronizados um com o outro. */}
                 <div className="border-b border-gray-100 py-4 text-center">
                   <p className="text-xs font-semibold text-gray-900">Valor máximo desejado</p>
-                  <p className="mt-2 inline-block rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-bold text-gray-900">
-                    abaixo de {formatPrice(targetPrice)}
-                  </p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5">
+                    <span className="text-sm font-bold text-gray-900">abaixo de</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={targetPriceInput}
+                      onChange={(e) => setTargetPriceInput(e.target.value)}
+                      onBlur={commitManualPrice}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          commitManualPrice()
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      className="w-12 border-none bg-transparent p-0 text-sm font-bold text-gray-900 text-center focus:outline-none"
+                      aria-label="Valor máximo desejado, em euros"
+                    />
+                    <span className="text-sm font-bold text-gray-900">€</span>
+                  </div>
                   <input
                     type="range"
                     min={sliderMin}
@@ -326,6 +367,9 @@ export default function PriceAlertButton({
                     style={{ ['--slider-percent' as string]: `${sliderPercent}%` }}
                     aria-label="Valor máximo desejado"
                   />
+                  <p className="mt-1.5 text-[11px] text-gray-400">
+                    Entre {formatPrice(sliderMin)} e {formatPrice(sliderMax)}
+                  </p>
                 </div>
 
                 {/* Expiração - elimina o alerta ao fim de 1 ou 2 meses (ver

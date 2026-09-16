@@ -91,7 +91,12 @@ export default function ComparePicker({
   }
 
   return (
-    <div className="w-[300px] max-w-full rounded-xl border border-gray-900 bg-white p-3">
+    // Sem contorno/fundo/padding próprios neste wrapper (pedido do Jorge:
+    // apareciam "duas caixas" quando o picker abria - esta caixa exterior
+    // e o próprio input, cada um com o seu border-gray-900). Agora só o
+    // input mostra a caixa (rounded-full, com o seu border) - este div é só
+    // um contentor de layout, sem aparência visual própria.
+    <div className="w-[300px] max-w-full">
       <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}
