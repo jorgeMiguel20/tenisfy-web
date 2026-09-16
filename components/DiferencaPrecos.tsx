@@ -320,12 +320,12 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               return (
                 <div
                   key={row.store}
-                  className={`flex items-center justify-between gap-3 px-3.5 py-3.5 transition-colors ${
-                    isBest ? 'rounded-lg bg-gray-900' : ''
-                  } ${i > 0 && !isBest ? 'border-t border-gray-100' : ''}`}
+                  className={`flex items-center justify-between gap-3 px-3.5 py-3.5 ${
+                    i > 0 ? 'border-t border-gray-100' : ''
+                  }`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className={`text-xs font-bold shrink-0 ${isBest ? 'text-white/50' : 'text-gray-400'}`}>
+                    <span className="text-xs font-bold shrink-0 text-gray-400">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     {row.domain && (
@@ -343,31 +343,28 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
                       </span>
                     )}
                     <span className="min-w-0 flex flex-col">
-                      <span className={`truncate text-sm ${isBest ? 'font-bold text-white' : 'text-gray-600'}`}>
-                        {row.store}
-                      </span>
-                      {(isBest || freeShipping) && (
-                        <span className="flex flex-wrap gap-1 mt-0.5">
-                          {isBest && (
-                            <span className="inline-flex items-center rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-semibold text-white">
-                              Melhor preço
-                            </span>
-                          )}
-                          {freeShipping && (
-                            <span
-                              className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
-                                isBest ? 'bg-white/15 text-white' : 'bg-emerald-50 text-emerald-700'
-                              }`}
-                            >
-                              Portes grátis
-                            </span>
-                          )}
+                      <span className="truncate text-sm font-medium text-gray-900">{row.store}</span>
+                      {/* Só o que é real: nota discreta de portes grátis quando o
+                          preço já atinge o limiar conhecido dessa loja - sem
+                          prazo de entrega (não temos esse dado - combinado com
+                          o Jorge). */}
+                      {freeShipping && (
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400">
+                          <TruckIcon className="h-3 w-3" />
+                          Grátis
                         </span>
                       )}
                     </span>
                   </span>
-                  <span className={`shrink-0 text-sm ${isBest ? 'font-extrabold text-white' : 'text-gray-400'}`}>
-                    {formatPrice(row.price)}
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className={`text-sm ${isBest ? 'font-extrabold text-gray-900' : 'text-gray-400'}`}>
+                      {formatPrice(row.price)}
+                    </span>
+                    {isBest && (
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#1F5F58] px-2 py-1 text-[10px] font-semibold text-white">
+                        Melhor preço
+                      </span>
+                    )}
                   </span>
                 </div>
               )
