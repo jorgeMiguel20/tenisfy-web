@@ -336,7 +336,13 @@ export default function PriceAlertButton({
                     sempre sincronizados um com o outro. */}
                 <div className="border-b border-gray-100 py-4 text-center">
                   <p className="text-xs font-semibold text-gray-900">Valor máximo desejado</p>
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5">
+                  {/* O contorno agora está só à volta do campo do número (não
+                      do bloco "abaixo de ... €" todo) - pedido do Jorge:
+                      antes o contorno envolvia tudo, dando a ideia de que se
+                      podia clicar em qualquer parte para escrever, quando só
+                      o número reagia. Assim fica visualmente claro que só
+                      ali é editável. */}
+                  <div className="mt-2 inline-flex items-center gap-1.5">
                     <span className="text-sm font-bold text-gray-900">abaixo de</span>
                     <input
                       type="text"
@@ -351,7 +357,7 @@ export default function PriceAlertButton({
                           e.currentTarget.blur()
                         }
                       }}
-                      className="w-12 border-none bg-transparent p-0 text-sm font-bold text-gray-900 text-center focus:outline-none"
+                      className="w-14 rounded-md border border-gray-300 bg-white px-1.5 py-1 text-sm font-bold text-gray-900 text-center focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                       aria-label="Valor máximo desejado, em euros"
                     />
                     <span className="text-sm font-bold text-gray-900">€</span>
