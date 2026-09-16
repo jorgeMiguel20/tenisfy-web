@@ -94,18 +94,6 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   // horizontalmente entre os dois, mesmo quando um deles nao tem o dado.
   const specRows = SPEC_DEFS.filter(({ key }) => a[key] || b[key])
 
-  // Specs cujo valor difere entre os 2 produtos (para destacar com fundo
-  // suave) - mesma logica de app/comparar/page.tsx.
-  // Conta tambem como "diferente" quando um dos 2 produtos tem o dado e o
-  // outro nao (ex.: "Com atacadores" vs "-") - antes so comparava quando os
-  // 2 tinham valor preenchido, por isso esse caso ficava sem destaque apesar
-  // de ser claramente uma diferenca entre os produtos.
-  const differingLabels = new Set(
-    specRows
-      .filter(({ key }) => a[key] !== b[key])
-      .map(({ label }) => label)
-  )
-
   // max-w-5xl (era max-w-3xl) - a coluna de texto teve de crescer para o
   // titulo caber numa so linha, e isso so tinha espaco sem espremer os
   // cartoes se a seccao toda ficasse mais larga
@@ -263,20 +251,23 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               Envolvida numa caixa branca para o espaço entre linhas
               mostrar sempre branco a sério (não o fundo da secção) -
               pedido do Jorge, confirmado com exemplo.
-              Caixa de destaque (quando os 2 produtos diferem nessa
-              especificação) passou de bg-orange-50 a bg-gray-100 - pedido
-              do Jorge para tirar o tom laranja, usando o mesmo cinza já
-              usado por trás das fotos dos ténis. Continua a distinguir-se
-              das caixas iguais (essas ficam bg-white, sem realce). */}
+              Cor das caixas: NÃO depende de os 2 produtos terem valores
+              diferentes (era assim antes, mas o Jorge reparou que ficava
+              inconsistente - ex.: "Fecho" branco só porque calhava de ser
+              igual nos 2 ténis). Agora é uma regra fixa por posição da
+              linha - 1ª/3ª/5ª linha (Material, Fecho, ...) cinza claro,
+              2ª/4ª/6ª linha (Sola, Cor, ...) branco - para ficar sempre
+              previsível e continuar a aplicar-se sozinha se aparecer mais
+              alguma característica no futuro. */}
           {specRows.length > 0 && (
             <div className="mt-2 rounded-2xl bg-white p-1.5">
               <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-                {specRows.flatMap(({ key, label }) => {
-                  const isDifferent = differingLabels.has(label)
+                {specRows.flatMap(({ key, label }, rowIndex) => {
+                  const rowBg = rowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-white'
                   return [a, b].map((product) => (
                     <div
                       key={`${label}-${product.id}`}
-                      className={`rounded-xl px-3 py-2 text-xs ${isDifferent ? 'bg-gray-100' : 'bg-white'}`}
+                      className={`rounded-xl px-3 py-2 text-xs ${rowBg}`}
                     >
                       <p className="text-[10px] font-bold uppercase tracking-wide text-black">{label}</p>
                       <p className="mt-0.5 text-gray-800">{product[key] ?? '—'}</p>
