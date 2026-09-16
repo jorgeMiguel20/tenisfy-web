@@ -440,7 +440,15 @@ export default async function CompararPage({
       </nav>
 
       <CompareDiffProvider>
-        <div className="flex items-start justify-between gap-4 mt-3">
+        {/* flex-col no telemóvel, flex-row a partir de sm (pedido do Jorge):
+            com o título "Comparar ténis" a competir por largura com o
+            interruptor "Mostrar só as diferenças" na mesma linha, em ecrãs
+            estreitos o título era obrigado a quebrar ("Comparar" / "ténis")
+            e o interruptor ficava espremido logo a seguir à primeira
+            palavra - com mau aspeto. Agora o interruptor cai para a sua
+            própria linha, por baixo do título/texto, só no telemóvel; a
+            partir de sm mantém-se tal e qual como antes (lado a lado). */}
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mt-3">
           <div>
             <h1 className="font-display text-4xl font-bold tracking-tight text-gray-900 mb-2">
               Comparar ténis
@@ -455,7 +463,7 @@ export default async function CompararPage({
             )}
           </div>
           {ordered.length > 1 && (
-            <div className="pt-2 shrink-0">
+            <div className="sm:pt-2 shrink-0">
               <CompareDiffToggle />
             </div>
           )}
