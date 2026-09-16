@@ -71,8 +71,13 @@ export default function HomeHero() {
               Preços verificados todos os dias
             </span>
           </div>
+          {/* <br/> forcado entre as 2 frases (pedido do Jorge) - sem isto,
+              o "Ao" ficava sozinho no fim da 1a linha em vez de junto com
+              "preço certo." */}
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-            Encontra o par certo. Ao preço certo.
+            Encontra o par certo.
+            <br />
+            Ao preço certo.
           </h1>
           <p className="mt-4 text-white/80 text-lg max-w-md">
             Uma pesquisa, todas as lojas. Comparamos preço, stock e tamanhos para que pagues o menos possível pelo

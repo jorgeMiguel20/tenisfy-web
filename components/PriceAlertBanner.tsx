@@ -59,7 +59,7 @@ export default function PriceAlertBanner({ product }: { product: ProductWithPric
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <span className="rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-700">
-                100% grátis, sem conta paga
+                100% grátis
               </span>
               <span className="rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-700">
                 24/7 lojas parceiras monitorizadas

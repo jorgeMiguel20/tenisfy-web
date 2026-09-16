@@ -30,7 +30,7 @@ export default function PesquisaPorFotoButton() {
         onClick={() => fileInputRef.current?.click()}
         className="inline-block bg-gray-900 text-white font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-800 transition-colors"
       >
-        Experimenta a Pesquisa por Foto
+        Experimenta a pesquisa por foto
       </button>
       <input
         ref={fileInputRef}

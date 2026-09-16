@@ -21,7 +21,11 @@ const STEPS = [
 
 export default function ComoFunciona() {
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden">
+    // mb-12 (pedido do Jorge: reparou que esta seccao encostava direto na
+    // seccao seguinte - "Alerta de preco inteligente" - sem qualquer
+    // espaco entre as duas, ao contrario de todas as outras transicoes de
+    // seccao na pagina, que tem sempre uma margem visivel)
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden mb-12">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/marketing/step-buy.jpg"

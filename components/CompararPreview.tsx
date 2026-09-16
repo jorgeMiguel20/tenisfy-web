@@ -114,11 +114,11 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             ténis lado a lado" caber numa unica linha no tamanho de letra
             atual (pedido do Jorge) */}
         <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-[340px]">
-          {/* Etiqueta em texto simples, sem contorno nem badge - pedido do
-              Jorge com a 2ª imagem de referência (a 1ª versão tinha um
-              círculo à mão à volta do texto, que ele pediu para tirar). */}
-          <span className="text-gray-900 text-xs font-bold uppercase tracking-wide">Comparar</span>
-          <h2 className="font-display text-2xl font-bold text-gray-900 sm:text-3xl">Vê os ténis lado a lado</h2>
+          {/* Etiqueta "Comparar" removida (pedido do Jorge) - o titulo já
+              deixa claro do que se trata, e a letra do titulo aumentou
+              (text-2xl/3xl -> text-3xl/4xl) para compensar o espaço e dar
+              mais destaque a esta secção. */}
+          <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Vê os ténis lado a lado</h2>
           {/* Sem text-sm (era mais pequeno que o texto da Pesquisa por foto,
               que usa o tamanho base) - agora o paragrafo fica do mesmo
               tamanho que o da seccao vizinha. */}
@@ -137,13 +137,15 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               <path d="M16 21l4-4-4-4" />
               <path d="M20 17H4" />
             </svg>
-            Ir para o Comparar
+            Ir para o comparar
           </Link>
           {/* Imagem decorativa enviada pelo Jorge - agora tambem no mobile
               (pedido do Jorge: "falta aplicares no mobile"), um pouco mais
               pequena do que no desktop para nao ocupar espaco a mais antes
-              das fotos dos tenis. */}
-          <div className="mt-6 w-[180px] sm:w-[220px]">
+              das fotos dos tenis.
+              Tamanho aumentado (180/220px -> 260/320px) - pedido do Jorge,
+              o texto escrito a mao dentro da imagem nao dava para ler. */}
+          <div className="mt-6 w-[260px] sm:w-[320px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/marketing/comparar-deco.png"
