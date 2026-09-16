@@ -85,10 +85,14 @@ export default function PriceAlertButton({
     setTargetPriceInput(String(targetPrice))
   }, [targetPrice])
 
+  // Ao contrário do slider (que fica preso entre sliderMin e sliderMax, para
+  // arrastar sempre dar um valor abaixo do preço atual), o campo de texto
+  // deixa o utilizador escrever o valor mínimo que quiser - pedido do Jorge,
+  // sem limite inferior imposto. Só se valida que é mesmo um número positivo.
   function commitManualPrice() {
     const parsed = Number(targetPriceInput.replace(',', '.'))
     if (Number.isFinite(parsed) && parsed > 0) {
-      setTargetPrice(Math.min(sliderMax, Math.max(sliderMin, Math.round(parsed))))
+      setTargetPrice(Math.round(parsed))
     } else {
       setTargetPriceInput(String(targetPrice))
     }
@@ -373,9 +377,6 @@ export default function PriceAlertButton({
                     style={{ ['--slider-percent' as string]: `${sliderPercent}%` }}
                     aria-label="Valor máximo desejado"
                   />
-                  <p className="mt-1.5 text-[11px] text-gray-400">
-                    Entre {formatPrice(sliderMin)} e {formatPrice(sliderMax)}
-                  </p>
                 </div>
 
                 {/* Expiração - elimina o alerta ao fim de 1 ou 2 meses (ver
