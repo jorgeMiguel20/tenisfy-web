@@ -110,12 +110,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   // titulo caber numa so linha, e isso so tinha espaco sem espremer os
   // cartoes se a seccao toda ficasse mais larga
   return (
-    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto rounded-2xl bg-[#faf7f2] p-6 sm:p-10">
-      {/* bg-[#faf7f2] (fundo creme muito suave) - a pagina tinha varias
-          seccoes seguidas em branco puro, sem nada a separa-las (pedido do
-          Jorge para dar mais dinamica sem exagerar em cor/laranja). Esta e
-          uma de 2 seccoes que passam a ter um fundo levemente tingido,
-          alternado com seccoes brancas, so para dar ritmo ao scroll. */}
+    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto rounded-2xl bg-[#f7f9f8] p-6 sm:p-10">
+      {/* bg-[#f7f9f8] (era bg-[#faf7f2], um creme mais quente) - pedido do
+          Jorge para o fundo desta seccao ficar mais claro e neutro, a bater
+          certo com o tom da imagem de referencia que enviou (~#f7f8f7),
+          em vez do creme quente que tinha antes. Continua a ser uma de 2
+          seccoes com fundo levemente tingido, alternado com seccoes
+          brancas, so para dar ritmo ao scroll. */}
       {/* gap-6 mantem-se no mobile (empilhado) - o espaco maior
           (sm:gap-40) e so a partir do ecra onde o texto e os cartoes ficam
           lado a lado, que era onde o Jorge achava que estava muito junto */}
@@ -260,8 +261,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               bem mais comprido (ex.: a "Sola" do Gel-Kayano vs a da
               Ultraboost) - mesma técnica da tabela grande do /comparar.
               Envolvida numa caixa branca para o espaço entre linhas
-              mostrar sempre branco a sério (não o creme da secção) -
-              pedido do Jorge, confirmado com exemplo. */}
+              mostrar sempre branco a sério (não o fundo da secção) -
+              pedido do Jorge, confirmado com exemplo.
+              Caixa de destaque (quando os 2 produtos diferem nessa
+              especificação) passou de bg-orange-50 a bg-gray-100 - pedido
+              do Jorge para tirar o tom laranja, usando o mesmo cinza já
+              usado por trás das fotos dos ténis. Continua a distinguir-se
+              das caixas iguais (essas ficam bg-white, sem realce). */}
           {specRows.length > 0 && (
             <div className="mt-2 rounded-2xl bg-white p-1.5">
               <div className="grid grid-cols-2 gap-x-3 gap-y-2">
@@ -270,7 +276,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                   return [a, b].map((product) => (
                     <div
                       key={`${label}-${product.id}`}
-                      className={`rounded-xl px-3 py-2 text-xs ${isDifferent ? 'bg-orange-50' : 'bg-white'}`}
+                      className={`rounded-xl px-3 py-2 text-xs ${isDifferent ? 'bg-gray-100' : 'bg-white'}`}
                     >
                       <p className="text-[10px] font-bold uppercase tracking-wide text-black">{label}</p>
                       <p className="mt-0.5 text-gray-800">{product[key] ?? '—'}</p>
