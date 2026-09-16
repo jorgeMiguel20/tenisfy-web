@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
 import ProductGallery from '@/components/ProductGallery'
+import FavoriteButton from '@/components/FavoriteButton'
 
 type GroupedOffer = {
   store: string
@@ -27,6 +28,18 @@ function groupOffers(offers: any[]): GroupedOffer[] {
   return Object.values(grouped).sort((a, b) => a.price - b.price)
 }
 
+// Mesma formula do selo "-X%" do components/ProductCard.tsx (grelha do
+// catalogo) - percentagem sobre uma descida de preco REAL (priceDrop, do
+// historico de precos) ou, na falta dessa, a poupanca real entre lojas
+// (savings). Nunca um "preco original"/"preco de referencia" inventado -
+// isso nao existe nos nossos dados.
+function getDropPercent(product: any): number | null {
+  const lowestPrice = product.lowest_price
+  const discount = product.priceDrop ?? product.savings
+  if (!discount || lowestPrice == null) return null
+  return Math.round((discount.amount / (lowestPrice + discount.amount)) * 100)
+}
+
 // Mesmas especificacoes tecnicas da pagina /comparar (material, sola, fecho,
 // cor) - vem diretamente das colunas reais da tabela products (nunca
 // inventadas). Sem "Ref": esse campo e mais util na pagina /comparar, aqui
@@ -43,6 +56,25 @@ const SPEC_DEFS = [
 // Layout em 2 colunas: bloco de texto/CTA fixo à esquerda, grelha de
 // comparação (2 cartões) à direita - pedido explícito do Jorge com imagem
 // de referência.
+//
+// Redesenho (2ª ronda, pedido do Jorge com nova imagem de referência):
+// - Etiqueta "Comparar" deixou de ter qualquer contorno à volta (só texto),
+//   e passou de azul a preta, para bater certo com a imagem enviada.
+// - Botão "Ir para o Comparar" mais pequeno (px-5/py-2.5/text-sm ->
+//   px-4/py-2/text-xs) e com um pequeno ícone de "comparar" antes do texto.
+// - Imagem decorativa (public/marketing/comparar-deco.png, enviada pelo
+//   Jorge) por baixo do botão, só no desktop - no telemóvel o espaço é
+//   escasso e esta imagem é só um enfeite, não informação.
+// - Fotos dos 2 ténis passaram a ter uma caixa cinza-clara à volta (como no
+//   cartão da página /comparar) e o botão de favoritos real (mesmo
+//   componente FavoriteButton usado no /catalogo e na página de produto -
+//   não um coração decorativo à parte).
+// - Selo "-X%" no canto (mesma fórmula e cor do card do catálogo,
+//   components/ProductCard.tsx): usa uma descida de preço real
+//   (priceDrop, do histórico de preços) ou a poupança real entre lojas
+//   (savings) - nunca uma percentagem inventada a partir de um "preço
+//   original" que não existe nos nossos dados. Por isso o selo só aparece
+//   quando o produto tiver mesmo esse dado (pode não aparecer nos 2 lados).
 export default function CompararPreview({ products }: { products: ProductWithPrice[] }) {
   if (products.length < 2) return null
   const [a, b] = products as any[]
@@ -92,11 +124,10 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             ténis lado a lado" caber numa unica linha no tamanho de letra
             atual (pedido do Jorge) */}
         <div className="flex w-full flex-shrink-0 flex-col gap-2.5 sm:w-[340px]">
-          {/* Etiqueta em texto simples (nao badge/pill) - mesmo padrao usado nas
-              outras seccoes da homepage (Pesquisa por foto, Maior poupanca
-              agora, banner de marcas), para a seccao nao destoar visualmente
-              das vizinhas. */}
-          <span className="text-blue-600 text-xs font-bold uppercase tracking-wide">Comparar</span>
+          {/* Etiqueta em texto simples, sem contorno nem badge - pedido do
+              Jorge com a 2ª imagem de referência (a 1ª versão tinha um
+              círculo à mão à volta do texto, que ele pediu para tirar). */}
+          <span className="text-gray-900 text-xs font-bold uppercase tracking-wide">Comparar</span>
           <h2 className="font-display text-2xl font-bold text-gray-900 sm:text-3xl">Vê os ténis lado a lado</h2>
           {/* Sem text-sm (era mais pequeno que o texto da Pesquisa por foto,
               que usa o tamanho base) - agora o paragrafo fica do mesmo
@@ -104,12 +135,32 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           <p className="text-gray-500 leading-relaxed">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
+          {/* Botão mais pequeno (px-4/py-2/text-xs, era px-5/py-2.5/text-sm)
+              e com ícone de "comparar" antes do texto - pedido do Jorge. */}
           <Link
             href="/comparar"
-            className="mt-1 inline-flex w-fit items-center justify-center rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+            className="mt-1 inline-flex w-fit items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800"
           >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+              <path d="M8 3 4 7l4 4" />
+              <path d="M4 7h16" />
+              <path d="M16 21l4-4-4-4" />
+              <path d="M20 17H4" />
+            </svg>
             Ir para o Comparar
           </Link>
+          {/* Imagem decorativa enviada pelo Jorge - só desktop (hidden no
+              mobile, onde este espaço é precioso e a imagem não é
+              informação, só enfeite). */}
+          <div className="hidden sm:block mt-6 w-[220px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/marketing/comparar-deco.png"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-auto"
+            />
+          </div>
         </div>
 
         {/* Coluna direita: grelha de comparacao com os 2 cartoes */}
@@ -118,7 +169,12 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               fica ancorado so a esta linha (nao ao cartao todo, texto e
               specs incluidos), para ficar mesmo junto as fotos e nao a
               flutuar a meio do cartao (pedido do Jorge, comparando com o
-              mockup: cor preta e posicao junto as fotos). */}
+              mockup: cor preta e posicao junto as fotos).
+              Caixa cinza-clara à volta de cada foto, selo "-X%" no canto
+              esquerdo (quando há descida de preço real) e o botão de
+              favoritos real no canto direito - pedido do Jorge com a
+              imagem de referência, reaproveitando o mesmo padrão visual do
+              cartão do catálogo (components/ProductCard.tsx). */}
           <div className="relative grid grid-cols-2 gap-4">
             <span
               aria-hidden="true"
@@ -131,15 +187,27 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               // (essa fica para a página /comparar) - uma imagem estática fica
               // mais limpa aqui do que um carrossel com setas e pontos.
               const firstImage = product.image_url ?? product.image_urls?.[0] ?? null
+              const dropPercent = getDropPercent(product)
               return (
-                <ProductGallery
-                  key={product.id}
-                  images={firstImage ? [firstImage] : []}
-                  alt={product.model_name}
-                  compact
-                  imageBoxClassName="aspect-square"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
+                <div key={product.id} className="relative rounded-2xl bg-gray-100 p-2">
+                  <div className="absolute left-3 top-3 right-3 z-10 flex items-center justify-between">
+                    {dropPercent != null ? (
+                      <span className="rounded-md bg-[#1F5F58] px-2 py-1 text-xs font-bold text-white">
+                        -{dropPercent}%
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    <FavoriteButton slug={product.slug} />
+                  </div>
+                  <ProductGallery
+                    images={firstImage ? [firstImage] : []}
+                    alt={product.model_name}
+                    compact
+                    imageBoxClassName="aspect-square"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
               )
             })}
           </div>
