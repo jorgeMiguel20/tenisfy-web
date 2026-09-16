@@ -63,8 +63,9 @@ const SPEC_DEFS = [
 // - Botão "Ir para o Comparar" mais pequeno (px-5/py-2.5/text-sm ->
 //   px-4/py-2/text-xs) e com um pequeno ícone de "comparar" antes do texto.
 // - Imagem decorativa (public/marketing/comparar-deco.png, enviada pelo
-//   Jorge) por baixo do botão, só no desktop - no telemóvel o espaço é
-//   escasso e esta imagem é só um enfeite, não informação.
+//   Jorge) por baixo do botão, no desktop e no mobile (pedido do Jorge),
+//   um pouco mais pequena no mobile para não empurrar as fotos para muito
+//   mais baixo.
 // - Fotos dos 2 ténis passaram a ter uma caixa cinza-clara à volta (como no
 //   cartão da página /comparar) e o botão de favoritos real (mesmo
 //   componente FavoriteButton usado no /catalogo e na página de produto -
@@ -149,10 +150,11 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             </svg>
             Ir para o Comparar
           </Link>
-          {/* Imagem decorativa enviada pelo Jorge - só desktop (hidden no
-              mobile, onde este espaço é precioso e a imagem não é
-              informação, só enfeite). */}
-          <div className="hidden sm:block mt-6 w-[220px]">
+          {/* Imagem decorativa enviada pelo Jorge - agora tambem no mobile
+              (pedido do Jorge: "falta aplicares no mobile"), um pouco mais
+              pequena do que no desktop para nao ocupar espaco a mais antes
+              das fotos dos tenis. */}
+          <div className="mt-6 w-[180px] sm:w-[220px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/marketing/comparar-deco.png"
