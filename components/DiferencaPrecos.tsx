@@ -1,7 +1,7 @@
 // components/DiferencaPrecos.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
@@ -137,6 +137,20 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   const images = product?.image_urls?.length ? product.image_urls : product?.image_url ? [product.image_url] : []
   const [imageIndex, setImageIndex] = useState(0)
   const [storeIndex, setStoreIndex] = useState(0)
+  const storeCount = storeRows.length
+
+  // Correção a pedido do Jorge: não é um carrossel manual (setas/clique) -
+  // as 3 lojas ficam sempre todas visíveis, e o destaque avança sozinho de
+  // loja em loja, em loop, a cada 2.5s. Hook chamado sempre (nunca depois de
+  // um "return" condicional - regra dos Hooks do React), a guarda
+  // "storeCount < 2" fica dentro do efeito.
+  useEffect(() => {
+    if (storeCount < 2) return
+    const id = setInterval(() => {
+      setStoreIndex((i) => (i + 1) % storeCount)
+    }, 2500)
+    return () => clearInterval(id)
+  }, [storeCount])
 
   if (!product || storeRows.length < 2) return null
 
@@ -145,23 +159,12 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   const savings = priciest.price - cheapest.price
   const verifiedLabel = formatVerifiedLabel(cheapest.lastCheckedAt)
   const currentImage = images[imageIndex] ?? null
-  const currentStore = storeRows[storeIndex] ?? storeRows[0]
 
   function prevImage() {
     setImageIndex((i) => (i - 1 + images.length) % images.length)
   }
   function nextImage() {
     setImageIndex((i) => (i + 1) % images.length)
-  }
-  // Pedido do Jorge: o card "Onde comprar" passa de lista vertical (todas as
-  // lojas visíveis) para carrossel - mostra uma loja de cada vez, com as
-  // mesmas setas + pontinhos já usados no carrossel de fotos ao lado, para
-  // manter a mesma linguagem visual dentro da secção.
-  function prevStore() {
-    setStoreIndex((i) => (i - 1 + storeRows.length) % storeRows.length)
-  }
-  function nextStore() {
-    setStoreIndex((i) => (i + 1) % storeRows.length)
   }
 
   return (
@@ -328,96 +331,72 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               visualmente. Continua claramente mais estreito do que a
               imagem toda, com folga cinzenta visível à direita (onde ficam
               as setas e os dots da foto), tal como na referência.
-              Pedido do Jorge: o card passa de lista vertical (todas as
-              lojas) para carrossel - mostra uma loja de cada vez, com
-              setas + pontinhos (mesma linguagem visual do carrossel de
-              fotos ao lado). "Ordenar por: preço mais baixo" removido do
-              cabeçalho, e o selo "Grátis"/data de verificação removidos de
-              cada loja - a pedido do Jorge. */}
+              Correção a pedido do Jorge: o "carrossel" que ele queria não
+              era o de esconder lojas e mostrar uma de cada vez (isso já
+              tinha sido feito e ele corrigiu) - é este: as 3 lojas ficam
+              todas visíveis ao mesmo tempo, como antes, e um destaque
+              (fundo verde claro) vai passando automaticamente de loja em
+              loja sozinho, em loop, sem precisar de clique nem hover.
+              "Ordenar por: preço mais baixo" continua removido do
+              cabeçalho, e o selo "Grátis"/data de verificação continuam
+              removidos de cada loja - a pedido do Jorge. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
               currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[164px] sm:-ml-16' : ''
             }`}
           >
-            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+            <div className="flex items-center px-5 pt-4 pb-2">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
-              {storeRows.length > 1 && (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={prevStore}
-                    aria-label="Loja anterior"
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-[#68747C] hover:bg-gray-100"
-                  >
-                    <ChevronIcon direction="left" className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextStore}
-                    aria-label="Loja seguinte"
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-[#68747C] hover:bg-gray-100"
-                  >
-                    <ChevronIcon direction="right" className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              )}
             </div>
-            {currentStore && (
-              <div className="flex items-center justify-between gap-3 px-5 py-4">
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className="text-xs font-bold shrink-0 text-[#68747C]">
-                    {String(storeIndex + 1).padStart(2, '0')}
-                  </span>
-                  {currentStore.domain && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-1 ring-gray-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={storeLogoSrc(currentStore.domain)}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-full w-full object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
+            {storeRows.map((row, i) => {
+              const isBest = i === 0
+              const isHighlighted = i === storeIndex
+              return (
+                <div
+                  key={row.store}
+                  className={`flex items-center justify-between gap-3 px-5 py-4 transition-colors duration-700 ${
+                    i > 0 ? 'border-t border-gray-100' : ''
+                  } ${isHighlighted ? 'bg-[#E8F2EF]' : ''}`}
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="text-xs font-bold shrink-0 text-[#68747C]">
+                      {String(i + 1).padStart(2, '0')}
                     </span>
-                  )}
-                  <span className="min-w-0 flex flex-col">
-                    <span className="truncate text-sm font-medium text-[#17232B]">{currentStore.store}</span>
-                  </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  {/* Pedido do Jorge: preços sempre em carvão (nunca
-                      esbatidos a cinzento-claro) - a diferença entre a
-                      melhor oferta e as restantes vem do peso da fonte e
-                      do selo "Melhor preço", não da cor do preço em si. */}
-                  <span
-                    className={`text-sm text-[#17232B] ${
-                      storeIndex === 0 ? 'font-extrabold' : 'font-normal'
-                    }`}
-                  >
-                    {formatPrice(currentStore.price)}
-                  </span>
-                  {storeIndex === 0 && (
-                    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
-                      Melhor preço
+                    {row.domain && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-1 ring-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={storeLogoSrc(row.domain)}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-full w-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      </span>
+                    )}
+                    <span className="min-w-0 flex flex-col">
+                      <span className="truncate text-sm font-medium text-[#17232B]">{row.store}</span>
                     </span>
-                  )}
-                </span>
-              </div>
-            )}
-            {storeRows.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 pb-4">
-                {storeRows.map((row, i) => (
-                  <span
-                    key={row.store}
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                      i === storeIndex ? 'bg-[#123F3A]' : 'bg-gray-200'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    {/* Pedido do Jorge: preços sempre em carvão (nunca
+                        esbatidos a cinzento-claro) - a diferença entre a
+                        melhor oferta e as restantes vem do peso da fonte e
+                        do selo "Melhor preço", não da cor do preço em si. */}
+                    <span className={`text-sm text-[#17232B] ${isBest ? 'font-extrabold' : 'font-normal'}`}>
+                      {formatPrice(row.price)}
+                    </span>
+                    {isBest && (
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
+                        Melhor preço
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
