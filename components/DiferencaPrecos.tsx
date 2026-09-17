@@ -56,13 +56,6 @@ function domainFromBaseUrl(baseUrl: string | null | undefined): string {
   }
 }
 
-// Só mostra o selo "Portes grátis" quando o preço real desta loja já atinge
-// o limiar - sem isso, ou sem limiar conhecido, não mostra nada (nunca um
-// prazo/condição de envio a adivinhar).
-function isFreeShipping(price: number, threshold: number | null): boolean {
-  return threshold != null && price >= threshold
-}
-
 function bestPricePerStore(product: ProductWithPrice) {
   const grouped = new Map<
     string,
@@ -116,27 +109,7 @@ function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
   return `verificado há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
 }
 
-// Versão compacta do mesmo label real (sem o prefixo "verificado "), para
-// caber ao lado do selo de portes grátis em cada linha da lista de lojas -
-// mesma data real, só o texto mais curto.
-function formatShortVerified(lastCheckedAt: string | null): string | null {
-  const full = formatVerifiedLabel(lastCheckedAt)
-  return full ? full.replace(/^verificado /, '') : null
-}
-
-const COUNT_WORDS: Record<number, string> = { 2: 'dois', 3: 'três', 4: 'quatro' }
-
-// Ícones simples (mesmo estilo de traço fino usado no resto do site - ver o
-// ícone de "camadas" já usado no aviso do /comparar em app/comparar/page.tsx)
-function LayersIcon({ className = 'h-4 w-4' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-      <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-    </svg>
-  )
-}
-
+// Ícones simples (mesmo estilo de traço fino usado no resto do site)
 function TagIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -151,44 +124,6 @@ function TagIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   )
 }
 
-function SearchIcon({ className = 'h-5 w-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-  )
-}
-
-function TruckIcon({ className = 'h-5 w-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="1" y="6" width="13" height="11" rx="1.5" />
-      <path d="M14 10h4l4 4v3h-8z" />
-      <circle cx="6" cy="19" r="1.7" />
-      <circle cx="17.5" cy="19" r="1.7" />
-    </svg>
-  )
-}
-
-function ShieldIcon({ className = 'h-5 w-5' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3 4.5 6v5.5C4.5 16.5 7.8 20.5 12 21.5c4.2-1 7.5-5 7.5-10V6L12 3Z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  )
-}
-
-function ClockIcon({ className = 'h-3 w-3' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 2" />
-    </svg>
-  )
-}
-
 function ChevronIcon({ direction, className = 'h-4 w-4' }: { direction: 'left' | 'right'; className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -197,24 +132,11 @@ function ChevronIcon({ direction, className = 'h-4 w-4' }: { direction: 'left' |
   )
 }
 
-function ChevronDownIcon({ className = 'h-3 w-3' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  )
-}
-
-const INFO_ITEMS = [
-  { Icon: SearchIcon, text: 'Compara preços em várias lojas' },
-  { Icon: TruckIcon, text: 'Vê o stock e os tamanhos' },
-  { Icon: ShieldIcon, text: 'Compra com mais confiança' },
-]
-
 export default function DiferencaPrecos({ product }: { product?: ProductWithPrice | null }) {
   const storeRows = product ? bestPricePerStore(product).slice(0, 4) : []
   const images = product?.image_urls?.length ? product.image_urls : product?.image_url ? [product.image_url] : []
   const [imageIndex, setImageIndex] = useState(0)
+  const [storeIndex, setStoreIndex] = useState(0)
 
   if (!product || storeRows.length < 2) return null
 
@@ -223,12 +145,23 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   const savings = priciest.price - cheapest.price
   const verifiedLabel = formatVerifiedLabel(cheapest.lastCheckedAt)
   const currentImage = images[imageIndex] ?? null
+  const currentStore = storeRows[storeIndex] ?? storeRows[0]
 
   function prevImage() {
     setImageIndex((i) => (i - 1 + images.length) % images.length)
   }
   function nextImage() {
     setImageIndex((i) => (i + 1) % images.length)
+  }
+  // Pedido do Jorge: o card "Onde comprar" passa de lista vertical (todas as
+  // lojas visíveis) para carrossel - mostra uma loja de cada vez, com as
+  // mesmas setas + pontinhos já usados no carrossel de fotos ao lado, para
+  // manter a mesma linguagem visual dentro da secção.
+  function prevStore() {
+    setStoreIndex((i) => (i - 1 + storeRows.length) % storeRows.length)
+  }
+  function nextStore() {
+    setStoreIndex((i) => (i + 1) % storeRows.length)
   }
 
   return (
@@ -240,14 +173,11 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
     <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#F7F8F7] py-14 sm:py-16">
       <div className="relative mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-2 sm:items-center sm:gap-14 sm:px-12">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F2EF] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#123F3A]">
-            <LayersIcon className="h-3.5 w-3.5" />
-            O mesmo ténis, {COUNT_WORDS[storeRows.length] ?? storeRows.length} preços
-          </span>
           {/* Pedido do Jorge: hierarquia editorial muito mais forte - título
               e preço bem maiores do que antes, para serem claramente os
-              protagonistas da secção. */}
-          <h2 className="font-display mt-4 text-4xl sm:text-6xl font-bold leading-[1.05] text-[#17232B]">
+              protagonistas da secção. Badge "O mesmo ténis, X preços"
+              removido a pedido do Jorge. */}
+          <h2 className="font-display text-4xl sm:text-6xl font-bold leading-[1.05] text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
           <p className="mt-5 max-w-md text-base sm:text-lg text-[#68747C]">
@@ -278,22 +208,9 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
           </Link>
-
-          {/* Pedido do Jorge: separar os 3 benefícios com linhas verticais
-              muito subtis, em vez de espaço em branco só (grid com gap). */}
-          <div className="mt-10 flex items-start">
-            {INFO_ITEMS.map(({ Icon, text }, i) => (
-              <div
-                key={text}
-                className={`flex flex-1 flex-col gap-2 ${
-                  i > 0 ? 'ml-4 border-l border-[#E1E4E3] pl-4' : ''
-                }`}
-              >
-                <Icon className="h-5 w-5 text-[#17232B]" />
-                <p className="text-xs leading-snug text-[#68747C]">{text}</p>
-              </div>
-            ))}
-          </div>
+          {/* Linha dos 3 benefícios (Compara preços/Vê o stock/Compra com
+              confiança) removida a pedido do Jorge - informação já repetida
+              noutro sítio da página. */}
         </div>
 
         <div className="relative">
@@ -323,49 +240,43 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             //
             // Segundo achado (reportado pelo Jorge depois do 1º deploy, com
             // print anotado a mostrar um espaço grande a mais entre o ténis
-            // e o card): as fotos reais dos produtos (verificado neste e
-            // noutros modelos) são quadradas mas o ténis só ocupa ~34% da
-            // altura da foto - o resto é fundo de estúdio vazio, à volta de
-            // todo o ténis (~33% acima, ~32% abaixo), independentemente do
-            // stage ser quadrado ou não. Isso não tem nada a ver com o
-            // "pb-[180px]"/"-mt-[164px]" (esses continuam corretos, dão
-            // sempre os mesmos 16px de folga entre o fim da FOTO e o topo do
-            // card) - o espaço extra vinha de dentro da própria foto. Corrigi
-            // trocando o stage de quadrado ("aspect-square") para retangular
-            // ("aspect-[2/1]") e a imagem de "object-contain" para
-            // "object-cover": como a foto de origem é quadrada e a caixa
-            // ficou mais larga que alta, o corte do "cover" tira sempre a
-            // mesma fatia de cima E de baixo (nunca dos lados, que já
-            // estavam justos), aproximando o ténis do card sem cortar as
-            // pontas do ténis - testado e confirmado visualmente com a foto
-            // real do Campus 00s antes de aplicar.
+            // e o card): a foto "hero" (a primeira do carrossel) é quadrada
+            // mas o ténis só ocupa ~34% da altura da foto - o resto é fundo
+            // de estúdio vazio. Cheguei a apertar o enquadramento com
+            // "aspect-[2/1]" + "object-cover" (corta uma fatia de cima e de
+            // baixo), mas o Jorge reparou que isso cortava OUTRAS fotos do
+            // mesmo carrossel (pares de ténis, close-ups da sola, dos
+            // atacadores) que não têm a mesma proporção vazia à volta -
+            // ficavam com o ténis cortado. Voltei a "aspect-square" +
+            // "object-contain" (nunca corta nada, mostra sempre a foto
+            // inteira, seja qual for o enquadramento de cada foto) - troco
+            // sempre segurança (nunca cortar o produto) por um espaço
+            // ligeiramente maior nalgumas fotos, mantenho só a margem de
+            // baixo reduzida (ver nota seguinte) que continua segura porque
+            // não corta a imagem, só encolhe a moldura à volta dela.
             //
             // Terceiro ajuste (o Jorge pediu só mais um bocadinho depois do
-            // aspect-[2/1]): a folga que sobrava já não vinha da foto em si,
-            // vinha da margem interna ("p-6 sm:p-10") à volta da foto dentro
-            // do stage - essa margem é igual nos 4 lados. Reduzi só a
-            // margem de baixo (perto do card), mantendo a de cima e as
-            // laterais iguais, já que só a zona perto do card incomodava -
-            // testado ao vivo (o sapato continua com folga, não corta a
-            // sola) antes de aplicar.
+            // aspect-[2/1], entretanto revertido): a folga que sobrava já
+            // não vinha da foto em si, vinha da margem interna
+            // ("p-6 sm:p-10") à volta da foto dentro do stage - essa margem
+            // é igual nos 4 lados. Reduzi só a margem de baixo (perto do
+            // card), mantendo a de cima e as laterais iguais - isto é
+            // seguro com "object-contain" porque só reduz a moldura, nunca
+            // corta a foto.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
-              <div className="relative aspect-[2/1] w-full overflow-hidden rounded-[20px]">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
                 <div className="absolute inset-0 p-6 pb-2 sm:p-10 sm:pb-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
                     alt={product.model_name}
                     loading="lazy"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 </div>
 
-                <div className="absolute right-4 top-4 rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-black/5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#68747C]">
-                    {product.brands?.name}
-                  </p>
-                  <p className="text-sm font-bold text-[#17232B]">{product.model_name}</p>
-                </div>
+                {/* Etiqueta de marca/modelo no canto superior direito da
+                    foto removida a pedido do Jorge. */}
 
                 {images.length > 1 && (
                   <>
@@ -412,12 +323,17 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               largura do "product stage") em vez de usar o valor em pixels
               (570-620px) que o Jorge tinha estimado a olho - esse número
               assumia uma página mais larga do que o nosso layout real
-              (max-w-7xl). 72% (em vez dos 64% exatos da imagem) é o valor
-              mínimo que ainda evita que o texto de cada loja (ex.: "Grátis
-              · hoje às 06:22") quebre a meio da linha - testado e
-              confirmado visualmente. Continua claramente mais estreito do
-              que a imagem toda, com folga cinzenta visível à direita
-              (onde ficam as setas e os dots), tal como na referência. */}
+              (max-w-7xl). 72% é o valor mínimo que ainda evita que o texto
+              de cada loja quebre a meio da linha - testado e confirmado
+              visualmente. Continua claramente mais estreito do que a
+              imagem toda, com folga cinzenta visível à direita (onde ficam
+              as setas e os dots da foto), tal como na referência.
+              Pedido do Jorge: o card passa de lista vertical (todas as
+              lojas) para carrossel - mostra uma loja de cada vez, com
+              setas + pontinhos (mesma linguagem visual do carrossel de
+              fotos ao lado). "Ordenar por: preço mais baixo" removido do
+              cabeçalho, e o selo "Grátis"/data de verificação removidos de
+              cada loja - a pedido do Jorge. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
               currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[164px] sm:-ml-16' : ''
@@ -425,87 +341,83 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
           >
             <div className="flex items-center justify-between px-5 pt-4 pb-2">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
-              {/* Seta decorativa junto ao texto, como na imagem de
-                  referência - continua a não ser um menu funcional
-                  (confirmado com o Jorge, não temos outros critérios de
-                  ordenação além de preço mais baixo). */}
-              <span className="flex items-center gap-1 text-[11px] text-[#68747C]">
-                Ordenar por: preço mais baixo
-                <ChevronDownIcon className="h-3 w-3" />
-              </span>
-            </div>
-            {storeRows.map((row, i) => {
-              const isBest = i === 0
-              const freeShipping = isFreeShipping(row.price, row.threshold)
-              const shortVerified = formatShortVerified(row.lastCheckedAt)
-              return (
-                <div
-                  key={row.store}
-                  className={`flex items-center justify-between gap-3 px-5 py-4 ${
-                    i > 0 ? 'border-t border-gray-100' : ''
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="text-xs font-bold shrink-0 text-[#68747C]">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    {row.domain && (
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-1 ring-gray-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={storeLogoSrc(row.domain)}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-full w-full object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
-                      </span>
-                    )}
-                    <span className="min-w-0 flex flex-col">
-                      <span className="truncate text-sm font-medium text-[#17232B]">{row.store}</span>
-                      {/* Só o que é real: nota discreta de portes grátis quando o
-                          preço já atinge o limiar conhecido dessa loja, e a
-                          data em que o preço desta loja foi mesmo verificado
-                          (last_checked_at real da oferta) - sem prazo de
-                          entrega inventado (não temos esse dado - combinado
-                          com o Jorge). */}
-                      {(freeShipping || shortVerified) && (
-                        <span className="mt-0.5 flex items-center gap-2 text-[11px] text-[#68747C]">
-                          {freeShipping && (
-                            <span className="flex items-center gap-1">
-                              <TruckIcon className="h-3 w-3" />
-                              Grátis
-                            </span>
-                          )}
-                          {shortVerified && (
-                            <span className="flex items-center gap-1">
-                              <ClockIcon className="h-3 w-3" />
-                              {shortVerified}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-2">
-                    {/* Pedido do Jorge: preços sempre em carvão (nunca
-                        esbatidos a cinzento-claro) - a diferença entre a
-                        melhor oferta e as restantes vem do peso da fonte e
-                        do selo "Melhor preço", não da cor do preço em si. */}
-                    <span className={`text-sm text-[#17232B] ${isBest ? 'font-extrabold' : 'font-normal'}`}>
-                      {formatPrice(row.price)}
-                    </span>
-                    {isBest && (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
-                        Melhor preço
-                      </span>
-                    )}
-                  </span>
+              {storeRows.length > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={prevStore}
+                    aria-label="Loja anterior"
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-[#68747C] hover:bg-gray-100"
+                  >
+                    <ChevronIcon direction="left" className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextStore}
+                    aria-label="Loja seguinte"
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-[#68747C] hover:bg-gray-100"
+                  >
+                    <ChevronIcon direction="right" className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              )
-            })}
+              )}
+            </div>
+            {currentStore && (
+              <div className="flex items-center justify-between gap-3 px-5 py-4">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="text-xs font-bold shrink-0 text-[#68747C]">
+                    {String(storeIndex + 1).padStart(2, '0')}
+                  </span>
+                  {currentStore.domain && (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-1 ring-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={storeLogoSrc(currentStore.domain)}
+                        alt=""
+                        aria-hidden="true"
+                        className="h-full w-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    </span>
+                  )}
+                  <span className="min-w-0 flex flex-col">
+                    <span className="truncate text-sm font-medium text-[#17232B]">{currentStore.store}</span>
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  {/* Pedido do Jorge: preços sempre em carvão (nunca
+                      esbatidos a cinzento-claro) - a diferença entre a
+                      melhor oferta e as restantes vem do peso da fonte e
+                      do selo "Melhor preço", não da cor do preço em si. */}
+                  <span
+                    className={`text-sm text-[#17232B] ${
+                      storeIndex === 0 ? 'font-extrabold' : 'font-normal'
+                    }`}
+                  >
+                    {formatPrice(currentStore.price)}
+                  </span>
+                  {storeIndex === 0 && (
+                    <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
+                      Melhor preço
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+            {storeRows.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 pb-4">
+                {storeRows.map((row, i) => (
+                  <span
+                    key={row.store}
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                      i === storeIndex ? 'bg-[#123F3A]' : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
