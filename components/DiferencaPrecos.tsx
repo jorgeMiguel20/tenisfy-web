@@ -303,11 +303,17 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             </div>
           ) : null}
 
+          {/* Pedido do Jorge: o card deixou de ficar posicionado "absolute"
+              a sobrepor o fundo da foto - em fotos reais de produto (em
+              vez do silhueta genérica do mockup) isso por vezes cortava
+              mesmo em cima da sola/biqueira do ténis. Agora fica sempre
+              por baixo da foto, em fluxo normal, com uma margem clara
+              (mt-6) entre as duas - nunca sobrepõe a imagem, em nenhum
+              tamanho de ecrã. Continua alinhado à direita e com a mesma
+              largura de antes no desktop (só deixou de ser "absolute"). */}
           <div
             className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-black/5 ${
-              currentImage
-                ? 'mt-6 w-full sm:absolute sm:mt-0 sm:bottom-0 sm:-right-6 sm:w-[85%] sm:max-w-sm'
-                : ''
+              currentImage ? 'mt-6 w-full sm:ml-auto sm:w-[85%] sm:max-w-sm' : ''
             }`}
           >
             <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
