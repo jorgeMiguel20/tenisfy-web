@@ -116,6 +116,14 @@ function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
   return `verificado há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
 }
 
+// Versão compacta do mesmo label real (sem o prefixo "verificado "), para
+// caber ao lado do selo de portes grátis em cada linha da lista de lojas -
+// mesma data real, só o texto mais curto.
+function formatShortVerified(lastCheckedAt: string | null): string | null {
+  const full = formatVerifiedLabel(lastCheckedAt)
+  return full ? full.replace(/^verificado /, '') : null
+}
+
 const COUNT_WORDS: Record<number, string> = { 2: 'dois', 3: 'três', 4: 'quatro' }
 
 // Ícones simples (mesmo estilo de traço fino usado no resto do site - ver o
@@ -172,10 +180,27 @@ function ShieldIcon({ className = 'h-5 w-5' }: { className?: string }) {
   )
 }
 
+function ClockIcon({ className = 'h-3 w-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  )
+}
+
 function ChevronIcon({ direction, className = 'h-4 w-4' }: { direction: 'left' | 'right'; className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d={direction === 'left' ? 'M15 18l-6-6 6-6' : 'm9 18 6-6-6-6'} />
+    </svg>
+  )
+}
+
+function ChevronDownIcon({ className = 'h-3 w-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
     </svg>
   )
 }
@@ -207,46 +232,65 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   }
 
   return (
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#EFEBE2] py-16 sm:py-20">
-      <div className="relative mx-auto grid max-w-7xl gap-14 px-6 sm:grid-cols-2 sm:items-center sm:gap-16 sm:px-12">
+    // Pedido do Jorge: paleta "premium/editorial" exata (fundo quase branco,
+    // verde só como acento em botões/badges, nunca a preencher a interface).
+    // Cores exatas que pediu: fundo #F7F8F7, texto principal #17232B, texto
+    // secundário #68747C, verde de marca #123F3A, verde claro (só para o
+    // fundo dos pequenos badges) #E8F2EF.
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#F7F8F7] py-14 sm:py-16">
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-2 sm:items-center sm:gap-14 sm:px-12">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1F5F58]/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#1F5F58]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F2EF] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#123F3A]">
             <LayersIcon className="h-3.5 w-3.5" />
             O mesmo ténis, {COUNT_WORDS[storeRows.length] ?? storeRows.length} preços
           </span>
-          <h2 className="font-display mt-3 text-3xl sm:text-4xl font-bold leading-tight text-gray-900">
+          {/* Pedido do Jorge: hierarquia editorial muito mais forte - título
+              e preço bem maiores do que antes, para serem claramente os
+              protagonistas da secção. */}
+          <h2 className="font-display mt-4 text-4xl sm:text-6xl font-bold leading-[1.05] text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
-          <p className="mt-4 max-w-sm text-sm text-gray-600">
+          <p className="mt-5 max-w-md text-base sm:text-lg text-[#68747C]">
             Alinhamos o preço do mesmo modelo nas lojas parceiras. A tua poupança é a
             distância entre a primeira e a última linha.
           </p>
-          <p className="mt-6 flex flex-wrap items-center gap-3 text-4xl sm:text-5xl font-extrabold text-gray-900">
+          <p className="mt-8 flex flex-wrap items-center gap-3 text-5xl sm:text-6xl font-extrabold text-[#17232B]">
             {formatPrice(cheapest.price)}
             {savings > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#1F5F58]/10 px-3 py-1 align-middle text-sm font-bold text-[#1F5F58]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
                 <TagIcon />
                 Poupa {formatPrice(savings)}
               </span>
             )}
           </p>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-[#68747C]">
             {product.model_name}
             {verifiedLabel ? ` · ${verifiedLabel}` : ''}
           </p>
+          {/* Confirmado com o Jorge a partir da imagem de referência real:
+              o botão é mesmo pílula (rounded-full), não rounded-xl como uma
+              instrução em texto anterior tinha pedido - a imagem venceu por
+              ser a referência final. */}
           <Link
             href={`/produto/${product.slug}`}
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1F5F58] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1a4e48]"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
           >
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
           </Link>
 
-          <div className="mt-8 grid grid-cols-3 gap-4">
-            {INFO_ITEMS.map(({ Icon, text }) => (
-              <div key={text} className="flex flex-col gap-2">
-                <Icon className="h-5 w-5 text-gray-700" />
-                <p className="text-xs leading-snug text-gray-600">{text}</p>
+          {/* Pedido do Jorge: separar os 3 benefícios com linhas verticais
+              muito subtis, em vez de espaço em branco só (grid com gap). */}
+          <div className="mt-10 flex items-start">
+            {INFO_ITEMS.map(({ Icon, text }, i) => (
+              <div
+                key={text}
+                className={`flex flex-1 flex-col gap-2 ${
+                  i > 0 ? 'ml-4 border-l border-[#E1E4E3] pl-4' : ''
+                }`}
+              >
+                <Icon className="h-5 w-5 text-[#17232B]" />
+                <p className="text-xs leading-snug text-[#68747C]">{text}</p>
               </div>
             ))}
           </div>
@@ -254,84 +298,127 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
 
         <div className="relative">
           {currentImage ? (
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentImage}
-                alt={product.model_name}
-                loading="lazy"
-                className="h-full w-full object-contain"
-              />
+            // Comparação pixel-a-pixel com a imagem de referência real que o
+            // Jorge enviou (medi as coordenadas na própria imagem, não é a
+            // olho): o card "Onde comprar" fica quase inteiramente DENTRO do
+            // "product stage" - só uma faixa fina do lado esquerdo do card é
+            // que sai para fora do stage, para a esquerda. A técnica
+            // continua a ser segura e independente da altura do card (2, 3
+            // ou 4 lojas): a caixa exterior do stage reserva uma zona vazia
+            // fixa depois da foto ("pb-[180px]"), e o card é puxado para
+            // cima por uma quantidade FIXA ("sm:-mt-[164px]") para dentro
+            // dessa reserva - sobram sempre os mesmos 16px de margem de
+            // segurança entre o fim da foto e o topo do card, nunca toca no
+            // ténis, seja qual for a altura do card. sm:-ml-8 desloca o
+            // card ligeiramente para a esquerda, a transbordar para fora do
+            // stage, tal como confirmado na imagem de referência.
+            //
+            // Achado técnico importante (também confirmado a comparar com a
+            // referência): o "product stage" não pode ter o mesmo fundo da
+            // secção (#F7F8F7) - tem de ser uma cor própria, ligeiramente
+            // diferente (#EDEFEE), senão a zona de reserva fica invisível
+            // (misturada com o fundo da página) e a sobreposição do card
+            // parece não fazer efeito nenhum visualmente, mesmo estando
+            // matematicamente correta.
+            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
+                <div className="absolute inset-0 p-6 sm:p-10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentImage}
+                    alt={product.model_name}
+                    loading="lazy"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
 
-              <div className="absolute right-4 top-4 rounded-xl bg-white px-3 py-2 text-right shadow-md ring-1 ring-black/5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                  {product.brands?.name}
-                </p>
-                <p className="text-sm font-bold text-gray-900">{product.model_name}</p>
+                <div className="absolute right-4 top-4 rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-black/5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#68747C]">
+                    {product.brands?.name}
+                  </p>
+                  <p className="text-sm font-bold text-[#17232B]">{product.model_name}</p>
+                </div>
+
+                {images.length > 1 && (
+                  <>
+                    {/* Confirmado com a imagem de referência: as setas do
+                        carrossel ficam centradas verticalmente na foto,
+                        junto à borda direita - separadas da etiqueta de
+                        marca (que fica só no topo), dentro do card
+                        cinzento. */}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={prevImage}
+                        aria-label="Foto anterior"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#17232B] shadow-sm ring-1 ring-black/5 hover:bg-gray-50"
+                      >
+                        <ChevronIcon direction="left" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={nextImage}
+                        aria-label="Foto seguinte"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#17232B] shadow-sm ring-1 ring-black/5 hover:bg-gray-50"
+                      >
+                        <ChevronIcon direction="right" />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                      {images.map((_, i) => (
+                        <span
+                          key={i}
+                          className={`h-2 w-2 rounded-full ring-1 ring-black/10 transition-colors ${
+                            i === imageIndex ? 'bg-[#123F3A]' : 'bg-white'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-
-              {images.length > 1 && (
-                <>
-                  <div className="absolute right-4 top-1/2 flex -translate-y-1/2 gap-2">
-                    <button
-                      type="button"
-                      onClick={prevImage}
-                      aria-label="Foto anterior"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-700 shadow-md ring-1 ring-black/5 hover:bg-gray-50"
-                    >
-                      <ChevronIcon direction="left" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={nextImage}
-                      aria-label="Foto seguinte"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-700 shadow-md ring-1 ring-black/5 hover:bg-gray-50"
-                    >
-                      <ChevronIcon direction="right" />
-                    </button>
-                  </div>
-                  <div className="absolute bottom-4 right-4 flex gap-1.5">
-                    {images.map((_, i) => (
-                      <span
-                        key={i}
-                        className={`h-1.5 w-1.5 rounded-full ${i === imageIndex ? 'bg-gray-900' : 'bg-white/70'}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
             </div>
           ) : null}
 
-          {/* Pedido do Jorge: o card deixou de ficar posicionado "absolute"
-              a sobrepor o fundo da foto - em fotos reais de produto (em
-              vez do silhueta genérica do mockup) isso por vezes cortava
-              mesmo em cima da sola/biqueira do ténis. Agora fica sempre
-              por baixo da foto, em fluxo normal, com uma margem clara
-              (mt-6) entre as duas - nunca sobrepõe a imagem, em nenhum
-              tamanho de ecrã. Continua alinhado à direita e com a mesma
-              largura de antes no desktop (só deixou de ser "absolute"). */}
+          {/* Medi a proporção real na imagem de referência (card ≈64% da
+              largura do "product stage") em vez de usar o valor em pixels
+              (570-620px) que o Jorge tinha estimado a olho - esse número
+              assumia uma página mais larga do que o nosso layout real
+              (max-w-7xl). 72% (em vez dos 64% exatos da imagem) é o valor
+              mínimo que ainda evita que o texto de cada loja (ex.: "Grátis
+              · hoje às 06:22") quebre a meio da linha - testado e
+              confirmado visualmente. Continua claramente mais estreito do
+              que a imagem toda, com folga cinzenta visível à direita
+              (onde ficam as setas e os dots), tal como na referência. */}
           <div
-            className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-black/5 ${
-              currentImage ? 'mt-6 w-full sm:ml-auto sm:w-[85%] sm:max-w-sm' : ''
+            className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
+              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[164px] sm:-ml-16' : ''
             }`}
           >
-            <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Onde comprar</span>
-              <span className="text-[11px] text-gray-400">Ordenar por: preço mais baixo</span>
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
+              {/* Seta decorativa junto ao texto, como na imagem de
+                  referência - continua a não ser um menu funcional
+                  (confirmado com o Jorge, não temos outros critérios de
+                  ordenação além de preço mais baixo). */}
+              <span className="flex items-center gap-1 text-[11px] text-[#68747C]">
+                Ordenar por: preço mais baixo
+                <ChevronDownIcon className="h-3 w-3" />
+              </span>
             </div>
             {storeRows.map((row, i) => {
               const isBest = i === 0
               const freeShipping = isFreeShipping(row.price, row.threshold)
+              const shortVerified = formatShortVerified(row.lastCheckedAt)
               return (
                 <div
                   key={row.store}
-                  className={`flex items-center justify-between gap-3 px-3.5 py-3.5 ${
+                  className={`flex items-center justify-between gap-3 px-5 py-4 ${
                     i > 0 ? 'border-t border-gray-100' : ''
                   }`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className="text-xs font-bold shrink-0 text-gray-400">
+                    <span className="text-xs font-bold shrink-0 text-[#68747C]">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     {row.domain && (
@@ -349,25 +436,41 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
                       </span>
                     )}
                     <span className="min-w-0 flex flex-col">
-                      <span className="truncate text-sm font-medium text-gray-900">{row.store}</span>
+                      <span className="truncate text-sm font-medium text-[#17232B]">{row.store}</span>
                       {/* Só o que é real: nota discreta de portes grátis quando o
-                          preço já atinge o limiar conhecido dessa loja - sem
-                          prazo de entrega (não temos esse dado - combinado com
-                          o Jorge). */}
-                      {freeShipping && (
-                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400">
-                          <TruckIcon className="h-3 w-3" />
-                          Grátis
+                          preço já atinge o limiar conhecido dessa loja, e a
+                          data em que o preço desta loja foi mesmo verificado
+                          (last_checked_at real da oferta) - sem prazo de
+                          entrega inventado (não temos esse dado - combinado
+                          com o Jorge). */}
+                      {(freeShipping || shortVerified) && (
+                        <span className="mt-0.5 flex items-center gap-2 text-[11px] text-[#68747C]">
+                          {freeShipping && (
+                            <span className="flex items-center gap-1">
+                              <TruckIcon className="h-3 w-3" />
+                              Grátis
+                            </span>
+                          )}
+                          {shortVerified && (
+                            <span className="flex items-center gap-1">
+                              <ClockIcon className="h-3 w-3" />
+                              {shortVerified}
+                            </span>
+                          )}
                         </span>
                       )}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
-                    <span className={`text-sm ${isBest ? 'font-extrabold text-gray-900' : 'text-gray-400'}`}>
+                    {/* Pedido do Jorge: preços sempre em carvão (nunca
+                        esbatidos a cinzento-claro) - a diferença entre a
+                        melhor oferta e as restantes vem do peso da fonte e
+                        do selo "Melhor preço", não da cor do preço em si. */}
+                    <span className={`text-sm text-[#17232B] ${isBest ? 'font-extrabold' : 'font-normal'}`}>
                       {formatPrice(row.price)}
                     </span>
                     {isBest && (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#1F5F58] px-2 py-1 text-[10px] font-semibold text-white">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
                         Melhor preço
                       </span>
                     )}
