@@ -320,15 +320,34 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // (misturada com o fundo da página) e a sobreposição do card
             // parece não fazer efeito nenhum visualmente, mesmo estando
             // matematicamente correta.
+            //
+            // Segundo achado (reportado pelo Jorge depois do 1º deploy, com
+            // print anotado a mostrar um espaço grande a mais entre o ténis
+            // e o card): as fotos reais dos produtos (verificado neste e
+            // noutros modelos) são quadradas mas o ténis só ocupa ~34% da
+            // altura da foto - o resto é fundo de estúdio vazio, à volta de
+            // todo o ténis (~33% acima, ~32% abaixo), independentemente do
+            // stage ser quadrado ou não. Isso não tem nada a ver com o
+            // "pb-[180px]"/"-mt-[164px]" (esses continuam corretos, dão
+            // sempre os mesmos 16px de folga entre o fim da FOTO e o topo do
+            // card) - o espaço extra vinha de dentro da própria foto. Corrigi
+            // trocando o stage de quadrado ("aspect-square") para retangular
+            // ("aspect-[2/1]") e a imagem de "object-contain" para
+            // "object-cover": como a foto de origem é quadrada e a caixa
+            // ficou mais larga que alta, o corte do "cover" tira sempre a
+            // mesma fatia de cima E de baixo (nunca dos lados, que já
+            // estavam justos), aproximando o ténis do card sem cortar as
+            // pontas do ténis - testado e confirmado visualmente com a foto
+            // real do Campus 00s antes de aplicar.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
-              <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
+              <div className="relative aspect-[2/1] w-full overflow-hidden rounded-[20px]">
                 <div className="absolute inset-0 p-6 sm:p-10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
                     alt={product.model_name}
                     loading="lazy"
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover"
                   />
                 </div>
 
