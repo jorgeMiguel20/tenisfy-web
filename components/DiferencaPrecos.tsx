@@ -339,9 +339,18 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // estavam justos), aproximando o ténis do card sem cortar as
             // pontas do ténis - testado e confirmado visualmente com a foto
             // real do Campus 00s antes de aplicar.
+            //
+            // Terceiro ajuste (o Jorge pediu só mais um bocadinho depois do
+            // aspect-[2/1]): a folga que sobrava já não vinha da foto em si,
+            // vinha da margem interna ("p-6 sm:p-10") à volta da foto dentro
+            // do stage - essa margem é igual nos 4 lados. Reduzi só a
+            // margem de baixo (perto do card), mantendo a de cima e as
+            // laterais iguais, já que só a zona perto do card incomodava -
+            // testado ao vivo (o sapato continua com folga, não corta a
+            // sola) antes de aplicar.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
               <div className="relative aspect-[2/1] w-full overflow-hidden rounded-[20px]">
-                <div className="absolute inset-0 p-6 sm:p-10">
+                <div className="absolute inset-0 p-6 pb-2 sm:p-10 sm:pb-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
