@@ -226,10 +226,8 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // continua a ser segura e independente da altura do card (2, 3
             // ou 4 lojas): a caixa exterior do stage reserva uma zona vazia
             // fixa depois da foto ("pb-[180px]"), e o card é puxado para
-            // cima por uma quantidade FIXA ("sm:-mt-[164px]") para dentro
-            // dessa reserva - sobram sempre os mesmos 16px de margem de
-            // segurança entre o fim da foto e o topo do card, nunca toca no
-            // ténis, seja qual for a altura do card. sm:-ml-8 desloca o
+            // cima por uma quantidade FIXA ("sm:-mt-[205px]") para dentro
+            // dessa reserva. sm:-ml-8 desloca o
             // card ligeiramente para a esquerda, a transbordar para fora do
             // stage, tal como confirmado na imagem de referência.
             //
@@ -266,6 +264,20 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // card), mantendo a de cima e as laterais iguais - isto é
             // seguro com "object-contain" porque só reduz a moldura, nunca
             // corta a foto.
+            //
+            // Quarto ajuste (Jorge voltou a reportar "está muito separado"
+            // depois do revert para aspect-square/object-contain, que trouxe
+            // de volta o espaço vazio de estúdio nas 7 fotos do carrossel):
+            // testei ao vivo, com o DOM da página em produção, a margem de
+            // sobreposição do card em CADA uma das 7 fotos do carrossel
+            // deste produto para encontrar o valor mais apertado que ainda
+            // é seguro em todas - as fotos mais "cheias" (par de ténis
+            // empilhado, sola e biqueira em close-up) só tinham ~110px de
+            // fundo vazio por baixo do ténis, contra os ~200px da foto
+            // "hero". Subi "sm:-mt-[164px]" para "sm:-mt-[205px]" (+41px de
+            // sobreposição): reduz visivelmente o espaço em todas as fotos
+            // e ainda sobra uma margem de segurança de ~60px nas fotos mais
+            // apertadas, nunca toca no ténis nem nessas.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
               <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
                 <div className="absolute inset-0 p-6 pb-2 sm:p-10 sm:pb-3">
@@ -342,7 +354,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               removidos de cada loja - a pedido do Jorge. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
-              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[164px] sm:-ml-16' : ''
+              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[205px] sm:-ml-16' : ''
             }`}
           >
             <div className="flex items-center px-5 pt-4 pb-2">
