@@ -173,21 +173,29 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
     // Cores exatas que pediu: fundo #F7F8F7, texto principal #17232B, texto
     // secundário #68747C, verde de marca #123F3A, verde claro (só para o
     // fundo dos pequenos badges) #E8F2EF.
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#F7F8F7] py-14 sm:py-16">
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-2 sm:items-center sm:gap-14 sm:px-12">
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#F7F8F7] py-8 sm:py-10">
+      <div className="relative mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 sm:items-center sm:gap-8 sm:px-12">
         <div>
           {/* Pedido do Jorge: hierarquia editorial muito mais forte - título
               e preço bem maiores do que antes, para serem claramente os
               protagonistas da secção. Badge "O mesmo ténis, X preços"
-              removido a pedido do Jorge. */}
-          <h2 className="font-display text-4xl sm:text-6xl font-bold leading-[1.05] text-[#17232B]">
+              removido a pedido do Jorge.
+              Quinto ajuste (Jorge: "ainda está muito grande, quero que se
+              veja tudo numa só página" - a secção inteira não cabia num ecrã
+              normal sem dar scroll, confirmado com print do próprio ecrã do
+              Jorge, 1365x688px): reduzi texto, espaçamentos verticais e o
+              tamanho da própria foto (ver nota mais abaixo) para a secção
+              toda caber num ecrã típico sem scroll - testado ao vivo,
+              medindo a altura real da secção (876px antes, 611px depois,
+              contra os 688px do ecrã do Jorge). */}
+          <h2 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
-          <p className="mt-5 max-w-md text-base sm:text-lg text-[#68747C]">
+          <p className="mt-3 max-w-md text-sm sm:text-base text-[#68747C]">
             Alinhamos o preço do mesmo modelo nas lojas parceiras. A tua poupança é a
             distância entre a primeira e a última linha.
           </p>
-          <p className="mt-8 flex flex-wrap items-center gap-3 text-5xl sm:text-6xl font-extrabold text-[#17232B]">
+          <p className="mt-4 flex flex-wrap items-center gap-3 text-3xl sm:text-4xl font-extrabold text-[#17232B]">
             {formatPrice(cheapest.price)}
             {savings > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
@@ -196,7 +204,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               </span>
             )}
           </p>
-          <p className="mt-2 text-xs text-[#68747C]">
+          <p className="mt-1 text-xs text-[#68747C]">
             {product.model_name}
             {verifiedLabel ? ` · ${verifiedLabel}` : ''}
           </p>
@@ -206,7 +214,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               ser a referência final. */}
           <Link
             href={`/produto/${product.slug}`}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
           >
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
@@ -274,13 +282,26 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // é seguro em todas - as fotos mais "cheias" (par de ténis
             // empilhado, sola e biqueira em close-up) só tinham ~110px de
             // fundo vazio por baixo do ténis, contra os ~200px da foto
-            // "hero". Subi "sm:-mt-[164px]" para "sm:-mt-[205px]" (+41px de
-            // sobreposição): reduz visivelmente o espaço em todas as fotos
-            // e ainda sobra uma margem de segurança de ~60px nas fotos mais
-            // apertadas, nunca toca no ténis nem nessas.
-            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[180px]">
+            // "hero".
+            //
+            // Quinto ajuste (Jorge: "ainda está muito grande, quero que se
+            // veja tudo numa só página" - ver nota junto ao título): além de
+            // reduzir texto e espaçamentos, encolhi a própria foto - deixou
+            // de ocupar a largura toda da coluna ("w-full") e passou a ter
+            // um limite ("max-w-[380px]", centrado com "mx-auto"). Como a
+            // foto ficou mais pequena, a reserva vazia a seguir ("pb-[180px]"
+            // -> "pb-[115px]") e a sobreposição do card ("sm:-mt-[205px]" ->
+            // "sm:-mt-[113px]") tiveram de encolher na mesma proporção -
+            // voltei a testar ao vivo nas 7 fotos do carrossel com o novo
+            // tamanho para confirmar que sobra sempre pelo menos ~45px de
+            // margem de segurança até ao ténis, mesmo nas fotos mais
+            // "cheias" (antes ~60px, a um tamanho de foto maior). No
+            // telemóvel (colunas empilhadas) o limite de largura não tem
+            // efeito visível, porque a coluna já é mais estreita do que
+            // 380px.
+            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px]">
               <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
-                <div className="absolute inset-0 p-6 pb-2 sm:p-10 sm:pb-3">
+                <div className="absolute inset-0 p-4 pb-1.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
@@ -354,10 +375,10 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               removidos de cada loja - a pedido do Jorge. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
-              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[205px] sm:-ml-16' : ''
+              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[113px] sm:-ml-16' : ''
             }`}
           >
-            <div className="flex items-center px-5 pt-4 pb-2">
+            <div className="flex items-center px-5 pt-2.5 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
             </div>
             {storeRows.map((row, i) => {
@@ -366,7 +387,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               return (
                 <div
                   key={row.store}
-                  className={`flex items-center justify-between gap-3 px-5 py-4 transition-colors duration-700 ${
+                  className={`flex items-center justify-between gap-3 px-5 py-2.5 transition-colors duration-700 ${
                     i > 0 ? 'border-t border-gray-100' : ''
                   } ${isHighlighted ? 'bg-[#E8F2EF]' : ''}`}
                 >
