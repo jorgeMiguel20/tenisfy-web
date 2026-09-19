@@ -342,9 +342,32 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // referência (porque tem muito mais fundo vazio por baixo do
             // ténis do que as outras), mas nenhuma foto do carrossel fica
             // alguma vez tapada pelo card.
+            //
+            // Sétimo ajuste (Jorge enviou novo print anotado, a assinalar
+            // com uma seta e um retângulo o espaço vazio de estúdio que
+            // sobra no TOPO da foto, pedindo para "cortar este bocado"):
+            // apliquei a mesma lógica de segurança do ajuste anterior, mas
+            // ao contrário - medi pixel a pixel onde COMEÇA o produto (a
+            // partir do topo) em cada uma das 7 fotos do carrossel. As duas
+            // mais "cheias" no topo têm o ténis a começar já aos 12,5% da
+            // altura da foto. Para nunca cortar o produto em nenhuma foto,
+            // corto só 40px do topo (~10%, com margem de segurança) - o
+            // ténis mantém sempre exatamente o mesmo tamanho (não há zoom,
+            // só remoção do espaço morto), e a "caixa" da foto encolhe a
+            // mesma quantidade. Tecnicamente: a imagem interior sobe 40px
+            // (posição -40px em vez de 0) e a caixa exterior (com
+            // "overflow-hidden") fica com menos 40px de altura - o
+            // "aspect-[660/479]" passou a "aspect-[660/433]" para refletir
+            // essa nova altura. Como o fundo da imagem fica ancorado ao
+            // fundo da caixa (só a parte de cima é que é cortada), a
+            // sobreposição do card com o ténis (calibrada no ajuste
+            // anterior) mantém-se sempre segura - confirmei ao vivo nas
+            // fotos mais apertadas de topo e de fundo depois desta
+            // alteração, sem nenhuma foto tapada ou cortada. Só a partir do
+            // "sm:" - no telemóvel fica tudo como estava.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px] sm:max-w-none">
-              <div className="relative aspect-square w-full overflow-hidden rounded-[20px] sm:aspect-[660/479]">
-                <div className="absolute inset-0 p-4 pb-1.5">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[20px] sm:aspect-[660/433]">
+                <div className="absolute left-0 right-0 top-0 bottom-0 p-4 pb-1.5 sm:top-[-40px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
