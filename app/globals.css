@@ -23,8 +23,24 @@
   }
 }
 
+/* Décimo ajuste (barra do topo a desaparecer no scroll da homepage): o
+   Jorge reportou que a barra (Header.tsx, que já tem "sticky top-0")
+   desaparecia ao fazer scroll para baixo na homepage. Testado ao vivo em
+   produção com window.scrollTo() + getBoundingClientRect(): confirmou-se
+   que "overflow-x: hidden" aqui e no body faziam o browser calcular
+   sozinho "overflow-y: auto" nos dois (regra do CSS: um eixo só pode ficar
+   "visible" se o outro também ficar - caso contrário passa a "auto"). Isso
+   transformava o <body> num contentor de scroll próprio; como a barra é
+   filha direta do <body>, o "sticky" passava a ser calculado em relação a
+   esse contentor (que nunca chega a rolar sozinho), em vez de em relação ao
+   ecrã - por isso a barra subia com o resto da página em vez de ficar fixa.
+   "overflow-x: clip" resolve o mesmo objetivo (cortar o transbordo
+   horizontal) sem forçar o eixo vertical a "auto", confirmado ao vivo:
+   a barra passou a ficar fixa no scroll e o corte horizontal continuou a
+   funcionar (bodyScrollWidth 1913 vs bodyClientWidth 1905, sem barra de
+   scroll horizontal a aparecer). */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -32,8 +48,11 @@ body {
   color: var(--foreground);
   /* Corta o transbordo horizontal (~8px) que as seccoes "a toda a largura"
      (w-screen / -50vw) criam quando a barra de scroll vertical esta
-     presente - 100vw inclui a barra, mas a largura visivel do ecra nao. */
-  overflow-x: hidden;
+     presente - 100vw inclui a barra, mas a largura visivel do ecra nao.
+     "clip" em vez de "hidden" - ver comentário do décimo ajuste acima do
+     <html>, mesmo motivo (não força overflow-y a "auto", o que partia o
+     "sticky" da barra do topo). */
+  overflow-x: clip;
   /* Antes disto ficava hardcoded a Arial/Helvetica — a variável do
      Tailwind (Geist, agora Inter) nunca chegava a ser aplicada ao body. */
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
