@@ -364,10 +364,36 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // anterior) mantém-se sempre segura - confirmei ao vivo nas
             // fotos mais apertadas de topo e de fundo depois desta
             // alteração, sem nenhuma foto tapada ou cortada. Só a partir do
-            // "sm:" - no telemóvel fica tudo como estava.
+            // "sm:" - no telemóvel fica tudo como estava (até este ajuste).
+            //
+            // Oitavo ajuste (Jorge: "agora melhora no mobile também" - no
+            // telemóvel a foto continuava exatamente como antes do ajuste
+            // anterior, quadrada e sem cortar o espaço vazio do topo).
+            // Apliquei a mesma ideia do 7º ajuste (cortar só o topo, sem
+            // zoom, sem tocar no tamanho do ténis) mas desta vez em
+            // percentagem em vez de pixels fixos - no telemóvel a largura da
+            // foto varia mais de telefone para telefone do que no desktop
+            // (onde a coluna tem sempre uma largura parecida), e não
+            // consegui testar em todos os tamanhos de ecrã reais neste
+            // ambiente. Usar "%" em vez de "px" resolve isso: o corte fica
+            // sempre proporcional ao tamanho da própria foto,
+            // automaticamente correto em qualquer telemóvel, sem depender
+            // de um valor fixo calibrado só para um tamanho. Corto 10% do
+            // topo ("top-0" -> "top-[-10%]"), a mesma margem de segurança já
+            // confirmada pixel a pixel nas 7 fotos (a mais "cheia" no topo
+            // só começa a 12,5%). A "caixa" quadrada encolhe a mesma
+            // proporção ("aspect-square" -> "aspect-[1/0.9]"). Testei ao
+            // vivo, forçando a largura da foto para vários tamanhos
+            // parecidos com um telemóvel, nas fotos mais apertadas de topo -
+            // sem cortar nenhuma. Por agora só tratei do espaço vazio do
+            // TOPO no telemóvel (o mesmo efeito de sobreposição do card por
+            // cima do fundo da foto, que existe no desktop, não foi
+            // replicado aqui - fica como possível próximo passo, a pedido
+            // do Jorge). No ecrã grande ("sm:") mantém-se exatamente igual
+            // ao ajuste anterior.
             <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px] sm:max-w-none">
-              <div className="relative aspect-square w-full overflow-hidden rounded-[20px] sm:aspect-[660/433]">
-                <div className="absolute left-0 right-0 top-0 bottom-0 p-4 pb-1.5 sm:top-[-40px]">
+              <div className="relative aspect-[1/0.9] w-full overflow-hidden rounded-[20px] sm:aspect-[660/433]">
+                <div className="absolute left-0 right-0 top-[-10%] bottom-0 p-4 pb-1.5 sm:top-[-40px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentImage}
