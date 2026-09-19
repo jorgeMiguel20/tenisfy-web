@@ -10,10 +10,18 @@ export default function PesquisaPorFoto() {
   return (
     <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
       <div>
-        {/* orange-700 (não orange-600) por contraste - ver nota abaixo */}
-        <span className="text-orange-700 text-xs font-bold uppercase tracking-wide">Pesquisa por foto</span>
+        {/* Décimo terceiro ajuste: o Jorge pediu para mudar a cor deste
+            rótulo (escolheu preto/cinza-escuro, a condizer com o título a
+            seguir - por isso "text-gray-900", igual ao h2 logo abaixo, em
+            vez do laranja-700 anterior) e para aumentar o tamanho da letra
+            (de "text-xs" para "text-sm"). Pediu também para "Tira uma
+            foto." ficar numa linha própria, por baixo de "Viste uns ténis
+            na rua?" (<br /> a seguir no h2). */}
+        <span className="text-gray-900 text-sm font-bold uppercase tracking-wide">Pesquisa por foto</span>
         <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">
-          Viste uns ténis na rua? Tira uma foto.
+          Viste uns ténis na rua?
+          <br />
+          Tira uma foto.
         </h2>
         <p className="text-gray-500 mb-5 max-w-sm">
           Procuramos no nosso catálogo os ténis mais parecidos com a tua foto, com preço incluído — funciona com
