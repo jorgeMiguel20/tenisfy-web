@@ -299,8 +299,51 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             // telemóvel (colunas empilhadas) o limite de largura não tem
             // efeito visível, porque a coluna já é mais estreita do que
             // 380px.
-            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px]">
-              <div className="relative aspect-square w-full overflow-hidden rounded-[20px]">
+            //
+            // Sexto ajuste (Jorge enviou 2 fotos anotadas a comparar a
+            // página atual com uma referência: "a foto 2 é como eu quero",
+            // sinalizando a amarelo o tamanho da foto, a azul o card e a
+            // vermelho a distância entre os dois - queria a foto do mesmo
+            // tamanho da referência e a distância exatamente igual).
+            // Medi ao pixel: na referência a foto ocupa ~48% da largura da
+            // página (contra ~28% na versão atual, por causa do limite
+            // "max-w-[380px]" do ajuste anterior) e o card entra por cima da
+            // foto até 67,6% da altura - exatamente a "linha de água" onde
+            // termina a sola do ténis na foto "hero" (confirmado por medição
+            // de pixel feita num ajuste bem mais antigo). Ou seja: a
+            // referência foi desenhada à volta da foto "hero" e essa
+            // sobreposição só é segura NESSA foto.
+            //
+            // Para alargar a foto sem nunca cortar nenhuma das 7 fotos do
+            // carrossel, troquei "aspect-square" por "aspect-[660/479]"
+            // (mantendo sempre "object-contain") - com a caixa mais larga do
+            // que quadrada, a foto passa a ser limitada pela ALTURA da
+            // caixa, nunca pela largura, por isso sobra só espaço vazio dos
+            // lados (nunca em cima/baixo) e nenhuma foto fica cortada. Isto
+            // só se aplica a partir do "sm:" (o limite "max-w-[380px]" passa
+            // a "sm:max-w-none" só no ecrã grande) - no telemóvel (colunas
+            // empilhadas) fica tudo exatamente como estava.
+            //
+            // Testei em produção a sobreposição de 67,6% (igual à
+            // referência) nas 7 fotos do carrossel deste produto: cobre uma
+            // fatia da biqueira/sola em 2 das 7 fotos (o par de ténis
+            // empilhado e a foto de cima a mostrar as solas) - o Jorge viu
+            // exemplos e escolheu manter uma margem de segurança igual em
+            // todas as fotos, em vez de usar 67,6% só na "hero" e um valor
+            // diferente nas outras. Para encontrar o valor seguro, busquei
+            // as imagens reais das 7 fotos e medi, pixel a pixel, onde
+            // termina o produto (sola/biqueira) em cada uma: a mais
+            // "cheia" (vista de cima, solas à mostra) tem o produto a
+            // terminar a 89,25% da altura da foto - por isso fixei a
+            // sobreposição do card em 90% da altura da caixa (um pouco
+            // abaixo disso), com ~10px de margem de segurança confirmada
+            // visualmente nessa foto e testada também nas restantes.
+            // Resultado: a foto "hero" fica com uma folga maior do que a
+            // referência (porque tem muito mais fundo vazio por baixo do
+            // ténis do que as outras), mas nenhuma foto do carrossel fica
+            // alguma vez tapada pelo card.
+            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px] sm:max-w-none">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[20px] sm:aspect-[660/479]">
                 <div className="absolute inset-0 p-4 pb-1.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -375,7 +418,7 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               removidos de cada loja - a pedido do Jorge. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
-              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[113px] sm:-ml-16' : ''
+              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[157px] sm:-ml-16' : ''
             }`}
           >
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
