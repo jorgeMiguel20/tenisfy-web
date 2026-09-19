@@ -106,24 +106,20 @@ export default function PriceAlertButton({
   const [durationMonths, setDurationMonths] = useState<1 | 2>(1)
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
-  // Dica de "toque" ocasional no botao grande (seccao de alertas da
-  // homepage) - aparece uns segundos a cada 9s para dar vida ao botao,
-  // sem ser um efeito continuo/chamativo (pedido do Jorge: nada a "piscar").
-  const [showTapHint, setShowTapHint] = useState(false)
+  // Décimo primeiro ajuste: a "seta" (dica de toque) do botão grande
+  // ("Criar alerta grátis" da homepage) só aparecia uns segundos a cada 9s,
+  // com um atraso inicial de 9s antes da primeira aparição - o Jorge pediu
+  // para deixar de ter atraso e ficar sempre visível/a animar, para chamar
+  // logo a atenção do utilizador para o botão. Antes disto usava-se um
+  // temporizador (setInterval + setTimeout) a alternar entre aparecer e
+  // desaparecer, com o objetivo de não "piscar" continuamente - esse
+  // objetivo foi substituído por este pedido mais recente do Jorge, por
+  // isso a dica fica agora sempre visível (variant "large" e ainda não
+  // aberto), sem qualquer temporizador: aparece de imediato e mantém o
+  // mesmo efeito de "pulso" (halo + seta), já contínuo (animation: infinite).
+  const showTapHint = variant === 'large' && !open
 
   useEffect(() => setMounted(true), [])
-
-  useEffect(() => {
-    if (variant !== 'large' || open) {
-      setShowTapHint(false)
-      return
-    }
-    const interval = setInterval(() => {
-      setShowTapHint(true)
-      setTimeout(() => setShowTapHint(false), 1800)
-    }, 9000)
-    return () => clearInterval(interval)
-  }, [variant, open])
 
   useEffect(() => {
     if (!open) return
