@@ -465,9 +465,33 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
               "Ordenar por: preço mais baixo" continua removido do
               cabeçalho, e o selo "Grátis"/data de verificação continuam
               removidos de cada loja - a pedido do Jorge. */}
+          {/* Nono ajuste (Jorge, depois de ver fotos reais do telemóvel:
+              "sim, aplica a sobreposição" - queria o mesmo efeito de o card
+              subir por cima do fundo da foto que já existe no computador).
+              A investigar percebi a causa do espaço vazio enorme que
+              aparecia nas fotos do Jorge: o "stage" reserva sempre
+              "pb-[115px]" de espaço vazio a seguir à foto (para o card
+              encaixar quando sobe) - no telemóvel esse espaço estava só
+              ali, todo vazio, porque o card nunca subia (tinha só "mt-4",
+              uma margem normal). Ou seja, o problema não era só "falta de
+              sobreposição" - era espaço morto reservado e nunca usado.
+              Para subir o card a mesma proporção segura já usada no
+              computador (90% da altura da foto, a mesma margem confirmada
+              pixel a pixel nas 7 fotos do carrossel), sem usar um valor em
+              pixels fixo (que no telemóvel varia de telefone para
+              telefone), uso "calc()" a combinar percentagem com o "115px"
+              fixo do stage: "mt-[calc(-9%_-_115px)]" - os 9% vêm de 0,9
+              (proporção da caixa, "aspect-[1/0.9]") vezes (1 - 0,90) de
+              sobreposição. Testei ao vivo, forçando a largura da coluna
+              para vários tamanhos de telemóvel, nas fotos mais apertadas -
+              sem tapar o ténis em nenhuma. Estreitei o card para "w-[85%]"
+              (em vez de "w-full") só no telemóvel, alinhado à esquerda sem
+              deslocação, para não tapar as bolinhas de navegação da foto
+              (canto inferior direito) - o mesmo espírito do computador, que
+              também deixa o card mais estreito do que a foto. */}
           <div
             className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
-              currentImage ? 'mt-4 w-full sm:w-[72%] sm:-mt-[157px] sm:-ml-16' : ''
+              currentImage ? 'w-[85%] mt-[calc(-9%_-_115px)] sm:w-[72%] sm:-mt-[157px] sm:-ml-16' : ''
             }`}
           >
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
