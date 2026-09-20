@@ -27,7 +27,14 @@ export default function FavoriteButton({
     >
       <svg
         viewBox="0 0 24 24"
-        className={`h-4 w-4 transition-colors ${active ? 'text-[#1F5F58]' : 'text-gray-400'}`}
+        // Mesma família de verde da marca (emerald) usada no resto do
+        // rebranding (selo de desconto, "Como funciona", contadores da
+        // barra) em vez do verde escuro #1F5F58 anterior (pedido do Jorge:
+        // "aqui também"). Aqui usa-se emerald-600 (mais saturado) em vez do
+        // emerald-300 dos selos, porque este ícone fica sobre um fundo
+        // quase branco (bg-white/90) - o emerald-300, sendo um verde muito
+        // claro, ficaria com pouco contraste e mal visível aqui.
+        className={`h-4 w-4 transition-colors ${active ? 'text-emerald-600' : 'text-gray-400'}`}
         fill={active ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth="2"
