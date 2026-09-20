@@ -74,36 +74,32 @@ export default async function Home() {
     ? pickComparePair(compareGroups[Math.floor(Math.random() * compareGroups.length)])
     : []
 
-  // Produto real usado nos passos 2 e 3 do "Como funciona" (tabela de preços
-  // por loja + cartão de poupança - ver components/ComoFunciona.tsx). Nunca
-  // os números fixos do mockup: preferimos um produto com descida de preço
-  // recente e várias lojas comparáveis; sem isso, o que tiver a maior
-  // poupança entre lojas. Se nada qualificar, ComoFunciona usa as imagens
-  // estáticas originais para esses passos.
-  const showcaseCandidates = productsWithPrice
-    .filter((p) => p.savings && (p.store_count ?? 0) >= 2)
-    .sort((a, b) => {
-      const aHasDrop = a.priceDrop ? 1 : 0
-      const bHasDrop = b.priceDrop ? 1 : 0
-      if (aHasDrop !== bHasDrop) return bHasDrop - aHasDrop
-      return (b.savings?.amount ?? 0) - (a.savings?.amount ?? 0)
-    })
-  const showcaseProduct = showcaseCandidates[0] ?? null
+  // Secção "A diferença que ninguém te mostra" (DiferencaPrecos) - pedido do
+  // Jorge (ronda mais recente): deixou de ser um produto escolhido
+  // automaticamente (maior poupança do catálogo) e passou a ser SEMPRE o
+  // Vans Old Skool - "os vans tem sempre disponível em várias lojas". Preço,
+  // lojas e poupança continuam 100% reais e ao vivo (vêm da mesma
+  // getProductsWithPrice() de sempre) - só o PRODUTO deixou de ser
+  // dinâmico. Se este produto alguma vez ficar com menos de 2 lojas em
+  // stock, o componente já sabe não mostrar nada (return null), nunca
+  // inventa dados.
+  const vansShowcaseProduct =
+    productsWithPrice.find((p) => p.slug === 'vans-old-skool-unisex') ?? null
 
   // Produto para a seccao de alertas de preco: evita repetir o que ja
   // aparece no "Como funciona" ou no "Maior poupanca agora", para a
   // homepage nao mostrar sempre o mesmo tenis em varios sitios (reparado
-  // pelo Jorge). So cai para topDeals[0]/showcaseProduct se mesmo assim
+  // pelo Jorge). So cai para topDeals[0]/vansShowcaseProduct se mesmo assim
   // nao sobrar nenhum candidato diferente.
   const usedProductIds = new Set(
-    [showcaseProduct?.id, ...topDeals.map((p) => p.id)].filter((id): id is string => Boolean(id))
+    [vansShowcaseProduct?.id, ...topDeals.map((p) => p.id)].filter((id): id is string => Boolean(id))
   )
   const alertProduct =
     productsWithPrice
       .filter((p) => p.priceDrop && p.gender !== 'crianca' && !usedProductIds.has(p.id))
       .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)[0] ??
     topDeals[0] ??
-    showcaseProduct ??
+    vansShowcaseProduct ??
     null
 
   // Faixa de marcas reais para o HomeMarquee - so marcas que existem mesmo
@@ -116,7 +112,11 @@ export default async function Home() {
     <main className="max-w-7xl mx-auto px-6 pb-10">
       <HomeHero />
 
-      <DiferencaPrecos product={showcaseProduct} />
+      {/* Foto lifestyle fixa (skate) escolhida pelo Claude a pedido do Jorge
+          entre 5 fotos reais que ele enviou - nunca as fotos de catálogo do
+          produto (pedido explícito do Jorge, "não quero que utilizes as
+          fotos dos cards"), para elevar a qualidade visual da homepage. */}
+      <DiferencaPrecos product={vansShowcaseProduct} heroImageSrc="/marketing/diferenca-precos-vans.jpg" />
 
       <MaiorPoupancaAgora products={topDeals} />
 
