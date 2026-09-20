@@ -22,6 +22,14 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
     discount && lowestPrice
       ? Math.round((discount.amount / (lowestPrice + discount.amount)) * 100)
       : null
+  // Regra pedida pelo Jorge: só mostrar o selo "-X%" a partir de 5% de
+  // desconto - descidas de 1 a 4% são normais da flutuação de preço do dia
+  // a dia e não comunicam uma poupança real, por isso deixavam o selo com
+  // pouco valor (ex.: "-1%"). MIN_DISCOUNT_PERCENT_TO_SHOW fica à parte
+  // para ser fácil de ajustar mais tarde. Mesma regra aplicada em
+  // components/CompararPreview.tsx (mesma fórmula e selo).
+  const MIN_DISCOUNT_PERCENT_TO_SHOW = 5
+  const showDropBadge = dropPercent != null && dropPercent >= MIN_DISCOUNT_PERCENT_TO_SHOW
 
   // Fotos do mini-carrossel do card (estilo Lacoste/Armani): a foto de capa
   // primeiro, depois as restantes fotos do produto, sem repetir. Só aparecem
@@ -75,8 +83,14 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             abaixo, colado ao topo da imagem, em vez de alinhado com estes
             ícones). */}
         <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
-          {dropPercent != null ? (
-            <span className="rounded-md bg-[#1F5F58] px-2 py-1 text-xs font-bold text-white">
+          {showDropBadge ? (
+            // Cor pedida pelo Jorge: o mesmo verde vivo usado no rótulo
+            // "Como funciona" (components/ComoFunciona.tsx, emerald-300),
+            // em vez do verde escuro anterior (#1F5F58). Como é um verde
+            // claro, o texto branco de antes ficava sem contraste - por
+            // isso o texto passa a emerald-950 (verde muito escuro da
+            // mesma família), mantendo exatamente o tom de verde pedido.
+            <span className="rounded-md bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
               -{dropPercent}%
             </span>
           ) : (

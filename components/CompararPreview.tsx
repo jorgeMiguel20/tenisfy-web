@@ -184,11 +184,18 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               // mais limpa aqui do que um carrossel com setas e pontos.
               const firstImage = product.image_url ?? product.image_urls?.[0] ?? null
               const dropPercent = getDropPercent(product)
+              // Mesma regra de components/ProductCard.tsx: só mostrar o
+              // selo a partir de 5% de desconto (pedido do Jorge - abaixo
+              // disso é flutuação normal de preço, não uma poupança real).
+              const showDropBadge = dropPercent != null && dropPercent >= 5
               return (
                 <div key={product.id} className="relative rounded-2xl bg-gray-100 p-2">
                   <div className="absolute left-3 top-3 right-3 z-10 flex items-center justify-between">
-                    {dropPercent != null ? (
-                      <span className="rounded-md bg-[#1F5F58] px-2 py-1 text-xs font-bold text-white">
+                    {showDropBadge ? (
+                      // Mesma cor de components/ProductCard.tsx: verde vivo
+                      // "Como funciona" (emerald-300) com texto emerald-950
+                      // para contraste - ver comentário lá para detalhe.
+                      <span className="rounded-md bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
                         -{dropPercent}%
                       </span>
                     ) : (
