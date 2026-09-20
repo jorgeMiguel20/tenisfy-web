@@ -6,25 +6,36 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
 
-// Seccao "A diferenca que ninguem te mostra" - REDESIGN pedido pelo Jorge
-// (mockup exato fornecido, "Desenvolve exatamente igual tamanho e tudo").
-// Mostra o preco do mesmo produto em ate 4 lojas reais, sempre da mais
-// barata para a mais cara ("Ordenar por: preco mais baixo" e sempre assim,
-// nao e um menu funcional - confirmado com o Jorge) - nunca lojas, precos,
-// portes ou PRAZOS DE ENTREGA inventados. O mockup original do Jorge tinha
-// um prazo de entrega por loja (“2 dias”, “3 dias”) que nao existe em lado
-// nenhum dos nossos dados - combinado com o Jorge (perguntado antes de
-// avancar): esse elemento fica de fora, so aparece o que e real (preco,
-// "Melhor preco" e portes gratis/custo de envio quando ha dados fiaveis).
+// Seccao "A diferenca que ninguem te mostra" - historial resumido: nasceu
+// como um REDESIGN pedido pelo Jorge a partir de um mockup exato, e mostrava
+// o produto com maior poupanca real do catalogo (escolhido automaticamente
+// em app/page.tsx), com um carrossel a percorrer as fotos desse produto
+// vindas da Supabase. Depois de varios ajustes de enquadramento (guardados
+// no historico do repo) para nunca cortar o tenis em nenhuma das fotos
+// imprevisiveis desse carrossel, o Jorge pediu uma segunda redesign (ver
+// commit desta alteracao): a seccao passa a ser SEMPRE o Vans Old Skool -
+// "os vans tem sempre disponivel em varias lojas" - em vez de escolha
+// automatica, e a foto deixa de vir do catalogo (fotos de estudio dos
+// cards): usa-se uma foto lifestyle real (skate, fornecida pelo Jorge,
+// escolhida entre 5 - as outras mostravam relogio/tatuagem a distrair, ou
+// (a da ponte) pes pendurados no ar com muita altura, pouco apropriado para
+// uma loja) para "aumentar a qualidade da home page". Como e uma UNICA foto
+// fixa (nunca muda), o enquadramento pode ser calibrado uma vez com
+// seguranca - por isso o carrossel de fotos (setas, pontinhos, logica de
+// nunca cortar fotos desconhecidas) foi removido; ver heroImageSrc mais
+// abaixo.
+//
+// Continua tudo o resto: preco/lojas SEMPRE reais (nunca inventados), sempre
+// ordenado do mais barato para o mais caro ("Ordenar por: preco mais baixo"
+// e sempre assim, confirmado com o Jorge, nao e um menu funcional). Prazos
+// de entrega continuam de fora de proposito - nao existem em lado nenhum
+// dos nossos dados (nem shipping_info, so shipping_base_fee/
+// shipping_free_threshold), confirmado outra vez com o Jorge nesta ronda.
 //
 // Logo real da loja e logica de portes - mesma abordagem ja usada e
 // validada em components/StoreOffersList.tsx, duplicada aqui de proposito
 // (mesmo criterio de sempre nesta seccao: independente, para nao arriscar
-// mexer num componente ja validado). getProductsWithPrice.ts (que alimenta
-// esta seccao, via a homepage) so traz shipping_base_fee/shipping_free_threshold
-// por loja, nao shipping_info - por isso a variante "texto" mais detalhada
-// do StoreOffersList (que depende de shipping_info) fica de fora aqui; so
-// se mostra o selo "Portes gratis" quando os dados garantem mesmo isso.
+// mexer num componente ja validado).
 const BRAND_ICON_SLUGS: Record<string, string> = {
   'nike.com': 'nike',
   'adidas.pt': 'adidas',
@@ -132,10 +143,17 @@ function ChevronIcon({ direction, className = 'h-4 w-4' }: { direction: 'left' |
   )
 }
 
-export default function DiferencaPrecos({ product }: { product?: ProductWithPrice | null }) {
+export default function DiferencaPrecos({
+  product,
+  heroImageSrc,
+}: {
+  product?: ProductWithPrice | null
+  // Foto lifestyle fixa (pedido do Jorge, ver nota acima) - vem sempre de
+  // app/page.tsx como um ficheiro estático do site (public/marketing/...),
+  // nunca de product.image_url/image_urls (fotos de estúdio dos cards).
+  heroImageSrc: string
+}) {
   const storeRows = product ? bestPricePerStore(product).slice(0, 4) : []
-  const images = product?.image_urls?.length ? product.image_urls : product?.image_url ? [product.image_url] : []
-  const [imageIndex, setImageIndex] = useState(0)
   const [storeIndex, setStoreIndex] = useState(0)
   const storeCount = storeRows.length
 
@@ -158,36 +176,18 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
   const priciest = storeRows[storeRows.length - 1]
   const savings = priciest.price - cheapest.price
   const verifiedLabel = formatVerifiedLabel(cheapest.lastCheckedAt)
-  const currentImage = images[imageIndex] ?? null
-
-  function prevImage() {
-    setImageIndex((i) => (i - 1 + images.length) % images.length)
-  }
-  function nextImage() {
-    setImageIndex((i) => (i + 1) % images.length)
-  }
 
   return (
-    // Pedido do Jorge: paleta "premium/editorial" exata (fundo quase branco,
-    // verde só como acento em botões/badges, nunca a preencher a interface).
-    // Cores exatas que pediu: fundo #F7F8F7, texto principal #17232B, texto
-    // secundário #68747C, verde de marca #123F3A, verde claro (só para o
-    // fundo dos pequenos badges) #E8F2EF.
-    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-[#F7F8F7] py-8 sm:py-10">
+    // Pedido do Jorge (ronda mais recente): fundo da secção passa a branco
+    // puro (era #F7F8F7, um branco-sujo "premium/editorial" escolhido numa
+    // ronda anterior) - "o fundo branco que me refiro é o da página".
+    // Texto principal #17232B, texto secundário #68747C, verde de marca
+    // #123F3A e verde claro dos badges #E8F2EF mantêm-se (o Jorge confirmou
+    // manter a cor atual dos botões, não mudar para preto como no mockup
+    // mais recente).
+    <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-white py-8 sm:py-10">
       <div className="relative mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 sm:items-center sm:gap-8 sm:px-12">
         <div>
-          {/* Pedido do Jorge: hierarquia editorial muito mais forte - título
-              e preço bem maiores do que antes, para serem claramente os
-              protagonistas da secção. Badge "O mesmo ténis, X preços"
-              removido a pedido do Jorge.
-              Quinto ajuste (Jorge: "ainda está muito grande, quero que se
-              veja tudo numa só página" - a secção inteira não cabia num ecrã
-              normal sem dar scroll, confirmado com print do próprio ecrã do
-              Jorge, 1365x688px): reduzi texto, espaçamentos verticais e o
-              tamanho da própria foto (ver nota mais abaixo) para a secção
-              toda caber num ecrã típico sem scroll - testado ao vivo,
-              medindo a altura real da secção (876px antes, 611px depois,
-              contra os 688px do ecrã do Jorge). */}
           <h2 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
@@ -208,10 +208,6 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             {product.model_name}
             {verifiedLabel ? ` · ${verifiedLabel}` : ''}
           </p>
-          {/* Confirmado com o Jorge a partir da imagem de referência real:
-              o botão é mesmo pílula (rounded-full), não rounded-xl como uma
-              instrução em texto anterior tinha pedido - a imagem venceu por
-              ser a referência final. */}
           <Link
             href={`/produto/${product.slug}`}
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
@@ -219,281 +215,38 @@ export default function DiferencaPrecos({ product }: { product?: ProductWithPric
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
           </Link>
-          {/* Linha dos 3 benefícios (Compara preços/Vê o stock/Compra com
-              confiança) removida a pedido do Jorge - informação já repetida
-              noutro sítio da página. */}
         </div>
 
         <div className="relative">
-          {currentImage ? (
-            // Comparação pixel-a-pixel com a imagem de referência real que o
-            // Jorge enviou (medi as coordenadas na própria imagem, não é a
-            // olho): o card "Onde comprar" fica quase inteiramente DENTRO do
-            // "product stage" - só uma faixa fina do lado esquerdo do card é
-            // que sai para fora do stage, para a esquerda. A técnica
-            // continua a ser segura e independente da altura do card (2, 3
-            // ou 4 lojas): a caixa exterior do stage reserva uma zona vazia
-            // fixa depois da foto ("pb-[180px]"), e o card é puxado para
-            // cima por uma quantidade FIXA ("sm:-mt-[205px]") para dentro
-            // dessa reserva. sm:-ml-8 desloca o
-            // card ligeiramente para a esquerda, a transbordar para fora do
-            // stage, tal como confirmado na imagem de referência.
-            //
-            // Achado técnico importante (também confirmado a comparar com a
-            // referência): o "product stage" não pode ter o mesmo fundo da
-            // secção (#F7F8F7) - tem de ser uma cor própria, ligeiramente
-            // diferente (#EDEFEE), senão a zona de reserva fica invisível
-            // (misturada com o fundo da página) e a sobreposição do card
-            // parece não fazer efeito nenhum visualmente, mesmo estando
-            // matematicamente correta.
-            //
-            // Segundo achado (reportado pelo Jorge depois do 1º deploy, com
-            // print anotado a mostrar um espaço grande a mais entre o ténis
-            // e o card): a foto "hero" (a primeira do carrossel) é quadrada
-            // mas o ténis só ocupa ~34% da altura da foto - o resto é fundo
-            // de estúdio vazio. Cheguei a apertar o enquadramento com
-            // "aspect-[2/1]" + "object-cover" (corta uma fatia de cima e de
-            // baixo), mas o Jorge reparou que isso cortava OUTRAS fotos do
-            // mesmo carrossel (pares de ténis, close-ups da sola, dos
-            // atacadores) que não têm a mesma proporção vazia à volta -
-            // ficavam com o ténis cortado. Voltei a "aspect-square" +
-            // "object-contain" (nunca corta nada, mostra sempre a foto
-            // inteira, seja qual for o enquadramento de cada foto) - troco
-            // sempre segurança (nunca cortar o produto) por um espaço
-            // ligeiramente maior nalgumas fotos, mantenho só a margem de
-            // baixo reduzida (ver nota seguinte) que continua segura porque
-            // não corta a imagem, só encolhe a moldura à volta dela.
-            //
-            // Terceiro ajuste (o Jorge pediu só mais um bocadinho depois do
-            // aspect-[2/1], entretanto revertido): a folga que sobrava já
-            // não vinha da foto em si, vinha da margem interna
-            // ("p-6 sm:p-10") à volta da foto dentro do stage - essa margem
-            // é igual nos 4 lados. Reduzi só a margem de baixo (perto do
-            // card), mantendo a de cima e as laterais iguais - isto é
-            // seguro com "object-contain" porque só reduz a moldura, nunca
-            // corta a foto.
-            //
-            // Quarto ajuste (Jorge voltou a reportar "está muito separado"
-            // depois do revert para aspect-square/object-contain, que trouxe
-            // de volta o espaço vazio de estúdio nas 7 fotos do carrossel):
-            // testei ao vivo, com o DOM da página em produção, a margem de
-            // sobreposição do card em CADA uma das 7 fotos do carrossel
-            // deste produto para encontrar o valor mais apertado que ainda
-            // é seguro em todas - as fotos mais "cheias" (par de ténis
-            // empilhado, sola e biqueira em close-up) só tinham ~110px de
-            // fundo vazio por baixo do ténis, contra os ~200px da foto
-            // "hero".
-            //
-            // Quinto ajuste (Jorge: "ainda está muito grande, quero que se
-            // veja tudo numa só página" - ver nota junto ao título): além de
-            // reduzir texto e espaçamentos, encolhi a própria foto - deixou
-            // de ocupar a largura toda da coluna ("w-full") e passou a ter
-            // um limite ("max-w-[380px]", centrado com "mx-auto"). Como a
-            // foto ficou mais pequena, a reserva vazia a seguir ("pb-[180px]"
-            // -> "pb-[115px]") e a sobreposição do card ("sm:-mt-[205px]" ->
-            // "sm:-mt-[113px]") tiveram de encolher na mesma proporção -
-            // voltei a testar ao vivo nas 7 fotos do carrossel com o novo
-            // tamanho para confirmar que sobra sempre pelo menos ~45px de
-            // margem de segurança até ao ténis, mesmo nas fotos mais
-            // "cheias" (antes ~60px, a um tamanho de foto maior). No
-            // telemóvel (colunas empilhadas) o limite de largura não tem
-            // efeito visível, porque a coluna já é mais estreita do que
-            // 380px.
-            //
-            // Sexto ajuste (Jorge enviou 2 fotos anotadas a comparar a
-            // página atual com uma referência: "a foto 2 é como eu quero",
-            // sinalizando a amarelo o tamanho da foto, a azul o card e a
-            // vermelho a distância entre os dois - queria a foto do mesmo
-            // tamanho da referência e a distância exatamente igual).
-            // Medi ao pixel: na referência a foto ocupa ~48% da largura da
-            // página (contra ~28% na versão atual, por causa do limite
-            // "max-w-[380px]" do ajuste anterior) e o card entra por cima da
-            // foto até 67,6% da altura - exatamente a "linha de água" onde
-            // termina a sola do ténis na foto "hero" (confirmado por medição
-            // de pixel feita num ajuste bem mais antigo). Ou seja: a
-            // referência foi desenhada à volta da foto "hero" e essa
-            // sobreposição só é segura NESSA foto.
-            //
-            // Para alargar a foto sem nunca cortar nenhuma das 7 fotos do
-            // carrossel, troquei "aspect-square" por "aspect-[660/479]"
-            // (mantendo sempre "object-contain") - com a caixa mais larga do
-            // que quadrada, a foto passa a ser limitada pela ALTURA da
-            // caixa, nunca pela largura, por isso sobra só espaço vazio dos
-            // lados (nunca em cima/baixo) e nenhuma foto fica cortada. Isto
-            // só se aplica a partir do "sm:" (o limite "max-w-[380px]" passa
-            // a "sm:max-w-none" só no ecrã grande) - no telemóvel (colunas
-            // empilhadas) fica tudo exatamente como estava.
-            //
-            // Testei em produção a sobreposição de 67,6% (igual à
-            // referência) nas 7 fotos do carrossel deste produto: cobre uma
-            // fatia da biqueira/sola em 2 das 7 fotos (o par de ténis
-            // empilhado e a foto de cima a mostrar as solas) - o Jorge viu
-            // exemplos e escolheu manter uma margem de segurança igual em
-            // todas as fotos, em vez de usar 67,6% só na "hero" e um valor
-            // diferente nas outras. Para encontrar o valor seguro, busquei
-            // as imagens reais das 7 fotos e medi, pixel a pixel, onde
-            // termina o produto (sola/biqueira) em cada uma: a mais
-            // "cheia" (vista de cima, solas à mostra) tem o produto a
-            // terminar a 89,25% da altura da foto - por isso fixei a
-            // sobreposição do card em 90% da altura da caixa (um pouco
-            // abaixo disso), com ~10px de margem de segurança confirmada
-            // visualmente nessa foto e testada também nas restantes.
-            // Resultado: a foto "hero" fica com uma folga maior do que a
-            // referência (porque tem muito mais fundo vazio por baixo do
-            // ténis do que as outras), mas nenhuma foto do carrossel fica
-            // alguma vez tapada pelo card.
-            //
-            // Sétimo ajuste (Jorge enviou novo print anotado, a assinalar
-            // com uma seta e um retângulo o espaço vazio de estúdio que
-            // sobra no TOPO da foto, pedindo para "cortar este bocado"):
-            // apliquei a mesma lógica de segurança do ajuste anterior, mas
-            // ao contrário - medi pixel a pixel onde COMEÇA o produto (a
-            // partir do topo) em cada uma das 7 fotos do carrossel. As duas
-            // mais "cheias" no topo têm o ténis a começar já aos 12,5% da
-            // altura da foto. Para nunca cortar o produto em nenhuma foto,
-            // corto só 40px do topo (~10%, com margem de segurança) - o
-            // ténis mantém sempre exatamente o mesmo tamanho (não há zoom,
-            // só remoção do espaço morto), e a "caixa" da foto encolhe a
-            // mesma quantidade. Tecnicamente: a imagem interior sobe 40px
-            // (posição -40px em vez de 0) e a caixa exterior (com
-            // "overflow-hidden") fica com menos 40px de altura - o
-            // "aspect-[660/479]" passou a "aspect-[660/433]" para refletir
-            // essa nova altura. Como o fundo da imagem fica ancorado ao
-            // fundo da caixa (só a parte de cima é que é cortada), a
-            // sobreposição do card com o ténis (calibrada no ajuste
-            // anterior) mantém-se sempre segura - confirmei ao vivo nas
-            // fotos mais apertadas de topo e de fundo depois desta
-            // alteração, sem nenhuma foto tapada ou cortada. Só a partir do
-            // "sm:" - no telemóvel fica tudo como estava (até este ajuste).
-            //
-            // Oitavo ajuste (Jorge: "agora melhora no mobile também" - no
-            // telemóvel a foto continuava exatamente como antes do ajuste
-            // anterior, quadrada e sem cortar o espaço vazio do topo).
-            // Apliquei a mesma ideia do 7º ajuste (cortar só o topo, sem
-            // zoom, sem tocar no tamanho do ténis) mas desta vez em
-            // percentagem em vez de pixels fixos - no telemóvel a largura da
-            // foto varia mais de telefone para telefone do que no desktop
-            // (onde a coluna tem sempre uma largura parecida), e não
-            // consegui testar em todos os tamanhos de ecrã reais neste
-            // ambiente. Usar "%" em vez de "px" resolve isso: o corte fica
-            // sempre proporcional ao tamanho da própria foto,
-            // automaticamente correto em qualquer telemóvel, sem depender
-            // de um valor fixo calibrado só para um tamanho. Corto 10% do
-            // topo ("top-0" -> "top-[-10%]"), a mesma margem de segurança já
-            // confirmada pixel a pixel nas 7 fotos (a mais "cheia" no topo
-            // só começa a 12,5%). A "caixa" quadrada encolhe a mesma
-            // proporção ("aspect-square" -> "aspect-[1/0.9]"). Testei ao
-            // vivo, forçando a largura da foto para vários tamanhos
-            // parecidos com um telemóvel, nas fotos mais apertadas de topo -
-            // sem cortar nenhuma. Por agora só tratei do espaço vazio do
-            // TOPO no telemóvel (o mesmo efeito de sobreposição do card por
-            // cima do fundo da foto, que existe no desktop, não foi
-            // replicado aqui - fica como possível próximo passo, a pedido
-            // do Jorge). No ecrã grande ("sm:") mantém-se exatamente igual
-            // ao ajuste anterior.
-            <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[115px] mx-auto w-full max-w-[380px] sm:max-w-none">
-              <div className="relative aspect-[1/0.9] w-full overflow-hidden rounded-[20px] sm:aspect-[660/433]">
-                <div className="absolute left-0 right-0 top-[-10%] bottom-0 p-4 pb-1.5 sm:top-[-40px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentImage}
-                    alt={product.model_name}
-                    loading="lazy"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-
-                {/* Etiqueta de marca/modelo no canto superior direito da
-                    foto removida a pedido do Jorge. */}
-
-                {images.length > 1 && (
-                  <>
-                    {/* Confirmado com a imagem de referência: as setas do
-                        carrossel ficam centradas verticalmente na foto,
-                        junto à borda direita - separadas da etiqueta de
-                        marca (que fica só no topo), dentro do card
-                        cinzento. */}
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={prevImage}
-                        aria-label="Foto anterior"
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#17232B] shadow-sm ring-1 ring-black/5 hover:bg-gray-50"
-                      >
-                        <ChevronIcon direction="left" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={nextImage}
-                        aria-label="Foto seguinte"
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#17232B] shadow-sm ring-1 ring-black/5 hover:bg-gray-50"
-                      >
-                        <ChevronIcon direction="right" />
-                      </button>
-                    </div>
-                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-                      {images.map((_, i) => (
-                        <span
-                          key={i}
-                          className={`h-2 w-2 rounded-full ring-1 ring-black/10 transition-colors ${
-                            i === imageIndex ? 'bg-[#123F3A]' : 'bg-white'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+          {/* Foto fixa (não é mais um carrossel - ver nota no topo do
+              ficheiro): "object-cover" é seguro aqui porque é sempre a MESMA
+              foto, já enquadrada de propósito (recorte escolhido à mão) para
+              o tenis e a prancha ficarem bem visíveis em "aspect-[8/5]" -
+              ao contrário do carrossel antigo, que tinha de usar
+              "object-contain" para nunca arriscar cortar nenhuma de várias
+              fotos imprevisíveis.
+              O "stage" continua a precisar de uma cor própria (#EDEFEE),
+              ligeiramente diferente do branco puro da secção - senão a
+              reserva de espaço para o card "Onde comprar" fica invisível
+              (confirmado numa ronda anterior). */}
+          <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[100px] mx-auto w-full max-w-[420px] sm:max-w-none">
+            <div className="relative aspect-[8/5] w-full overflow-hidden rounded-[20px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroImageSrc}
+                alt={`${product.model_name} - foto lifestyle`}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
             </div>
-          ) : null}
+          </div>
 
-          {/* Medi a proporção real na imagem de referência (card ≈64% da
-              largura do "product stage") em vez de usar o valor em pixels
-              (570-620px) que o Jorge tinha estimado a olho - esse número
-              assumia uma página mais larga do que o nosso layout real
-              (max-w-7xl). 72% é o valor mínimo que ainda evita que o texto
-              de cada loja quebre a meio da linha - testado e confirmado
-              visualmente. Continua claramente mais estreito do que a
-              imagem toda, com folga cinzenta visível à direita (onde ficam
-              as setas e os dots da foto), tal como na referência.
-              Correção a pedido do Jorge: o "carrossel" que ele queria não
-              era o de esconder lojas e mostrar uma de cada vez (isso já
-              tinha sido feito e ele corrigiu) - é este: as 3 lojas ficam
-              todas visíveis ao mesmo tempo, como antes, e um destaque
-              (fundo verde claro) vai passando automaticamente de loja em
-              loja sozinho, em loop, sem precisar de clique nem hover.
-              "Ordenar por: preço mais baixo" continua removido do
-              cabeçalho, e o selo "Grátis"/data de verificação continuam
-              removidos de cada loja - a pedido do Jorge. */}
-          {/* Nono ajuste (Jorge, depois de ver fotos reais do telemóvel:
-              "sim, aplica a sobreposição" - queria o mesmo efeito de o card
-              subir por cima do fundo da foto que já existe no computador).
-              A investigar percebi a causa do espaço vazio enorme que
-              aparecia nas fotos do Jorge: o "stage" reserva sempre
-              "pb-[115px]" de espaço vazio a seguir à foto (para o card
-              encaixar quando sobe) - no telemóvel esse espaço estava só
-              ali, todo vazio, porque o card nunca subia (tinha só "mt-4",
-              uma margem normal). Ou seja, o problema não era só "falta de
-              sobreposição" - era espaço morto reservado e nunca usado.
-              Para subir o card a mesma proporção segura já usada no
-              computador (90% da altura da foto, a mesma margem confirmada
-              pixel a pixel nas 7 fotos do carrossel), sem usar um valor em
-              pixels fixo (que no telemóvel varia de telefone para
-              telefone), uso "calc()" a combinar percentagem com o "115px"
-              fixo do stage: "mt-[calc(-9%_-_115px)]" - os 9% vêm de 0,9
-              (proporção da caixa, "aspect-[1/0.9]") vezes (1 - 0,90) de
-              sobreposição. Testei ao vivo, forçando a largura da coluna
-              para vários tamanhos de telemóvel, nas fotos mais apertadas -
-              sem tapar o ténis em nenhuma. Estreitei o card para "w-[85%]"
-              (em vez de "w-full") só no telemóvel, alinhado à esquerda sem
-              deslocação, para não tapar as bolinhas de navegação da foto
-              (canto inferior direito) - o mesmo espírito do computador, que
-              também deixa o card mais estreito do que a foto. */}
-          <div
-            className={`relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ${
-              currentImage ? 'w-[85%] mt-[calc(-9%_-_115px)] sm:w-[72%] sm:-mt-[157px] sm:-ml-16' : ''
-            }`}
-          >
+          {/* Card "Onde comprar" sobreposto à foto - técnica e valores
+              recalibrados para esta foto fixa (skate). Como a foto nunca
+              muda, os valores em pixels ficam calibrados à mão em vez de
+              percentagens "à prova de qualquer foto" (que eram precisas
+              quando a foto vinha de um carrossel imprevisível). */}
+          <div className="relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 w-[85%] -mt-[90px] sm:w-[68%] sm:-mt-[130px] sm:-ml-14">
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
             </div>
