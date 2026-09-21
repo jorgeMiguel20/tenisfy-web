@@ -225,11 +225,11 @@ export default function DiferencaPrecos({
               ao contrário do carrossel antigo, que tinha de usar
               "object-contain" para nunca arriscar cortar nenhuma de várias
               fotos imprevisíveis.
-              O "stage" continua a precisar de uma cor própria (#EDEFEE),
-              ligeiramente diferente do branco puro da secção - senão a
-              reserva de espaço para o card "Onde comprar" fica invisível
-              (confirmado numa ronda anterior). */}
-          <div className="relative overflow-visible rounded-[20px] bg-[#EDEFEE] pb-[100px] mx-auto w-full max-w-[420px] sm:max-w-none">
+              Pedido do Jorge nesta ronda: tirar o card "Onde comprar" de
+              cima da foto - deixou de haver sobreposição (a foto já não
+              reserva espaço vazio por baixo nem tem "bg-[#EDEFEE]" próprio,
+              porque não há nada a esconder por trás do card). */}
+          <div className="relative overflow-hidden rounded-[20px] mx-auto w-full max-w-[420px] sm:max-w-none">
             <div className="relative aspect-[8/5] w-full overflow-hidden rounded-[20px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -241,12 +241,9 @@ export default function DiferencaPrecos({
             </div>
           </div>
 
-          {/* Card "Onde comprar" sobreposto à foto - técnica e valores
-              recalibrados para esta foto fixa (skate). Como a foto nunca
-              muda, os valores em pixels ficam calibrados à mão em vez de
-              percentagens "à prova de qualquer foto" (que eram precisas
-              quando a foto vinha de um carrossel imprevisível). */}
-          <div className="relative z-10 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 w-[85%] -mt-[90px] sm:w-[68%] sm:-mt-[130px] sm:-ml-14">
+          {/* Card "Onde comprar" - fica agora por baixo da foto, sem
+              sobreposição (pedido do Jorge, ver nota acima). */}
+          <div className="relative mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 mx-auto w-full max-w-[420px] sm:max-w-none">
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
             </div>
