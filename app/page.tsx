@@ -116,7 +116,11 @@ export default async function Home() {
           entre 5 fotos reais que ele enviou - nunca as fotos de catálogo do
           produto (pedido explícito do Jorge, "não quero que utilizes as
           fotos dos cards"), para elevar a qualidade visual da homepage. */}
-      <DiferencaPrecos product={vansShowcaseProduct} heroImageSrc="/marketing/diferenca-precos-vans.jpg" />
+      <DiferencaPrecos
+        product={vansShowcaseProduct}
+        heroImageSrc="/marketing/diferenca-precos-vans.jpg"
+        heroImageSrcMobile="/marketing/diferenca-precos-vans-mobile.jpg"
+      />
 
       <MaiorPoupancaAgora products={topDeals} />
 
