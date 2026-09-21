@@ -42,7 +42,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
             <Link
               key={product.id}
               href={`/produto/${product.slug}`}
-              className="group block overflow-hidden rounded-2xl bg-white transition-shadow hover:shadow-lg"
+              className="group block overflow-hidden rounded-none bg-white transition-shadow hover:shadow-lg"
             >
               {/* aspect-[16/10] (era aspect-[4/5]) - as fotos dos produtos
                   sao um quadrado com o tenis so a ocupar a faixa central
@@ -50,7 +50,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                   muito espaco vazio a volta do tenis. Uma caixa mais larga
                   do que alta faz o object-cover cortar esse espaco vazio
                   em cima/baixo, em vez dos lados, e o tenis fica maior. */}
-              <div className="relative aspect-[16/10] bg-[#f3f0ea] border border-[#e7e2d9] rounded-2xl overflow-hidden">
+              <div className="relative aspect-[16/10] bg-[#f3f0ea] border border-[#e7e2d9] rounded-none overflow-hidden">
                 {product.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -59,7 +59,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
-              <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-green-700 shadow-sm">
+              <span className="absolute left-3 top-3 inline-flex items-center rounded-none bg-white/95 px-2.5 py-1 text-[11px] font-bold text-green-700 shadow-sm">
                 -{percentOff}%
               </span>
               </div>

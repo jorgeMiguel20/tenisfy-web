@@ -30,7 +30,7 @@ export default function PesquisaPorFoto() {
         <PesquisaPorFotoButton />
       </div>
 
-      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-lg">
+      <div className="relative rounded-none overflow-hidden aspect-[4/3] shadow-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/marketing/photo-search-bg.jpg"

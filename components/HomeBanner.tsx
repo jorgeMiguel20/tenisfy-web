@@ -31,7 +31,7 @@ export default function HomeBanner() {
           </p>
           <Link
             href="/catalogo"
-            className="inline-block bg-white text-gray-900 font-semibold text-sm rounded-full px-5 py-2.5 hover:bg-gray-100 transition-colors"
+            className="inline-block bg-white text-gray-900 font-semibold text-sm rounded-none px-5 py-2.5 hover:bg-gray-100 transition-colors"
           >
             Explorar catálogo
           </Link>

@@ -98,7 +98,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   // titulo caber numa so linha, e isso so tinha espaco sem espremer os
   // cartoes se a seccao toda ficasse mais larga
   return (
-    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto rounded-2xl bg-[#f7f9f8] p-6 sm:p-10">
+    <section className="mb-16 sm:mb-20 max-w-5xl mx-auto rounded-none bg-[#f7f9f8] p-6 sm:p-10">
       {/* bg-[#f7f9f8] (era bg-[#faf7f2], um creme mais quente) - pedido do
           Jorge para o fundo desta seccao ficar mais claro e neutro, a bater
           certo com o tom da imagem de referencia que enviou (~#f7f8f7),
@@ -129,7 +129,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               e com ícone de "comparar" antes do texto - pedido do Jorge. */}
           <Link
             href="/comparar"
-            className="mt-1 inline-flex w-fit items-center justify-center gap-1.5 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800"
+            className="mt-1 inline-flex w-fit items-center justify-center gap-1.5 rounded-none bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-800"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
               <path d="M8 3 4 7l4 4" />
@@ -189,13 +189,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               // disso é flutuação normal de preço, não uma poupança real).
               const showDropBadge = dropPercent != null && dropPercent >= 5
               return (
-                <div key={product.id} className="relative rounded-2xl bg-gray-100 p-2">
+                <div key={product.id} className="relative rounded-none bg-gray-100 p-2">
                   <div className="absolute left-3 top-3 right-3 z-10 flex items-center justify-between">
                     {showDropBadge ? (
                       // Mesma cor de components/ProductCard.tsx: verde vivo
                       // "Como funciona" (emerald-300) com texto emerald-950
                       // para contraste - ver comentário lá para detalhe.
-                      <span className="rounded-md bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
+                      <span className="rounded-none bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
                         -{dropPercent}%
                       </span>
                     ) : (
@@ -241,7 +241,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                     <>
                       <p className="text-lg font-extrabold text-gray-900">{formatPrice(lowestPrice)}</p>
                       {isCheapest && (
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                        <span className="inline-flex items-center rounded-none bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
                           Mais barato{priceDiff ? ` · -${formatPrice(priceDiff)}` : ''}
                         </span>
                       )}
@@ -272,14 +272,14 @@ export default function CompararPreview({ products }: { products: ProductWithPri
               previsível e continuar a aplicar-se sozinha se aparecer mais
               alguma característica no futuro. */}
           {specRows.length > 0 && (
-            <div className="mt-2 rounded-2xl bg-white p-1.5">
+            <div className="mt-2 rounded-none bg-white p-1.5">
               <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                 {specRows.flatMap(({ key, label }, rowIndex) => {
                   const rowBg = rowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-white'
                   return [a, b].map((product) => (
                     <div
                       key={`${label}-${product.id}`}
-                      className={`rounded-xl px-3 py-2 text-xs ${rowBg}`}
+                      className={`rounded-none px-3 py-2 text-xs ${rowBg}`}
                     >
                       <p className="text-[10px] font-bold uppercase tracking-wide text-black">{label}</p>
                       <p className="mt-0.5 text-gray-800">{product[key] ?? '—'}</p>

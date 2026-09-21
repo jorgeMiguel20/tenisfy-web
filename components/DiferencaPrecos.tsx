@@ -211,7 +211,7 @@ export default function DiferencaPrecos({
           <p className="mt-4 flex flex-wrap items-center gap-3 text-3xl sm:text-4xl font-extrabold text-[#17232B]">
             {formatPrice(cheapest.price)}
             {savings > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
+              <span className="inline-flex items-center gap-1 rounded-none bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
                 <TagIcon />
                 Poupa {formatPrice(savings)}
               </span>
@@ -229,7 +229,7 @@ export default function DiferencaPrecos({
               alvo de toque confortável no telemóvel. */}
           <Link
             href={`/produto/${product.slug}`}
-            className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+            className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
           >
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
@@ -248,8 +248,8 @@ export default function DiferencaPrecos({
               cima da foto - deixou de haver sobreposição (a foto já não
               reserva espaço vazio por baixo nem tem "bg-[#EDEFEE]" próprio,
               porque não há nada a esconder por trás do card). */}
-          <div className="relative overflow-hidden rounded-[20px] mx-auto w-full max-w-[420px] sm:max-w-none">
-            <div className="relative aspect-[8/5] w-full overflow-hidden rounded-[20px]">
+          <div className="relative overflow-hidden rounded-none mx-auto w-full max-w-[420px] sm:max-w-none">
+            <div className="relative aspect-[8/5] w-full overflow-hidden rounded-none">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={heroImageSrc}
@@ -281,7 +281,7 @@ export default function DiferencaPrecos({
               "card dentro de card" sem tirar o contorno por completo (uma
               caixa branca sobre fundo branco precisa de alguma fronteira
               visível, mesmo que ténue). */}
-          <div className="relative mt-4 overflow-hidden rounded-[20px] bg-white ring-1 ring-black/[0.06] mx-auto w-full max-w-[420px] sm:max-w-none">
+          <div className="relative mt-4 overflow-hidden rounded-none bg-white ring-1 ring-black/[0.06] mx-auto w-full max-w-[420px] sm:max-w-none">
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
             </div>
@@ -326,7 +326,7 @@ export default function DiferencaPrecos({
                       {formatPrice(row.price)}
                     </span>
                     {isBest && (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-none bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
                         Melhor preço
                       </span>
                     )}

@@ -89,7 +89,7 @@ function priceBoundsFromProducts(products: ProductWithPrice[]) {
 }
 
 function sidebarItemClass(active: boolean) {
-  return `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-colors ${
+  return `flex items-center gap-2.5 px-3 py-2 rounded-none text-sm font-medium text-left transition-colors ${
     active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
   }`
 }
@@ -139,7 +139,7 @@ function DesktopGridViewToggle({
 }) {
   const options: DesktopGridCols[] = [3, 4, 5]
   return (
-    <div className="hidden xl:flex items-center gap-1 bg-gray-100 rounded-full p-1">
+    <div className="hidden xl:flex items-center gap-1 bg-gray-100 rounded-none p-1">
       {options.map((cols) => (
         <button
           key={cols}
@@ -147,7 +147,7 @@ function DesktopGridViewToggle({
           onClick={() => onChange(cols)}
           aria-label={`Ver em grelha de ${cols} colunas`}
           aria-pressed={value === cols}
-          className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+          className={`flex items-center justify-center h-7 w-7 rounded-none transition-colors ${
             value === cols ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
@@ -163,7 +163,7 @@ type PillOption = { value: string; display: string }
 function Checkbox({ active }: { active: boolean }) {
   return (
     <span
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-none border ${
         active ? 'border-white' : 'border-gray-300'
       }`}
     >
@@ -337,7 +337,7 @@ function PriceRangeSlider({
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="w-full border border-gray-200 rounded-lg pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full border border-gray-200 rounded-none pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
             €
@@ -360,7 +360,7 @@ function PriceRangeSlider({
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="w-full border border-gray-200 rounded-lg pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full border border-gray-200 rounded-none pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           />
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
             €
@@ -369,9 +369,9 @@ function PriceRangeSlider({
       </div>
 
       <div className="relative h-7">
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-full bg-gray-200" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-none bg-gray-200" />
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full bg-gray-900"
+          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-none bg-gray-900"
           style={{ left: `${leftPct}%`, width: `${Math.max(rightPct - leftPct, 0)}%` }}
         />
         <input
@@ -898,7 +898,7 @@ export default function ProductGrid({
         type="button"
         onClick={chip.onRemove}
         aria-label={`Remover filtro ${chip.label}`}
-        className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-full transition-colors"
+        className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors"
       >
         {chip.label}
         <span aria-hidden="true" className="text-gray-300">×</span>
@@ -926,7 +926,7 @@ export default function ProductGrid({
         <button
           type="button"
           onClick={openDrawer}
-          className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors shrink-0"
+          className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-none px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors shrink-0"
         >
           <FilterIcon className="h-4 w-4" />
           Filtros{hasActiveFilters ? ` (${activeChips.length})` : ''}
@@ -994,19 +994,19 @@ export default function ProductGrid({
       )}
 
       {compareLimitWarning && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-full shadow-lg">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-none shadow-lg">
           Só podes comparar até 3 produtos de cada vez.
         </div>
       )}
 
       {compareSlugs.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-full shadow-xl">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-none shadow-xl">
           <span className="text-sm font-medium">
             {compareSlugs.length} produto{compareSlugs.length > 1 ? 's' : ''} selecionado{compareSlugs.length > 1 ? 's' : ''}
           </span>
           <Link
             href={`/comparar?produtos=${compareSlugs.join(',')}`}
-            className="bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-700 border border-emerald-200 text-sm font-semibold px-4 py-1.5 rounded-full"
+            className="bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-700 border border-emerald-200 text-sm font-semibold px-4 py-1.5 rounded-none"
           >
             Comparar
           </Link>
@@ -1039,7 +1039,7 @@ export default function ProductGrid({
             <button
               type="button"
               onClick={applyDraftFilters}
-              className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2.5 rounded-full transition-colors"
+              className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2.5 rounded-none transition-colors"
             >
               Aplicar filtros
             </button>

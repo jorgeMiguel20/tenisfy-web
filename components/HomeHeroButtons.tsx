@@ -29,14 +29,14 @@ export default function HomeHeroButtons() {
       <Link
         href="/catalogo"
         prefetch={false}
-        className="inline-block rounded-lg bg-white text-gray-900 font-semibold text-sm px-5 py-3 hover:bg-gray-100 transition-colors"
+        className="inline-block rounded-none bg-white text-gray-900 font-semibold text-sm px-5 py-3 hover:bg-gray-100 transition-colors"
       >
         Explorar catálogo
       </Link>
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="inline-flex items-center gap-2 rounded-lg border border-white/40 text-white font-semibold text-sm px-5 py-3 hover:bg-white/10 transition-colors"
+        className="inline-flex items-center gap-2 rounded-none border border-white/40 text-white font-semibold text-sm px-5 py-3 hover:bg-white/10 transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path

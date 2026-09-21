@@ -40,10 +40,10 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
   const bestOffer = offers[0]
 
   return (
-    <div className="bg-white border border-gray-100 border-l-[3px] border-l-orange-600 rounded-2xl p-5 sm:p-8 shadow-[0_1px_3px_rgba(17,24,39,0.05),0_20px_44px_rgba(17,24,39,0.10)]">
+    <div className="bg-white border border-gray-100 border-l-[3px] border-l-orange-600 rounded-none p-5 sm:p-8 shadow-[0_1px_3px_rgba(17,24,39,0.05),0_20px_44px_rgba(17,24,39,0.10)]">
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 sm:gap-8 items-start">
         <div>
-          <Link href={`/produto/${product.slug}`} className="block aspect-square rounded-xl bg-gray-50 overflow-hidden">
+          <Link href={`/produto/${product.slug}`} className="block aspect-square rounded-none bg-gray-50 overflow-hidden">
             {product.image && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -55,7 +55,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
               {product.name}
             </Link>
             {priceDrop && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 text-xs font-semibold px-2.5 py-1 rounded-full mt-2">
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 text-xs font-semibold px-2.5 py-1 rounded-none mt-2">
                 ↓ {formatPrice(priceDrop.amount)} em 7 dias
               </span>
             )}
@@ -73,7 +73,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
                 <span className="text-sm text-gray-500">melhor preço</span>
               </div>
               {savings && (
-                <span className="inline-flex items-center bg-orange-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg mt-2 shadow-[0_2px_8px_rgba(234,88,12,0.28)]">
+                <span className="inline-flex items-center bg-orange-600 text-white text-sm font-semibold px-3 py-1.5 rounded-none mt-2 shadow-[0_2px_8px_rgba(234,88,12,0.28)]">
                   Poupa {formatPrice(savings.amount)} escolhendo {savings.store}
                 </span>
               )}
@@ -82,7 +82,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
               href={bestOffer.url}
               target="_blank"
               rel="nofollow sponsored noopener"
-              className="inline-flex items-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-full text-sm font-semibold hover:bg-gray-700 transition-colors whitespace-nowrap shadow-[0_4px_14px_rgba(17,24,39,0.24)]"
+              className="inline-flex items-center gap-2 bg-gray-900 text-white px-5 py-3 rounded-none text-sm font-semibold hover:bg-gray-700 transition-colors whitespace-nowrap shadow-[0_4px_14px_rgba(17,24,39,0.24)]"
             >
               Ir à {bestOffer.store}
               <ExternalLinkIcon className="h-4 w-4" />
@@ -97,20 +97,20 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
                 href={offer.url}
                 target="_blank"
                 rel="nofollow sponsored noopener"
-                className={`flex items-center gap-4 py-3.5 -mx-2 px-3 rounded-lg transition-colors ${
+                className={`flex items-center gap-4 py-3.5 -mx-2 px-3 rounded-none transition-colors ${
                   index === 0
                     ? 'bg-orange-50/60 border border-orange-100'
                     : 'hover:bg-gray-50 border-t border-gray-50'
                 }`}
               >
                 <span
-                  className={`w-1.5 h-6 rounded-sm shrink-0 ${index === 0 ? 'bg-orange-600' : 'bg-gray-200'}`}
+                  className={`w-1.5 h-6 rounded-none shrink-0 ${index === 0 ? 'bg-orange-600' : 'bg-gray-200'}`}
                   aria-hidden="true"
                 />
                 <span className="flex-1 flex items-center gap-2 min-w-0">
                   <span className={`text-sm ${index === 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{offer.store}</span>
                   {index === 0 && offers.length > 1 && (
-                    <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0">
+                    <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-none shrink-0">
                       Melhor preço
                     </span>
                   )}
@@ -130,19 +130,19 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
                 href={offer.url}
                 target="_blank"
                 rel="nofollow sponsored noopener"
-                className={`flex items-center gap-3 rounded-xl p-3 ${
+                className={`flex items-center gap-3 rounded-none p-3 ${
                   index === 0 ? 'bg-orange-50/60 border border-orange-100' : 'border border-gray-100'
                 }`}
               >
                 <span
-                  className={`w-1.5 h-8 rounded-sm shrink-0 ${index === 0 ? 'bg-orange-600' : 'bg-gray-200'}`}
+                  className={`w-1.5 h-8 rounded-none shrink-0 ${index === 0 ? 'bg-orange-600' : 'bg-gray-200'}`}
                   aria-hidden="true"
                 />
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center gap-1.5 flex-wrap">
                     <span className={`text-sm ${index === 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{offer.store}</span>
                     {index === 0 && offers.length > 1 && (
-                      <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                      <span className="inline-flex items-center bg-green-50 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-none">
                         Melhor preço
                       </span>
                     )}
@@ -168,7 +168,7 @@ export default function HighlightProductCard({ product, savings, priceDrop, offe
             <Link
               key={s.slug}
               href={`/produto/${s.slug}`}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-full px-3.5 py-1.5 hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-none px-3.5 py-1.5 hover:bg-gray-100 transition-colors"
             >
               {s.label}
               <svg className="h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

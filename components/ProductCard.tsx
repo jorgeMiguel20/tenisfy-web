@@ -90,7 +90,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             // claro, o texto branco de antes ficava sem contraste - por
             // isso o texto passa a emerald-950 (verde muito escuro da
             // mesma família), mantendo exatamente o tom de verde pedido.
-            <span className="rounded-md bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
+            <span className="rounded-none bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
               -{dropPercent}%
             </span>
           ) : (
@@ -201,7 +201,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               onToggleCompare(product)
             }}
             aria-pressed={isSelected}
-            className={`mt-auto pt-3 inline-flex w-fit self-center items-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors ${
+            className={`mt-auto pt-3 inline-flex w-fit self-center items-center gap-1.5 rounded-none px-3 py-2 text-xs transition-colors ${
               isSelected
                 ? 'font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'
                 : 'font-bold bg-white text-black border border-black'
