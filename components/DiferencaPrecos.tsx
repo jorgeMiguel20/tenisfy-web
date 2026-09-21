@@ -206,7 +206,8 @@ export default function DiferencaPrecos({
           </h2>
           {/* Cor mais escura (era "#68747C") - o cinzento anterior tinha
               4.80:1 de contraste contra o branco, só mesmo em cima do
-              mínimo de acessibilidade (4.5:1). "#5C6770" sobe para ~5.8:1,
+              mínimo de acessibilidade (4.5:1). "#5C6770" sobe para 5.79:1
+              (calculado com a fórmula de luminância relativa do WCAG),
               dando margem de segurança sem se notar a olho (pedido do
               Jorge). Mudança aplicada só aqui e na legenda abaixo - o resto
               do texto secundário da secção (rótulo "Onde comprar", números
