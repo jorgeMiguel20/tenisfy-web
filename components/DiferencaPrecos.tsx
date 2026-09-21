@@ -204,14 +204,21 @@ export default function DiferencaPrecos({
           <h2 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
-          <p className="mt-3 max-w-md text-sm sm:text-base text-[#68747C]">
+          {/* Cor mais escura (era "#68747C") - o cinzento anterior tinha
+              4.80:1 de contraste contra o branco, só mesmo em cima do
+              mínimo de acessibilidade (4.5:1). "#5C6770" sobe para ~5.8:1,
+              dando margem de segurança sem se notar a olho (pedido do
+              Jorge). Mudança aplicada só aqui e na legenda abaixo - o resto
+              do texto secundário da secção (rótulo "Onde comprar", números
+              das lojas) não foi tocado. */}
+          <p className="mt-3 max-w-md text-sm sm:text-base text-[#5C6770]">
             Alinhamos o preço do mesmo modelo nas lojas parceiras. A tua poupança é a
             distância entre a primeira e a última linha.
           </p>
           <p className="mt-4 flex flex-wrap items-center gap-3 text-3xl sm:text-4xl font-extrabold text-[#17232B]">
             {formatPrice(cheapest.price)}
             {savings > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-none bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F2EF] px-3 py-1 align-middle text-sm font-bold text-[#123F3A]">
                 <TagIcon />
                 Poupa {formatPrice(savings)}
               </span>
@@ -219,8 +226,9 @@ export default function DiferencaPrecos({
           </p>
           {/* Era "text-xs" (12px) - subi para "text-sm" (14px): 12px estava
               no limite mínimo de contraste confortável (medido ao vivo,
-              4.8:1) e é um texto pequeno demais para ler bem. */}
-          <p className="mt-1 text-sm text-[#68747C]">
+              4.8:1) e é um texto pequeno demais para ler bem. Cor também
+              escurecida para "#5C6770" - ver nota acima. */}
+          <p className="mt-1 text-sm text-[#5C6770]">
             {product.model_name}
             {verifiedLabel ? ` · ${verifiedLabel}` : ''}
           </p>
@@ -326,7 +334,7 @@ export default function DiferencaPrecos({
                       {formatPrice(row.price)}
                     </span>
                     {isBest && (
-                      <span className="inline-flex items-center whitespace-nowrap rounded-none bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#123F3A] px-2 py-1 text-[10px] font-semibold text-white">
                         Melhor preço
                       </span>
                     )}
