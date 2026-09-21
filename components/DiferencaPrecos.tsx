@@ -146,12 +146,19 @@ function ChevronIcon({ direction, className = 'h-4 w-4' }: { direction: 'left' |
 export default function DiferencaPrecos({
   product,
   heroImageSrc,
+  heroImageSrcMobile,
 }: {
   product?: ProductWithPrice | null
   // Foto lifestyle fixa (pedido do Jorge, ver nota acima) - vem sempre de
   // app/page.tsx como um ficheiro estático do site (public/marketing/...),
   // nunca de product.image_url/image_urls (fotos de estúdio dos cards).
   heroImageSrc: string
+  // Versão mais pequena (mesmo recorte, 800px em vez de 1600px) da mesma
+  // foto, só para telemóveis não descarregarem a versão de ecrã grande à
+  // toa (afinação de performance pedida pelo Jorge - "refinar, não
+  // redesenhar": a foto em si mantém-se exatamente igual, só passa a haver
+  // um segundo tamanho). Opcional para não partir nada se um dia faltar.
+  heroImageSrcMobile?: string
 }) {
   const storeRows = product ? bestPricePerStore(product).slice(0, 4) : []
   const [storeIndex, setStoreIndex] = useState(0)
@@ -186,7 +193,13 @@ export default function DiferencaPrecos({
     // manter a cor atual dos botões, não mudar para preto como no mockup
     // mais recente).
     <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden bg-white py-8 sm:py-10">
-      <div className="relative mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 sm:items-center sm:gap-8 sm:px-12">
+      {/* Afinação pedida pelo Jorge: colunas alinhadas pelo topo (era
+          "sm:items-center") - a coluna de texto é bem mais baixa do que a
+          foto+card, e centradas uma em relação à outra sobrava ~125px de
+          vazio em cima do título e outros ~125px abaixo do botão (medido
+          ao vivo). Alinhadas pelo topo, o texto fica colado à foto como no
+          resto do site. */}
+      <div className="relative mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 sm:items-start sm:gap-8 sm:px-12">
         <div>
           <h2 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
             A diferença que ninguém te mostra.
@@ -204,13 +217,19 @@ export default function DiferencaPrecos({
               </span>
             )}
           </p>
-          <p className="mt-1 text-xs text-[#68747C]">
+          {/* Era "text-xs" (12px) - subi para "text-sm" (14px): 12px estava
+              no limite mínimo de contraste confortável (medido ao vivo,
+              4.8:1) e é um texto pequeno demais para ler bem. */}
+          <p className="mt-1 text-sm text-[#68747C]">
             {product.model_name}
             {verifiedLabel ? ` · ${verifiedLabel}` : ''}
           </p>
+          {/* "min-h-[44px]" adicionado: o botão media só 36px de altura
+              (medido ao vivo), abaixo do mínimo recomendado (44px) para um
+              alvo de toque confortável no telemóvel. */}
           <Link
             href={`/produto/${product.slug}`}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+            className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#123F3A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
           >
             Ver este par
             <ChevronIcon direction="right" className="h-3.5 w-3.5" />
@@ -234,6 +253,19 @@ export default function DiferencaPrecos({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={heroImageSrc}
+                // "srcSet"/"sizes": no telemóvel a foto ocupa a largura do
+                // ecrã (~420px no máximo) mas antes descarregava sempre a
+                // versão de 1600px feita para ecrãs grandes. Com
+                // "heroImageSrcMobile" (mesmo recorte, 800px) o browser
+                // escolhe sozinho a versão mais leve consoante o ecrã - a
+                // foto em si não muda, só o ficheiro servido (pedido do
+                // Jorge: "não redesenhar, refinar").
+                srcSet={
+                  heroImageSrcMobile
+                    ? `${heroImageSrcMobile} 800w, ${heroImageSrc} 1600w`
+                    : undefined
+                }
+                sizes={heroImageSrcMobile ? '(min-width: 640px) 50vw, 100vw' : undefined}
                 alt={`${product.model_name} - foto lifestyle`}
                 loading="lazy"
                 className="h-full w-full object-cover"
@@ -242,8 +274,14 @@ export default function DiferencaPrecos({
           </div>
 
           {/* Card "Onde comprar" - fica agora por baixo da foto, sem
-              sobreposição (pedido do Jorge, ver nota acima). */}
-          <div className="relative mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 mx-auto w-full max-w-[420px] sm:max-w-none">
+              sobreposição (pedido do Jorge, ver nota acima). Sombra/contorno
+              mais discretos (era "shadow-sm ring-1 ring-black/5") e raio dos
+              cantos igualado ao da foto ("rounded-[20px]", era
+              "rounded-2xl") - pedido do Jorge para reduzir a sensação de
+              "card dentro de card" sem tirar o contorno por completo (uma
+              caixa branca sobre fundo branco precisa de alguma fronteira
+              visível, mesmo que ténue). */}
+          <div className="relative mt-4 overflow-hidden rounded-[20px] bg-white ring-1 ring-black/[0.06] mx-auto w-full max-w-[420px] sm:max-w-none">
             <div className="flex items-center px-5 pt-2.5 pb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-[#68747C]">Onde comprar</span>
             </div>
