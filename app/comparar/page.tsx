@@ -1,9 +1,10 @@
 // app/comparar/page.tsx
 import { Fragment } from 'react'
 import { supabase } from '@/lib/supabase'
+import { productSelect } from '@/lib/productColumns'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import ComparePicker from '@/components/ComparePicker'
+import ComparePicker, { type PickerProduct } from '@/components/ComparePicker'
 import ProductGallery from '@/components/ProductGallery'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
@@ -238,14 +239,13 @@ export default async function CompararPage({
   if (slugs.length > 0) {
     const { data: products } = await supabase
       .from('products')
-      .select(`
-        *,
+      .select(productSelect(`
         brands (*),
         product_offers (
           id, price, in_stock, discontinued_at,
           stores (name, shipping_free_threshold)
         )
-      `)
+      `))
       .in('slug', slugs)
 
     ordered = slugs
@@ -265,28 +265,46 @@ export default async function CompararPage({
   const placeholderCount = Math.max(0, 3 - ordered.length)
   const containerMaxWidth = ordered.length < 3 ? 'max-w-4xl' : 'max-w-5xl'
 
-  // Catálogo completo para o seletor "+ Adicionar produto" (mesma pesquisa
+  // Catálogo para o seletor "+ Adicionar produto" (mesma pesquisa
   // client-side da homepage, ver lib/searchProducts.ts) - só é preciso
   // quando sobra pelo menos um lugar por preencher.
-  let pickerProducts: ProductWithPrice[] = []
+  // Só com os campos que o seletor mostra/pesquisa (nome, marca, foto,
+  // preço mais baixo): esta lista vai inteira para o browser, e antes ia
+  // com todas as colunas de cada ténis (incluindo o "embedding" da
+  // pesquisa por foto), o que tornava o /comparar bem mais pesado sem
+  // nenhum benefício visível.
+  let pickerProducts: PickerProduct[] = []
   if (placeholderCount > 0) {
     const { data: allProducts } = await supabase
       .from('products')
       .select(`
-        *,
-        brands (*),
-        product_offers (price, in_stock, store_id, size, discontinued_at)
+        id, slug, model_name, image_url,
+        brands (name),
+        product_offers (price, in_stock, discontinued_at)
       `)
       .eq('is_active', true)
 
-    pickerProducts = (allProducts ?? []).map((p) => {
-      const inStockOffers = p.product_offers.filter((o: any) => o.in_stock && !o.discontinued_at)
+    type PickerRow = {
+      id: string
+      slug: string
+      model_name: string
+      image_url: string | null
+      brands: { name: string } | null
+      product_offers: { price: number; in_stock: boolean; discontinued_at: string | null }[] | null
+    }
+    pickerProducts = ((allProducts ?? []) as unknown as PickerRow[]).map((p) => {
+      const inStockOffers = (p.product_offers ?? []).filter((o) => o.in_stock && !o.discontinued_at)
       const lowest_price = inStockOffers.length > 0
-        ? Math.min(...inStockOffers.map((o: any) => o.price))
+        ? Math.min(...inStockOffers.map((o) => o.price))
         : null
-      const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
-      const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
-      return { ...p, lowest_price, store_count: distinctStores.size, sizes }
+      return {
+        id: p.id,
+        slug: p.slug,
+        model_name: p.model_name,
+        image_url: p.image_url ?? null,
+        brands: p.brands ? { name: p.brands.name } : null,
+        lowest_price,
+      }
     })
   }
 
