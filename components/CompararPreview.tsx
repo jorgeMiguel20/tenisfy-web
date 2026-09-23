@@ -1,6 +1,7 @@
 // components/CompararPreview.tsx
 import Link from 'next/link'
 import CompararPreviewCta from '@/components/CompararPreviewCta'
+import { dedupeColor } from '@/lib/formatColor'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductOfferWithStore, ProductWithPrice } from '@/lib/types'
 import FavoriteButton from '@/components/FavoriteButton'
@@ -48,23 +49,12 @@ const SPEC_DEFS = [
   { key: 'color', label: 'Cor' },
 ] as const
 
-// Tira partes repetidas da cor, mantendo a ordem original (ex.: "Core
-// Black / Core Black / Core Black" -> "Core Black"). Só remove repetições
-// do próprio texto guardado - nunca acrescenta nem traduz nada.
+// Cor sem partes repetidas (ver lib/formatColor.ts - a mesma regra é
+// usada na página /comparar).
 function formatSpecValue(key: string, value: string | null | undefined): string {
   if (!value) return '—'
   if (key !== 'color') return value
-  const seen = new Set<string>()
-  const parts = value
-    .split('/')
-    .map((part) => part.trim())
-    .filter((part) => {
-      const k = part.toLowerCase()
-      if (!part || seen.has(k)) return false
-      seen.add(k)
-      return true
-    })
-  return parts.length > 0 ? parts.join(' / ') : value
+  return dedupeColor(value) ?? value
 }
 
 // Regras visuais aplicadas nesta secção (4.ª ronda - pedido do Jorge para

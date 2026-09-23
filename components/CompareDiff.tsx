@@ -149,7 +149,7 @@ export function CompareTable({
   const gridCols = `160px repeat(${columnCount}, minmax(0, 240px))`
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
+    <div className="rounded-none border border-gray-100 bg-white overflow-hidden">
       {visibleRows.map((row, rowIndex) => (
         <div
           key={row.key}
@@ -189,7 +189,7 @@ export function CompareTable({
           <div key={slug} className="px-4 py-4 border-l border-gray-100">
             <Link
               href={`/produto/${slug}`}
-              className="flex items-center justify-center w-full rounded-full bg-gray-900 text-white text-sm font-semibold py-2.5 hover:bg-gray-700 transition-colors"
+              className="flex items-center justify-center w-full rounded-none bg-gray-900 text-white text-sm font-semibold py-2.5 hover:bg-gray-700 transition-colors"
             >
               Ver detalhe
             </Link>
