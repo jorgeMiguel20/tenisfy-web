@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { productSelect } from '@/lib/productColumns'
 import ProductCard from './ProductCard'
 import { useFavorites } from '@/lib/favorites'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
@@ -30,11 +31,10 @@ export default function FavoritesGrid() {
 
     supabase
       .from('products')
-      .select(`
-        *,
+      .select(productSelect(`
         brands (*),
         product_offers (price, in_stock, store_id, size, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold))
-      `)
+      `))
       .in('slug', favorites)
       .then(({ data }: { data: RawProduct[] | null }) => {
         if (cancelled) return

@@ -3,16 +3,27 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ProductWithPrice } from '@/lib/types'
 import { searchProducts } from '@/lib/searchProducts'
 import { useCompare } from '@/lib/compare'
 import { formatPrice } from '@/lib/formatPrice'
+
+// Só os campos que o seletor mostra e pesquisa - a página /comparar envia
+// esta lista inteira para o browser, por isso não leva mais nada (ver o
+// comentário em app/comparar/page.tsx).
+export type PickerProduct = {
+  id: string
+  slug: string
+  model_name: string
+  image_url: string | null
+  lowest_price: number | null
+  brands: { name: string } | null
+}
 
 export default function ComparePicker({
   allProducts,
   currentSlugs,
 }: {
-  allProducts: ProductWithPrice[]
+  allProducts: PickerProduct[]
   currentSlugs: string[]
 }) {
   const router = useRouter()
