@@ -76,6 +76,18 @@ const SPEC_DEFS = [
 // - Foto decorativa do topo: horizontal (16:9, como no mockup), escolhida
 //   entre as fotos enviadas pelo Jorge (duas mãos, um ténis em cada). Só
 //   decoração - nunca um dos 2 produtos comparados.
+//
+// Ajustes da 5.ª ronda (pedido do Jorge):
+// - Título maior (44px no desktop, 32px no telemóvel, letras ligeiramente
+//   mais juntas) e bloco de texto mais compacto (menos espaço entre
+//   etiqueta, título, texto e botão).
+// - Foto com mais presença: ocupa 7 de 12 colunas (era metade) e foi
+//   reenquadrada centrada nos 2 ténis, com a mesma margem dos 2 lados
+//   (antes o ténis da esquerda ficava quase colado à borda).
+// - Botão preenchido a verde da marca (#123F3A, texto branco) - igual ao
+//   "Ver este par" da DiferencaPrecos.
+// - "VS" volta a ser o círculo escuro com texto branco (sem sombra), em
+//   cima de uma só linha vertical fina entre os 2 produtos.
 const LINE = 'border-[#17232B]/10'
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
 const GRID = 'grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_48px_minmax(0,1fr)]'
@@ -95,28 +107,33 @@ export default function CompararPreview({ products }: { products: ProductWithPri
   // produtos tem esse dado.
   const specRows = SPEC_DEFS.filter(({ key }) => a[key] || b[key])
 
-  // Célula vazia da coluna "VS" (só as 2 linhas verticais), repetida em
-  // todas as linhas da tabela para as linhas ficarem contínuas.
-  const vsCell = <div aria-hidden="true" className={`border-x ${LINE}`} />
+  // Célula da coluna "VS": uma só linha vertical fina ao centro, repetida
+  // em todas as linhas da tabela para a linha ficar contínua.
+  const vsLine = 'pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[#17232B]/10'
+  const vsCell = (
+    <div aria-hidden="true" className="relative">
+      <span className={vsLine} />
+    </div>
+  )
   // Célula vazia da coluna de rótulos (só no desktop).
   const labelSpacer = <div aria-hidden="true" className={`hidden sm:block sm:border-r ${LINE}`} />
 
   return (
     <section className="py-16 sm:px-6 sm:py-24">
-      {/* Topo: intro à esquerda, foto decorativa à direita, alturas
-          equivalentes (foto 16:9 ao lado de um bloco de texto curto). */}
-      <div className="grid gap-8 sm:grid-cols-2 sm:items-center sm:gap-12">
-        <div>
+      {/* Topo: intro compacta à esquerda (5 colunas), foto decorativa com
+          mais presença à direita (7 colunas). */}
+      <div className="grid gap-8 sm:grid-cols-12 sm:items-center sm:gap-12">
+        <div className="sm:col-span-5">
           <p className={LABEL}>Comparador</p>
-          <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
+          <h2 className="mt-2 font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B]">
             Vê os ténis lado a lado.
           </h2>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-[#5C6770]">
+          <p className="mt-3 max-w-[26rem] text-base leading-relaxed text-[#5C6770]">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
           <Link
             href="/comparar"
-            className="mt-8 inline-flex min-h-[44px] items-center gap-2 rounded-none border border-[#17232B] px-5 text-sm font-semibold text-[#17232B] transition-colors hover:bg-[#17232B] hover:text-white"
+            className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
               <path d="M8 3 4 7l4 4" />
@@ -127,12 +144,12 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             Ir para o comparador
           </Link>
         </div>
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-none bg-[#F9FBFC]">
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:col-span-7">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/marketing/comparar-maos-1280.jpg"
-            srcSet="/marketing/comparar-maos-720.jpg 720w, /marketing/comparar-maos-1280.jpg 1280w"
-            sizes="(max-width: 640px) 100vw, 50vw"
+            src="/marketing/comparar-maos-v2-1600.jpg"
+            srcSet="/marketing/comparar-maos-v2-800.jpg 800w, /marketing/comparar-maos-v2-1600.jpg 1600w"
+            sizes="(max-width: 640px) 100vw, 58vw"
             alt=""
             aria-hidden="true"
             loading="lazy"
@@ -147,10 +164,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
         <div className={GRID}>
           {labelSpacer}
           <ProductPhoto product={a} />
-          {/* Coluna "VS" - texto discreto na vertical, sem círculo nem
-              sombra (como no mockup do Jorge). */}
-          <div className={`flex items-center justify-center border-x ${LINE}`}>
-            <span className={`${LABEL} [writing-mode:vertical-rl] rotate-180`}>vs</span>
+          {/* Coluna "VS" - círculo escuro com texto branco, sem sombra, em
+              cima da linha vertical, a meio da altura das fotos. */}
+          <div className="relative">
+            <span aria-hidden="true" className={vsLine} />
+            <span className="absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#17232B] text-[11px] font-bold uppercase text-white sm:h-8 sm:w-8">
+              vs
+            </span>
           </div>
           <ProductPhoto product={b} />
         </div>
@@ -182,7 +202,9 @@ export default function CompararPreview({ products }: { products: ProductWithPri
             <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{a[key] ?? '—'}</p>
             {/* No telemóvel as especificações ficam sem as linhas verticais
                 do "VS" (o rótulo por cima já as interrompia a cada linha). */}
-            <div aria-hidden="true" className={`sm:border-x ${LINE}`} />
+            <div aria-hidden="true" className="relative">
+              <span className={`hidden sm:block ${vsLine}`} />
+            </div>
             <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{b[key] ?? '—'}</p>
           </div>
         ))}
