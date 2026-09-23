@@ -5,6 +5,7 @@
 // filtros) - extraído de app/page.tsx para não duplicar esta lógica nos
 // dois sítios.
 import { supabase } from '@/lib/supabase'
+import { productSelect } from '@/lib/productColumns'
 import { computeSavingsFromRawOffers } from './savings'
 import { computePriceDrop } from './priceDrop'
 import type { ProductWithPrice } from './types'
@@ -15,11 +16,10 @@ export async function getProductsWithPrice(): Promise<{
 }> {
   const { data: rawProducts, error } = await supabase
     .from('products')
-    .select(`
-      *,
+    .select(productSelect(`
       brands (*),
       product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, discontinued_at, stores (name, base_url, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
-    `)
+    `))
     .eq('is_active', true)
 
   if (error) {

@@ -12,11 +12,13 @@ const FUSE_OPTIONS = {
   minMatchCharLength: 2,
 }
 
-export function searchProducts(
-  products: ProductWithPrice[],
+// Genérica: funciona com o produto completo (grelha do catálogo) e com a
+// versão reduzida do seletor do /comparar - só precisa do nome e da marca.
+export function searchProducts<T extends Pick<ProductWithPrice, 'model_name'> & { brands?: { name: string } | null }>(
+  products: T[],
   query: string,
   limit?: number
-): ProductWithPrice[] {
+): T[] {
   const trimmed = query.trim()
   if (trimmed.length < 2) return []
 
