@@ -281,8 +281,13 @@ function PriceCell({
         <p className="text-sm text-[#5C6770]">Sem oferta disponível</p>
       )}
       {isCheapest && (
-        <span className="inline-flex items-center rounded-full bg-[#E8F2EF] px-2.5 py-1 text-[11px] font-medium text-[#123F3A]">
-          {formatPrice(priceDiff!)} mais barato
+        // No telemóvel a coluna é estreita e "50,00 € mais barato" partia em
+        // 2 linhas dentro da pílula (ficava uma "bolha"). Aí mostra só "Mais
+        // barato" - como no /comparar - e a diferença vê-se logo pelos 2
+        // preços lado a lado; no desktop mantém o valor.
+        <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#E8F2EF] px-2.5 py-1 text-[11px] font-medium text-[#123F3A]">
+          <span className="sm:hidden">Mais barato</span>
+          <span className="hidden sm:inline">{formatPrice(priceDiff!)} mais barato</span>
         </span>
       )}
     </div>
