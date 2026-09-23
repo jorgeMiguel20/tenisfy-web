@@ -132,7 +132,7 @@ function EmptyState({ title, description }: { title: string; description: string
       <p className="text-gray-500 mt-2">{description}</p>
       <Link
         href="/catalogo"
-        className="inline-block mt-6 bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
+        className="inline-block mt-6 bg-gray-900 text-white px-5 py-2.5 rounded-none text-sm font-medium hover:bg-gray-700 transition-colors"
       >
         Ver catálogo
       </Link>
@@ -147,7 +147,7 @@ function EmptyState({ title, description }: { title: string; description: string
 // de esta caixa repetida por baixo de cada cartão.
 function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: string }) {
   const storeBox = offers.length > 0 && (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
+    <div className="border border-gray-100 rounded-none overflow-hidden">
       <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
         Preços por loja
       </p>
@@ -181,7 +181,7 @@ function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: stri
   const detailLink = (
     <Link
       href={`/produto/${slug}`}
-      className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
+      className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-none bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
     >
       Ver detalhe
     </Link>
@@ -470,7 +470,7 @@ export default async function CompararPage({
         </div>
 
         {summary && (
-          <div className="mt-5 flex items-center gap-3 rounded-xl bg-[#1F5F58]/5 border border-[#1F5F58]/20 px-4 py-3">
+          <div className="mt-5 flex items-center gap-3 rounded-none bg-[#1F5F58]/5 border border-[#1F5F58]/20 px-4 py-3">
             <svg
               width="18"
               height="18"
@@ -515,7 +515,7 @@ export default async function CompararPage({
             return (
               <div
                 key={product.id}
-                className="relative flex flex-col rounded-2xl border border-gray-100 bg-white overflow-hidden"
+                className="relative flex flex-col rounded-none border border-gray-100 bg-white overflow-hidden"
               >
                 <div className="p-6 pb-5">
                   <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
@@ -575,7 +575,7 @@ export default async function CompararPage({
             "Ver detalhe" alinhados por baixo de cada produto, cada
             característica escrita uma única vez à esquerda. */}
         {ordered.length > 0 && (
-          <div className="hidden lg:block mt-8 rounded-2xl border border-gray-100 bg-white p-6">
+          <div className="hidden lg:block mt-8 rounded-none border border-gray-100 bg-white p-6">
             <div className="flex items-start gap-0">
               {/* Tem de ser exactamente a mesma grelha (160px + colunas de
                   240px) do CompareTable em components/CompareDiff.tsx, para
@@ -653,7 +653,7 @@ export default async function CompararPage({
         )}
 
         {ordered.length === 0 && (
-          <div className="hidden lg:flex mt-8 rounded-2xl border border-gray-100 bg-white p-10 items-center justify-center">
+          <div className="hidden lg:flex mt-8 rounded-none border border-gray-100 bg-white p-10 items-center justify-center">
             <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
           </div>
         )}
@@ -661,7 +661,7 @@ export default async function CompararPage({
 
       {ordered.length > 1 && (
         <div className="mt-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 flex items-center gap-4 flex-wrap">
+          <div className="rounded-none border border-gray-200 bg-white p-6 flex items-center gap-4 flex-wrap">
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500" aria-hidden="true">
                 <path
@@ -679,7 +679,7 @@ export default async function CompararPage({
             </div>
             <Link
               href="/catalogo"
-              className="inline-flex items-center justify-center rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:border-gray-400 transition-colors"
+              className="inline-flex items-center justify-center rounded-none border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:border-gray-400 transition-colors"
             >
               Escolher no catálogo
             </Link>
