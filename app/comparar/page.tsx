@@ -18,6 +18,7 @@ import {
 import type { ProductWithPrice } from '@/lib/types'
 import { formatPrice } from '@/lib/formatPrice'
 import { computePriceDrop } from '@/lib/priceDrop'
+import { dedupeColor } from '@/lib/formatColor'
 
 function parseSlugs(produtos?: string): string[] {
   return (produtos ?? '')
@@ -357,7 +358,9 @@ export default async function CompararPage({
   // verde-petróleo na tabela/cartões.
   const soleValues = ordered.map((p) => p.sole_type ?? null)
   const closureValues = ordered.map((p) => p.closure_type ?? null)
-  const colorValues = ordered.map((p) => p.color ?? null)
+  // Cor sem partes repetidas ("Core Black / Core Black / Core Black" ->
+  // "Core Black") - mesma regra da homepage, ver lib/formatColor.ts.
+  const colorValues = ordered.map((p) => dedupeColor(p.color))
   const genderValues = ordered.map((p) => p.gender ?? null)
   const storeCountValues = compareData.map((d) => d.storeCount)
   const shippingValues = compareData.map((d) => d.shippingFreeThreshold)
