@@ -1,6 +1,7 @@
 // app/produto/[slug]/page.tsx
 
 import { supabase } from '@/lib/supabase'
+import { productSelect } from '@/lib/productColumns'
 
 import { notFound } from 'next/navigation'
 
@@ -63,7 +64,7 @@ export async function generateMetadata({
 
     .from('products')
 
-    .select('*, brands (*), product_offers (price, in_stock, store_id, discontinued_at)')
+    .select(productSelect(`brands (*), product_offers (price, in_stock, store_id, discontinued_at)`))
 
     .eq('slug', slug)
 
@@ -223,9 +224,7 @@ export default async function ProdutoPage({
 
     .from('products')
 
-    .select(`
-
-      *,
+    .select(productSelect(`
 
       brands (*),
 
@@ -237,7 +236,7 @@ export default async function ProdutoPage({
 
       )
 
-    `)
+    `))
 
     .eq('slug', slug)
 
@@ -259,11 +258,10 @@ export default async function ProdutoPage({
 
   const { data: candidateProducts } = await supabase
     .from('products')
-    .select(`
-      *,
+    .select(productSelect(`
       brands (*),
       product_offers (price, in_stock, store_id, size, discontinued_at, stores (name, shipping_base_fee, shipping_free_threshold))
-    `)
+    `))
     .eq('is_active', true)
     .neq('id', product.id)
     // So produtos que possam qualificar para "Modelos semelhantes" (mesma
