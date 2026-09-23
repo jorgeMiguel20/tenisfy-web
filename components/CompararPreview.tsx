@@ -1,5 +1,6 @@
 // components/CompararPreview.tsx
 import Link from 'next/link'
+import CompararPreviewCta from '@/components/CompararPreviewCta'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductOfferWithStore, ProductWithPrice } from '@/lib/types'
 import FavoriteButton from '@/components/FavoriteButton'
@@ -47,6 +48,25 @@ const SPEC_DEFS = [
   { key: 'color', label: 'Cor' },
 ] as const
 
+// Tira partes repetidas da cor, mantendo a ordem original (ex.: "Core
+// Black / Core Black / Core Black" -> "Core Black"). Só remove repetições
+// do próprio texto guardado - nunca acrescenta nem traduz nada.
+function formatSpecValue(key: string, value: string | null | undefined): string {
+  if (!value) return '—'
+  if (key !== 'color') return value
+  const seen = new Set<string>()
+  const parts = value
+    .split('/')
+    .map((part) => part.trim())
+    .filter((part) => {
+      const k = part.toLowerCase()
+      if (!part || seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+  return parts.length > 0 ? parts.join(' / ') : value
+}
+
 // Regras visuais aplicadas nesta secção (4.ª ronda - pedido do Jorge para
 // tirar o "aspeto gerado por IA", seguindo o mockup dele à risca):
 // - Fundo branco, sem caixa cinza à volta da secção nem caixas dentro de
@@ -88,6 +108,19 @@ const SPEC_DEFS = [
 //   "Ver este par" da DiferencaPrecos.
 // - "VS" volta a ser o círculo escuro com texto branco (sem sombra), em
 //   cima de uma só linha vertical fina entre os 2 produtos.
+//
+// Correções da 6.ª ronda (análise crítica pedida pelo Jorge):
+// - O botão deixou de levar a uma página vazia: abre o /comparar já com
+//   estes 2 ténis quando a pessoa não tem nenhuma comparação guardada (ver
+//   CompararPreviewCta.tsx - nunca apaga uma comparação já montada).
+// - Foto e nome de cada ténis levam à página do produto, com um zoom
+//   discreto na foto ao passar o rato.
+// - A coluna de rótulos deixou de estar vazia ao lado do nome e do preço:
+//   "Modelo" e "Preço" (só no desktop - no telemóvel não há essa coluna).
+// - Cor sem repetições: "Core Black / Core Black / Core Black" passa a
+//   "Core Black" (só se tiram partes repetidas, nunca se inventa nada).
+// - Título com a escala comum a todas as secções da homepage e
+//   text-balance (linhas equilibradas, sem palavras soltas).
 const LINE = 'border-[#17232B]/10'
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
 const GRID = 'grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)_48px_minmax(0,1fr)]'
@@ -115,8 +148,14 @@ export default function CompararPreview({ products }: { products: ProductWithPri
       <span className={vsLine} />
     </div>
   )
-  // Célula vazia da coluna de rótulos (só no desktop).
+  // Célula vazia da coluna de rótulos (só no desktop) - linha das fotos.
   const labelSpacer = <div aria-hidden="true" className={`hidden sm:block sm:border-r ${LINE}`} />
+  // Célula da coluna de rótulos com texto (só no desktop) - linhas do nome
+  // e do preço, com a mesma altura de linha do conteúdo ao lado para
+  // ficarem alinhados.
+  const rowLabel = (text: string, extra: string) => (
+    <p className={`hidden sm:block sm:border-r sm:px-6 ${LINE} ${LABEL} ${extra}`}>{text}</p>
+  )
 
   return (
     <section className="py-16 sm:px-6 sm:py-24">
@@ -125,24 +164,16 @@ export default function CompararPreview({ products }: { products: ProductWithPri
       <div className="grid gap-8 sm:grid-cols-12 sm:items-center sm:gap-12">
         <div className="sm:col-span-5">
           <p className={LABEL}>Comparador</p>
-          <h2 className="mt-2 font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B]">
+          <h2 className="mt-2 font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B]">
             Vê os ténis lado a lado.
           </h2>
           <p className="mt-3 max-w-[26rem] text-base leading-relaxed text-[#5C6770]">
             Seleciona dois ténis e vê-os lado a lado, com preço, especificações e loja — sem abrir dez separadores.
           </p>
-          <Link
-            href="/comparar"
+          <CompararPreviewCta
+            slugs={[a.slug, b.slug]}
             className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <path d="M8 3 4 7l4 4" />
-              <path d="M4 7h16" />
-              <path d="M16 21l4-4-4-4" />
-              <path d="M20 17H4" />
-            </svg>
-            Ir para o comparador
-          </Link>
+          />
         </div>
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:col-span-7">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -177,7 +208,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
         {/* Marca e nome */}
         <div className={GRID}>
-          {labelSpacer}
+          {rowLabel('Modelo', 'sm:pt-1')}
           <ProductName product={a} />
           {vsCell}
           <ProductName product={b} />
@@ -185,7 +216,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
 
         {/* Preço - sempre na 1.ª linha da célula, selo por baixo */}
         <div className={GRID}>
-          {labelSpacer}
+          {rowLabel('Preço', 'sm:pt-2 sm:leading-7')}
           <PriceCell price={lowestPrices[0]} cheapestPrice={cheapestPrice} priceDiff={priceDiff} />
           {vsCell}
           <PriceCell price={lowestPrices[1]} cheapestPrice={cheapestPrice} priceDiff={priceDiff} />
@@ -199,13 +230,13 @@ export default function CompararPreview({ products }: { products: ProductWithPri
                 (24px) para o rótulo pequeno ficar alinhado com a 1.ª linha
                 do valor ao lado, em vez de ficar mais acima. */}
             <p className={`col-span-3 px-3 pt-4 sm:col-span-1 sm:border-r sm:px-6 sm:py-5 sm:leading-6 ${LINE} ${LABEL}`}>{label}</p>
-            <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{a[key] ?? '—'}</p>
+            <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{formatSpecValue(key, a[key])}</p>
             {/* No telemóvel as especificações ficam sem as linhas verticais
                 do "VS" (o rótulo por cima já as interrompia a cada linha). */}
             <div aria-hidden="true" className="relative">
               <span className={`hidden sm:block ${vsLine}`} />
             </div>
-            <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{b[key] ?? '—'}</p>
+            <p className="px-3 pb-4 pt-2 text-sm leading-relaxed text-[#17232B] sm:px-6 sm:py-5 sm:text-[15px] sm:leading-6">{formatSpecValue(key, b[key])}</p>
           </div>
         ))}
       </div>
@@ -217,15 +248,22 @@ function ProductPhoto({ product }: { product: CompareProduct }) {
   return (
     <div className="p-3 sm:p-6">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-none bg-[#F9FBFC]">
-        {product.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.image_url}
-            alt={product.model_name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-contain"
-          />
-        ) : null}
+        {/* A foto leva à página do produto (zoom discreto ao passar o
+            rato). O coração fica fora do link, por cima - um botão dentro
+            de um link não é HTML válido. */}
+        <Link href={`/produto/${product.slug}`} prefetch={false} className="group absolute inset-0 block">
+          {product.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image_url}
+              alt={product.model_name}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            />
+          ) : (
+            <span className="sr-only">{product.model_name}</span>
+          )}
+        </Link>
         <div className="absolute right-2 top-2 z-10 sm:right-3 sm:top-3">
           <FavoriteButton slug={product.slug} />
         </div>
@@ -265,7 +303,15 @@ function ProductName({ product }: { product: CompareProduct }) {
   return (
     <div className="px-3 pt-1 sm:px-6">
       <p className={LABEL}>{product.brands?.name}</p>
-      <h3 className="mt-1 text-[15px] font-medium leading-snug text-[#17232B]">{product.model_name}</h3>
+      <h3 className="mt-1 text-[15px] font-medium leading-snug text-[#17232B]">
+        <Link
+          href={`/produto/${product.slug}`}
+          prefetch={false}
+          className="underline-offset-4 decoration-[#17232B]/30 hover:underline"
+        >
+          {product.model_name}
+        </Link>
+      </h3>
     </div>
   )
 }

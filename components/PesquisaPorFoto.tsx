@@ -18,7 +18,11 @@ export default function PesquisaPorFoto() {
             foto." ficar numa linha própria, por baixo de "Viste uns ténis
             na rua?" (<br /> a seguir no h2). */}
         <span className="text-gray-900 text-sm font-bold uppercase tracking-wide">Pesquisa por foto</span>
-        <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mt-2 mb-3">
+        {/* Escala de títulos comum a todas as secções da homepage (32px no
+            telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
+            mais juntas, linhas equilibradas) - pedido do Jorge para os
+            títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
+        <h2 className="font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] mt-2 mb-3">
           Viste uns ténis na rua?
           <br />
           Tira uma foto.

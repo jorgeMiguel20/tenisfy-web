@@ -48,10 +48,18 @@ export default function PriceAlertBanner({ product }: { product: ProductWithPric
               <span className="h-1.5 w-1.5 rounded-full bg-gray-900" />
               Alerta de preço inteligente
             </span>
-            <h2 className="font-display mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-              <span className="text-gray-900">Tu defines o preço.</span>
-              <br />
-              <span className="text-gray-400">Nós avisamos quando descer.</span>
+            {/* Escala de títulos comum a todas as secções da homepage (32px no
+                telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
+                mais juntas, linhas equilibradas) - pedido do Jorge para os
+                títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
+            <h2 className="font-display mt-4 text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
+              {/* Cada frase numa linha própria (block) com text-balance - com
+                  <br /> o equilíbrio de linhas não se aplicava e sobrava
+                  "descer." sozinho numa linha. 2.ª frase em #5C6770 (era
+                  gray-400, 2,46:1 de contraste - abaixo do mínimo mesmo
+                  para texto grande). */}
+              <span className="block text-balance text-gray-900">Tu defines o preço.</span>
+              <span className="block text-balance text-[#5C6770]">Nós avisamos quando descer.</span>
             </h2>
             <p className="mt-4 max-w-md text-sm text-gray-600">
               Define o teu preço limite para qualquer ténis do catálogo e recebe um email

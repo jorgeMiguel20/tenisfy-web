@@ -80,7 +80,7 @@ export default function ComparePicker({
       <button
         type="button"
         onClick={openPicker}
-        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-colors"
+        className="inline-flex items-center gap-2 rounded-none border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-colors"
       >
         <span aria-hidden="true" className="text-base leading-none text-gray-400">
           +
@@ -94,7 +94,7 @@ export default function ComparePicker({
     // Sem contorno/fundo/padding próprios neste wrapper (pedido do Jorge:
     // apareciam "duas caixas" quando o picker abria - esta caixa exterior
     // e o próprio input, cada um com o seu border-gray-900). Agora só o
-    // input mostra a caixa (rounded-full, com o seu border) - este div é só
+    // input mostra a caixa (cantos retos, com o seu border) - este div é só
     // um contentor de layout, sem aparência visual própria.
     <div className="w-[300px] max-w-full">
       <div className="flex items-center gap-2 w-full">
@@ -114,7 +114,7 @@ export default function ComparePicker({
           onBlur={() => setTimeout(closePicker, 150)}
           placeholder="Pesquisar produto..."
           aria-label="Pesquisar produto para adicionar à comparação"
-          className="w-full border border-gray-900 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+          className="w-full border border-gray-900 rounded-none px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
         />
         <button
           type="button"
@@ -139,11 +139,11 @@ export default function ComparePicker({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectProduct(p.slug)}
                 onMouseEnter={() => setActiveIndex(index)}
-                className={`flex items-center gap-3 rounded-xl p-2 text-left transition-colors ${
+                className={`flex items-center gap-3 rounded-none p-2 text-left transition-colors ${
                   index === activeIndex ? 'bg-gray-50' : 'hover:bg-gray-50'
                 }`}
               >
-                <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-50 overflow-hidden">
+                <div className="h-10 w-10 shrink-0 rounded-none bg-gray-50 overflow-hidden">
                   {p.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.image_url} alt="" className="h-full w-full object-cover" />

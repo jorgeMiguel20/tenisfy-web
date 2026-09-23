@@ -54,7 +54,11 @@ export default function ComoFunciona() {
       <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:grid-cols-2 sm:items-center sm:gap-16 sm:px-12 sm:py-24">
         <div>
           <span className="text-xs font-bold uppercase tracking-wide text-emerald-300">Como funciona</span>
-          <h2 className="font-display mt-3 text-3xl sm:text-4xl font-bold leading-tight text-white">
+          {/* Escala de títulos comum a todas as secções da homepage (32px no
+              telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
+              mais juntas, linhas equilibradas) - pedido do Jorge para os
+              títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
+          <h2 className="font-display mt-3 text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-white">
             Três passos.
             <br />
             Zero separadores.

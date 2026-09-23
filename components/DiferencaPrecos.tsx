@@ -201,7 +201,11 @@ export default function DiferencaPrecos({
           resto do site. */}
       <div className="relative mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 sm:items-start sm:gap-8 sm:px-12">
         <div>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold leading-[1.1] text-[#17232B]">
+          {/* Escala de títulos comum a todas as secções da homepage (32px no
+              telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
+              mais juntas, linhas equilibradas) - pedido do Jorge para os
+              títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
+          <h2 className="font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B]">
             A diferença que ninguém te mostra.
           </h2>
           {/* Cor mais escura (era "#68747C") - o cinzento anterior tinha

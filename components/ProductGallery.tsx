@@ -91,7 +91,7 @@ export default function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className={`${imageBoxClassName} bg-gray-50 rounded-2xl overflow-hidden relative`}>
+      <div className={`${imageBoxClassName} bg-gray-50 rounded-none overflow-hidden relative`}>
         <div className="w-full h-full flex items-center justify-center">
           <span className="text-gray-300 text-sm">Sem imagem disponível</span>
         </div>
@@ -101,7 +101,7 @@ export default function ProductGallery({
 
   const imageBox = (
     <div
-      className={`${imageBoxClassName} bg-gray-50 rounded-2xl overflow-hidden relative select-none ${
+      className={`${imageBoxClassName} bg-gray-50 rounded-none overflow-hidden relative select-none ${
         showThumbnails ? 'md:flex-1 md:min-w-0' : ''
       }`}
       role="region"
@@ -222,7 +222,7 @@ export default function ProductGallery({
               onClick={() => scrollToIndex(index)}
               aria-label={`Ir para a foto ${index + 1} de ${images.length}`}
               aria-current={index === currentIndex}
-              className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-gray-50 transition-colors ${
+              className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-none border-2 bg-gray-50 transition-colors ${
                 index === currentIndex ? 'border-gray-900' : 'border-transparent hover:border-gray-300'
               }`}
             >
