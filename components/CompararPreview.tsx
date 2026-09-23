@@ -84,7 +84,10 @@ function formatSpecValue(key: string, value: string | null | undefined): string 
 //   (#F9FBFC, ver ProductCard.tsx), por isso o fundo da área da foto usa
 //   exatamente essa cor - a foto funde-se com o fundo, sem "caixa".
 // - Foto decorativa do topo: horizontal (16:9, como no mockup), escolhida
-//   entre as fotos enviadas pelo Jorge (duas mãos, um ténis em cada). Só
+//   entre as fotos enviadas pelo Jorge - atualmente um All Star preto e um
+//   branco, pernas cruzadas contra uma parede branca (trocada a pedido do
+//   Jorge: tons neutros a condizer com o site, em vez da foto escura das
+//   duas mãos com Yeezy). Só
 //   decoração - nunca um dos 2 produtos comparados.
 //
 // Ajustes da 5.ª ronda (pedido do Jorge):
@@ -168,8 +171,8 @@ export default function CompararPreview({ products }: { products: ProductWithPri
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:col-span-7">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/marketing/comparar-maos-v2-1600.jpg"
-            srcSet="/marketing/comparar-maos-v2-800.jpg 800w, /marketing/comparar-maos-v2-1600.jpg 1600w"
+            src="/marketing/comparar-allstar-1600.jpg"
+            srcSet="/marketing/comparar-allstar-800.jpg 800w, /marketing/comparar-allstar-1600.jpg 1600w"
             sizes="(max-width: 640px) 100vw, 58vw"
             alt=""
             aria-hidden="true"
