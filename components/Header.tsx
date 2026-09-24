@@ -16,6 +16,21 @@ const NAV_LINKS: { label: string; value: GenderGroupValue }[] = [
   { label: 'Crianças', value: 'crianca' },
 ]
 
+// Links do menu no desktop (Marcas, Homem, Mulher, Crianças, Promoções).
+// Ao passar o rato, o texto passa de cinzento a #17232B e aparece por baixo
+// uma linha de 2px que "cresce" da esquerda para a direita (pedido do
+// Jorge, com imagem de referência). Também aparece com o teclado (Tab),
+// para quem navega sem rato.
+const NAV_LINK_CLASS =
+  'group relative inline-flex min-h-[44px] items-center whitespace-nowrap text-sm font-medium text-[#5C6770] transition-colors duration-200 hover:text-[#17232B] focus-visible:text-[#17232B]'
+
+const navUnderline = (
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-x-0 bottom-2 h-[2px] origin-left scale-x-0 bg-[#17232B] transition-transform duration-200 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100"
+  />
+)
+
 export default function Header() {
   // Ao clicar na lupa (ou no ícone de câmara do Hero / botão "Experimenta a
   // Pesquisa por Foto"), o menu dá lugar a uma barra de pesquisa encaixada
@@ -82,25 +97,28 @@ export default function Header() {
               <Link
                 href="/catalogo"
                 prefetch={false}
-                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
+                className={NAV_LINK_CLASS}
               >
                 Marcas
+                {navUnderline}
               </Link>
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.label}
                   href={`/catalogo?genero=${link.value}`}
                   prefetch={false}
-                  className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
+                  className={NAV_LINK_CLASS}
                 >
                   {link.label}
+                  {navUnderline}
                 </Link>
               ))}
               <Link
                 href="/#promocoes"
-                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
+                className={NAV_LINK_CLASS}
               >
                 Promoções
+                {navUnderline}
               </Link>
             </nav>
 
