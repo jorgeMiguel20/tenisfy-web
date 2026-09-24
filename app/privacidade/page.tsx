@@ -72,7 +72,7 @@ export default function PrivacidadePage() {
           <h2 className="font-semibold text-gray-900 mb-2">6. Contacto</h2>
           <p>
             Para questões sobre esta política, contacta-nos através de{' '}
-            <a href="mailto:geral@parjusto.pt" className="text-orange-600 hover:underline">
+            <a href="mailto:geral@parjusto.pt" className="font-medium text-[#123F3A] underline decoration-[#123F3A]/30 underline-offset-4 hover:decoration-[#123F3A]">
               geral@parjusto.pt
             </a>
             .
