@@ -77,7 +77,8 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
                 formatter={(value) => [formatPrice(Number(value)), 'Melhor preço']}
                 labelFormatter={(label) => formatFullDate(String(label))}
               />
-              <Line type="monotone" dataKey="price" stroke="#ea580c" strokeWidth={2} dot={{ r: 3 }} />
+              {/* Linha no verde do site (#123F3A) em vez do laranja antigo. */}
+              <Line type="monotone" dataKey="price" stroke="#123F3A" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
