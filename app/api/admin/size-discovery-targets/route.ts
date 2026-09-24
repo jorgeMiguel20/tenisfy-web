@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     store_id: string
     product_name: string
     product_slug: string | null
-    store_name: string
+    store_name: string | null
     url: string
     current_price: number
     known_sizes: string[]
@@ -64,7 +64,18 @@ export async function GET(request: NextRequest) {
 
   const groups = new Map<string, Group>()
 
-  for (const row of (data ?? []) as any[]) {
+  // Forma das linhas devolvidas pela consulta acima (só os campos usados).
+  type OfferRow = {
+    product_id: string
+    store_id: string
+    size: string
+    price: number
+    affiliate_url: string
+    products: { model_name: string; slug: string | null; brands: { name: string } | null } | null
+    stores: { name: string } | null
+  }
+
+  for (const row of (data ?? []) as unknown as OfferRow[]) {
     const key = `${row.product_id}::${row.store_id}`
     const existing = groups.get(key)
 
