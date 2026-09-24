@@ -44,14 +44,14 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
         <h2 className="text-lg font-semibold text-gray-900">Histórico de preços</h2>
 
         {hasAnyData && (
-          <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
+          <div className="flex items-center border border-[#17232B]/10">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setRangeDays(opt.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  rangeDays === opt.value ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900'
+                className={`min-h-[36px] px-3 rounded-none text-xs font-medium transition-colors ${
+                  rangeDays === opt.value ? 'bg-[#123F3A] text-white' : 'text-[#5C6770] hover:text-[#17232B]'
                 }`}
               >
                 {opt.label}
@@ -62,7 +62,7 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
       </div>
 
       {hasEnoughForRange ? (
-        <div className="h-64 border border-gray-100 rounded-2xl p-4">
+        <div className="h-64 border border-[#17232B]/10 rounded-none p-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filtered} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -82,7 +82,7 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="border border-dashed border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-500">
+        <div className="border border-[#17232B]/10 rounded-none bg-[#F9FBFC] p-8 text-center text-sm text-gray-500">
           A recolher histórico de preços — volta dentro de alguns dias para veres a evolução.
         </div>
       )}

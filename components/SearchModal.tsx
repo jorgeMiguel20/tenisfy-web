@@ -127,7 +127,7 @@ export default function SearchModal() {
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden max-h-[70vh] flex flex-col"
+        className="w-full max-w-lg rounded-none border border-[#17232B]/10 bg-white overflow-hidden max-h-[70vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra única: lupa + texto + foto + fechar, sem título nem
@@ -152,7 +152,7 @@ export default function SearchModal() {
             onClick={() => fileInputRef.current?.click()}
             disabled={imageLoading}
             aria-label="Pesquisar por foto"
-            className="shrink-0 flex items-center justify-center h-9 w-9 rounded-full text-gray-500 hover:bg-gray-100 hover:text-orange-600 transition-colors disabled:opacity-50"
+            className="shrink-0 flex items-center justify-center h-9 w-9 rounded-full text-gray-500 hover:bg-gray-100 hover:text-[#123F3A] transition-colors disabled:opacity-50"
           >
             {imageLoading ? (
               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -200,9 +200,9 @@ export default function SearchModal() {
                     key={r.id}
                     href={`/produto/${r.slug}`}
                     onClick={handleClose}
-                    className="flex items-center gap-3 rounded-xl p-2 -mx-2 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 rounded-none p-2 -mx-2 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="h-12 w-12 shrink-0 rounded-lg bg-gray-50 overflow-hidden">
+                    <div className="h-12 w-12 shrink-0 rounded-none bg-gray-50 overflow-hidden">
                       {r.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={r.image_url} alt={r.model_name} className="w-full h-full object-cover" />
@@ -228,7 +228,7 @@ export default function SearchModal() {
                     key={term}
                     type="button"
                     onClick={() => handleSuggestionClick(term)}
-                    className="text-sm font-medium bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full px-3 py-1.5 transition-colors"
+                    className="text-sm font-medium bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-none px-3 py-1.5 transition-colors"
                   >
                     {term}
                   </button>

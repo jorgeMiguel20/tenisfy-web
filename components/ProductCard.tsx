@@ -65,7 +65,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden bg-white border-r border-b border-black transition-shadow hover:shadow-lg"
+      className="group relative flex h-full flex-col overflow-hidden bg-white border-r border-b border-black"
     >
       {/* aspect-[16/10] (era aspect-[4/5]) - mesma correcao aplicada em
           MaiorPoupancaAgora.tsx: as fotos sao um quadrado com o tenis so a

@@ -25,7 +25,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-[#17232B]/10 bg-white">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 flex items-center gap-1.5 sm:gap-8">
         {/* No mobile o hamburger fica à esquerda e o "Parjusto" centrado -
             esta zona (flex-1) equilibra o espaço com a zona espelho da
@@ -37,7 +37,7 @@ export default function Header() {
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label="Abrir menu"
             aria-expanded={mobileMenuOpen}
-            className="inline-flex items-center justify-center w-8 h-8 shrink-0 text-gray-700 hover:text-orange-600 transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 shrink-0 text-gray-700 hover:text-[#123F3A] transition-colors"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -82,7 +82,7 @@ export default function Header() {
               <Link
                 href="/catalogo"
                 prefetch={false}
-                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
               >
                 Marcas
               </Link>
@@ -91,14 +91,14 @@ export default function Header() {
                   key={link.label}
                   href={`/catalogo?genero=${link.value}`}
                   prefetch={false}
-                  className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
                 >
                   {link.label}
                 </Link>
               ))}
               <Link
                 href="/#promocoes"
-                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors whitespace-nowrap"
+                className="inline-flex items-center min-h-[44px] text-sm font-medium text-gray-600 hover:text-[#123F3A] transition-colors whitespace-nowrap"
               >
                 Promoções
               </Link>
@@ -131,7 +131,7 @@ export default function Header() {
               href="/catalogo"
               prefetch={false}
               onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
             >
               Ver catálogo
             </Link>
@@ -141,7 +141,7 @@ export default function Header() {
                 href={`/catalogo?genero=${link.value}`}
                 prefetch={false}
                 onClick={() => setMobileMenuOpen(false)}
-                className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+                className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
               >
                 {link.label}
               </Link>
@@ -150,14 +150,14 @@ export default function Header() {
               href="/catalogo"
               prefetch={false}
               onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
             >
               Marcas
             </Link>
             <Link
               href="/#promocoes"
               onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors"
+              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
             >
               Promoções
             </Link>

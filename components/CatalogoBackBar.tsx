@@ -8,7 +8,7 @@ export default function CatalogoBackBar() {
     <div className="mb-6">
       <Link
         href="/"
-        className="text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors"
+        className="text-sm font-medium text-gray-500 hover:text-[#123F3A] transition-colors"
       >
         Página Inicial
       </Link>

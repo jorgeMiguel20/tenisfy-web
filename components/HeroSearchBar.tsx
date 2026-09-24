@@ -82,7 +82,7 @@ export default function HeroSearchBar() {
       <form
         action="/catalogo"
         method="get"
-        className="relative mt-6 flex items-center gap-2 bg-white rounded-none p-1.5 pl-5 shadow-lg max-w-md"
+        className="relative mt-6 flex items-center gap-2 bg-white rounded-none p-1.5 pl-5 max-w-md"
       >
         <input
           type="text"
@@ -94,7 +94,7 @@ export default function HeroSearchBar() {
         <button
           type="submit"
           aria-label="Pesquisar"
-          className="w-10 h-10 rounded-none bg-orange-600 hover:bg-orange-700 transition-colors flex items-center justify-center text-white shrink-0"
+          className="w-10 h-10 rounded-none bg-[#123F3A] hover:bg-[#0d2f2b] transition-colors flex items-center justify-center text-white shrink-0"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="7" />
@@ -111,7 +111,7 @@ export default function HeroSearchBar() {
         />
 
         {showDropdown && (
-          <div className="absolute left-0 top-full mt-2 w-full max-w-md rounded-none bg-white shadow-xl border border-gray-100 p-4 z-50">
+          <div className="absolute left-0 top-full mt-2 w-full max-w-md rounded-none bg-white border border-[#17232B]/10 p-4 z-50">
             {imageLoading ? (
               <p className="text-sm text-gray-500 text-center py-1">A analisar a fotografia...</p>
             ) : imageError ? (

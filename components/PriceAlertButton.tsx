@@ -190,7 +190,7 @@ export default function PriceAlertButton({
             ? `relative inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-none px-5 text-sm font-semibold transition-colors ${
                 open ? 'bg-[#0d2f2b] text-white' : 'bg-[#123F3A] text-white hover:bg-[#0d2f2b]'
               }`
-            : `inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
+            : `inline-flex items-center justify-center rounded-full border border-[#17232B]/10 p-2 transition-colors ${
                 open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
               }`
         }

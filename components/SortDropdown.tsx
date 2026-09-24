@@ -36,7 +36,7 @@ export default function SortDropdown({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
+        className="inline-flex items-center gap-2 border border-gray-200 bg-white rounded-none px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors"
       >
         {compact ? (
           'Ordenar'
@@ -57,7 +57,7 @@ export default function SortDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+        <div className="absolute right-0 z-20 mt-2 w-56 bg-white border border-[#17232B]/10 rounded-none overflow-hidden">
           {options.map((option) => {
             const active = option.value === selected
             return (

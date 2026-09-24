@@ -123,7 +123,7 @@ function StoreOfferCard({
   const verifiedLabel = formatVerifiedLabel(offer.lastCheckedAt)
 
   return (
-    <div className="rounded-2xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="rounded-none border border-[#17232B]/10 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 p-1 ring-1 ring-gray-100">
@@ -145,12 +145,12 @@ function StoreOfferCard({
           </span>
           <span className="font-semibold text-gray-900">{offer.store}</span>
           {isBest && (
-            <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center rounded-full bg-[#E8F2EF] px-2 py-0.5 text-[11px] font-medium text-[#123F3A]">
               Melhor preço
             </span>
           )}
           {shipping?.type === 'badge' && (
-            <span className="inline-flex items-center bg-green-50 text-green-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center rounded-full bg-[#E8F2EF] px-2 py-0.5 text-[11px] font-medium text-[#123F3A]">
               {shipping.text}
             </span>
           )}
@@ -173,11 +173,11 @@ function StoreOfferCard({
                 disabled={!s.inStock}
                 onClick={() => onSelectSize(s.size)}
                 title={s.inStock ? undefined : 'Esgotado nesta loja'}
-                className={`inline-flex items-center justify-center min-w-[2.25rem] h-8 px-2 rounded-md border text-xs font-medium transition-colors ${
+                className={`inline-flex items-center justify-center min-w-[2.25rem] h-8 px-2 rounded-none border text-xs font-medium transition-colors ${
                   !s.inStock
                     ? 'border-gray-100 text-gray-300 bg-gray-50 line-through cursor-not-allowed'
                     : selectedSize === s.size
-                    ? 'border-orange-500 text-orange-600 bg-orange-50'
+                    ? 'border-[#123F3A] text-[#123F3A] bg-[#E8F2EF]'
                     : 'border-gray-200 text-gray-700 bg-white hover:border-gray-400'
                 }`}
               >
@@ -194,7 +194,7 @@ function StoreOfferCard({
           href={buildOfferUrl(offer)}
           target="_blank"
           rel="nofollow sponsored noopener"
-          className="bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium text-center hover:bg-gray-700 transition-colors"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
         >
           Ver oferta
         </a>

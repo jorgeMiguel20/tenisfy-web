@@ -119,7 +119,7 @@ export default function HeaderSearchBar() {
     <div ref={containerRef} className="relative flex-1 min-w-0">
       <form
         onSubmit={handleTextSubmit}
-        className="flex items-center gap-2 bg-white rounded-none p-1.5 pl-5 shadow-lg border border-gray-100 w-full"
+        className="flex items-center gap-2 bg-white rounded-none p-1.5 pl-5 border border-[#17232B]/10 w-full"
       >
         <input
           type="text"
@@ -180,7 +180,7 @@ export default function HeaderSearchBar() {
       {/* Resultado da pesquisa por foto: um pequeno dropdown ancorado à
           barra, não um pop-up ou modal a cobrir a página. */}
       {showDropdown && (
-        <div className="absolute left-0 top-full mt-2 w-full max-w-md rounded-none bg-white shadow-xl border border-gray-100 p-4 z-50">
+        <div className="absolute left-0 top-full mt-2 w-full max-w-md rounded-none bg-white border border-[#17232B]/10 p-4 z-50">
           {imageLoading ? (
             <p className="text-sm text-gray-500 text-center py-1">A analisar a fotografia...</p>
           ) : imageError ? (

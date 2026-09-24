@@ -162,7 +162,7 @@ export default function ProductGallery({
             onClick={() => scrollToIndex(targetIndexRef.current - 1)}
             disabled={currentIndex === 0}
             aria-label="Foto anterior"
-            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#17232B]/10 bg-white/90 text-gray-700 hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
               compact ? 'left-2 h-6 w-6' : 'left-3 h-9 w-9'
             }`}
           >
@@ -175,7 +175,7 @@ export default function ProductGallery({
             onClick={() => scrollToIndex(targetIndexRef.current + 1)}
             disabled={currentIndex === images.length - 1}
             aria-label="Foto seguinte"
-            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
+            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#17232B]/10 bg-white/90 text-gray-700 hover:bg-white transition-colors disabled:opacity-0 disabled:pointer-events-none ${
               compact ? 'right-2 h-6 w-6' : 'right-3 h-9 w-9'
             }`}
           >
