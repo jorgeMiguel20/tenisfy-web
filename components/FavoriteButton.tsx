@@ -37,7 +37,7 @@ export default function FavoriteButton({
         // emerald-300 dos selos, porque este ícone fica sobre um fundo
         // quase branco (bg-white/90) - o emerald-300, sendo um verde muito
         // claro, ficaria com pouco contraste e mal visível aqui.
-        className={`h-4 w-4 transition-colors ${active ? 'text-emerald-600' : 'text-gray-400'}`}
+        className={`h-4 w-4 transition-colors ${active ? 'text-[#123F3A]' : 'text-[#5C6770]'}`}
         fill={active ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth="2"

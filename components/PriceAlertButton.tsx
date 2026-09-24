@@ -33,9 +33,9 @@ function subscribeActiveAlert(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
-// Versão compacta do "Avisa-me quando o preço descer" (ver PriceAlertForm.tsx,
-// na página do produto) para usar em cima dos cards da grelha/catálogo/
-// favoritos. Fica fechado por defeito (só o sino) e abre um modal centrado
+// Botão "Avisa-me quando o preço descer": versão compacta (só o sino) em
+// cima dos cards da grelha/catálogo/favoritos e da página de produto, e
+// versão grande no cartão de alerta da homepage. Fica fechado por defeito (só o sino) e abre um modal centrado
 // com fundo escurecido, via portal para <body> - assim bloqueia mesmo o
 // resto da página (incl. os cards vizinhos, que são <Link>) até o
 // utilizador terminar ou cancelar, e nunca há mais que um aberto.

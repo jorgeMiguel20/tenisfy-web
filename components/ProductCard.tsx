@@ -12,9 +12,14 @@ type ProductCardProps = {
   product: ProductWithPrice
   isSelected?: boolean
   onToggleCompare?: (product: ProductWithPrice) => void
+  // true no catálogo (grelha sem espaços): cada cartão só desenha as linhas
+  // da direita e de baixo e a grelha desenha as de cima e da esquerda, para
+  // as linhas de 1px nunca ficarem duplicadas. Fora da grelha (ex.:
+  // "Modelos semelhantes", favoritos) o cartão tem contorno completo.
+  inGrid?: boolean
 }
 
-export default function ProductCard({ product, isSelected = false, onToggleCompare }: ProductCardProps) {
+export default function ProductCard({ product, isSelected = false, onToggleCompare, inGrid = false }: ProductCardProps) {
   const lowestPrice = product.lowest_price
   const storeCount = product.store_count ?? 0
   const discount = product.priceDrop ?? product.savings
@@ -65,7 +70,9 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   return (
     <Link
       href={`/produto/${product.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden bg-white border-r border-b border-black"
+      className={`group relative flex h-full flex-col overflow-hidden bg-white ${
+        inGrid ? 'border-r border-b' : 'border'
+      } border-[#17232B]/10`}
     >
       {/* aspect-[16/10] (era aspect-[4/5]) - mesma correcao aplicada em
           MaiorPoupancaAgora.tsx: as fotos sao um quadrado com o tenis so a
@@ -90,7 +97,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             // claro, o texto branco de antes ficava sem contraste - por
             // isso o texto passa a emerald-950 (verde muito escuro da
             // mesma família), mantendo exatamente o tom de verde pedido.
-            <span className="rounded-none bg-emerald-300 px-2 py-1 text-xs font-bold text-emerald-950">
+            <span className="rounded-none bg-[#123F3A] px-2 py-1 text-[11px] font-semibold tabular-nums text-white">
               -{dropPercent}%
             </span>
           ) : (
@@ -167,25 +174,25 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">
           {product.brands?.name}
         </p>
-        <h3 className="font-semibold text-gray-900 mt-0.5 mb-2 line-clamp-2 min-h-[2.5rem]">{product.model_name}</h3>
+        <h3 className="mt-1 mb-2 line-clamp-2 min-h-[2.5rem] text-[15px] font-medium leading-snug text-[#17232B]">{product.model_name}</h3>
         {lowestPrice ? (
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-extrabold text-gray-900">
+              <span className="text-xl font-bold tabular-nums text-[#17232B]">
                 {formatPrice(lowestPrice)}
               </span>
               {storeCount > 0 && (
-                <span className="text-xs text-gray-600">
+                <span className="text-xs text-[#5C6770]">
                   · {storeCount} {storeCount === 1 ? 'loja' : 'lojas'}
                 </span>
               )}
             </div>
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">Sem oferta disponível</p>
+          <p className="text-sm text-[#5C6770]">Sem oferta disponível</p>
         )}
 
         {/* Botão "Comparar" fica sempre no fundo do card (mt-auto, dentro de
@@ -203,8 +210,8 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             aria-pressed={isSelected}
             className={`mt-auto pt-3 inline-flex w-fit self-center items-center gap-1.5 rounded-none px-3 py-2 text-xs transition-colors ${
               isSelected
-                ? 'font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'font-bold bg-white text-black border border-black'
+                ? 'font-semibold bg-[#E8F2EF] text-[#123F3A] border border-[#123F3A]/30'
+                : 'font-semibold bg-white text-[#17232B] border border-[#17232B]/30 hover:border-[#17232B]'
             }`}
           >
             {isSelected ? (

@@ -53,7 +53,7 @@ export default function ComoFunciona() {
 
       <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:grid-cols-2 sm:items-center sm:gap-16 sm:px-12 sm:py-24">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wide text-emerald-300">Como funciona</span>
+          <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">Como funciona</span>
           {/* Escala de títulos comum a todas as secções da homepage (32px no
               telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
               mais juntas, linhas equilibradas) - pedido do Jorge para os
@@ -68,7 +68,7 @@ export default function ComoFunciona() {
         <div>
           {STEPS.map((step, i) => (
             <div key={step.title} className={`py-5 ${i > 0 ? 'border-t border-white/15' : ''}`}>
-              <span className="text-xs font-bold text-emerald-300">{String(i + 1).padStart(2, '0')}</span>
+              <span className="text-[11px] font-medium tabular-nums tracking-[0.08em] text-white/60">{String(i + 1).padStart(2, '0')}</span>
               <h3 className="mt-1 text-base font-bold text-white">{step.title}</h3>
               <p className="mt-1 text-sm text-white/60">{step.text}</p>
             </div>

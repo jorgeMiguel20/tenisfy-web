@@ -59,7 +59,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
-              <span className="absolute left-3 top-3 inline-flex items-center rounded-none bg-white/95 px-2.5 py-1 text-[11px] font-bold text-green-700">
+              <span className="absolute left-3 top-3 inline-flex items-center rounded-none bg-white/95 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-[#123F3A]">
                 -{percentOff}%
               </span>
               </div>

@@ -978,7 +978,7 @@ export default function ProductGrid({
         // consoante o seletor de vista (DesktopGridViewToggle, só desktop);
         // no mobile/tablet mantém-se sempre 2/3 colunas.
         <div
-          className={`grid grid-cols-2 sm:grid-cols-3 ${
+          className={`grid grid-cols-2 border-l border-t border-[#17232B]/10 sm:grid-cols-3 ${
             desktopCols === 3 ? 'xl:grid-cols-3' : desktopCols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'
           }`}
         >
@@ -988,6 +988,7 @@ export default function ProductGrid({
               product={product}
               isSelected={compareSlugs.includes(product.slug)}
               onToggleCompare={toggleCompare}
+              inGrid
             />
           ))}
         </div>
@@ -1006,7 +1007,7 @@ export default function ProductGrid({
           </span>
           <Link
             href={`/comparar?produtos=${compareSlugs.join(',')}`}
-            className="bg-emerald-50 hover:bg-emerald-100 transition-colors text-emerald-700 border border-emerald-200 text-sm font-semibold px-4 py-1.5 rounded-none"
+            className="inline-flex min-h-[36px] items-center rounded-none bg-white px-4 text-sm font-semibold text-[#17232B] transition-colors hover:bg-[#E8F2EF]"
           >
             Comparar
           </Link>

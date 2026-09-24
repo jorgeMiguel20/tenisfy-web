@@ -34,7 +34,7 @@ export default function FavoritesNavLink() {
         // no rótulo "Como funciona" - verde vivo emerald-300 com texto
         // emerald-950 para contraste, em vez do verde escuro #1F5F58
         // anterior (pedido do Jorge: "aqui também").
-        <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-emerald-300 text-emerald-950 text-[11px] font-semibold">
+        <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-[#123F3A] text-white text-[11px] font-semibold tabular-nums">
           {count}
         </span>
       )}

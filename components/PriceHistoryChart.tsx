@@ -13,12 +13,20 @@ const RANGE_OPTIONS = [
   { value: 60, label: '60 dias' },
 ] as const
 
-function formatAxisDate(dateStr: string) {
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
+// Datas em milissegundos (meia-noite local), para o eixo horizontal ser
+// uma escala de tempo real: 5 dias sem verificação ocupam o espaço de 5
+// dias, e não o mesmo espaço de 1 dia como antes (o eixo era uma lista de
+// datas igualmente espaçadas).
+function toTime(dateStr: string) {
+  return new Date(`${dateStr}T00:00:00`).getTime()
 }
 
-function formatFullDate(dateStr: string) {
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString('pt-PT', {
+function formatAxisTime(time: number) {
+  return new Date(time).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
+}
+
+function formatFullTime(time: number) {
+  return new Date(time).toLocaleDateString('pt-PT', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -34,6 +42,21 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
     const cutoffStr = cutoff.toISOString().slice(0, 10)
     return data.filter((p) => p.date >= cutoffStr)
   }, [data, rangeDays])
+
+  // Pontos com a data em milissegundos (eixo de tempo real) e as marcas do
+  // eixo: no máximo 6 datas que existem mesmo nos dados, espalhadas por
+  // igual (primeira e última incluídas).
+  const timed = useMemo(() => filtered.map((p) => ({ t: toTime(p.date), price: p.price })), [filtered])
+  const xTicks = useMemo(() => {
+    if (timed.length <= 6) return timed.map((p) => p.t)
+    // Espalhadas por igual no TEMPO (não pela ordem dos pontos), para as
+    // datas do eixo não ficarem coladas umas às outras.
+    const first = timed[0].t
+    const span = timed[timed.length - 1].t - first
+    const nearest = (target: number) =>
+      timed.reduce((best, p) => (Math.abs(p.t - target) < Math.abs(best - target) ? p.t : best), timed[0].t)
+    return Array.from(new Set(Array.from({ length: 6 }, (_, i) => nearest(first + (span * i) / 5))))
+  }, [timed])
 
   const hasAnyData = data.length > 0
   const hasEnoughForRange = filtered.length >= 2
@@ -62,7 +85,7 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">Histórico de preços</h2>
+        <h2 className="font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B]">Histórico de preços</h2>
 
         {hasAnyData && (
           <div className="flex items-center border border-[#17232B]/10">
@@ -85,9 +108,17 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
       {hasEnoughForRange ? (
         <div className="h-64 border border-[#17232B]/10 rounded-none p-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={filtered} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <LineChart data={timed} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="date" tickFormatter={formatAxisDate} tick={{ fontSize: 12, fill: '#5C6770' }} />
+              <XAxis
+                dataKey="t"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
+                ticks={xTicks}
+                tickFormatter={(v) => formatAxisTime(Number(v))}
+                tick={{ fontSize: 12, fill: '#5C6770' }}
+              />
               <YAxis
                 width={70}
                 tickFormatter={(v) => formatPrice(v)}
@@ -98,7 +129,7 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
               />
               <Tooltip
                 formatter={(value) => [formatPrice(Number(value)), 'Melhor preço']}
-                labelFormatter={(label) => formatFullDate(String(label))}
+                labelFormatter={(label) => formatFullTime(Number(label))}
               />
               {/* Linha em degraus ("stepAfter"): o preço mantém-se igual até à
                   verificação seguinte que o encontra diferente. A linha curva
