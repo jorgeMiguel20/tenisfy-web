@@ -16,12 +16,13 @@ type IncomingItem = {
 
 type ItemResult = { product_offer_id: string | null; status: 'created' | 'updated' | 'failed'; error?: string }
 
-function isValidItem(item: any): item is IncomingItem {
+function isValidItem(item: unknown): item is IncomingItem {
   if (!item || typeof item !== 'object') return false
-  if (typeof item.product_offer_id !== 'string' || !item.product_offer_id) return false
-  if (item.checked_price !== null && typeof item.checked_price !== 'number') return false
-  if (item.checked_available !== null && typeof item.checked_available !== 'boolean') return false
-  if (item.notes != null && typeof item.notes !== 'string') return false
+  const i = item as Record<string, unknown>
+  if (typeof i.product_offer_id !== 'string' || !i.product_offer_id) return false
+  if (i.checked_price !== null && typeof i.checked_price !== 'number') return false
+  if (i.checked_available !== null && typeof i.checked_available !== 'boolean') return false
+  if (i.notes != null && typeof i.notes !== 'string') return false
   return true
 }
 
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 })
   }
 
-  const items = Array.isArray(body) ? body : (body as any)?.items
+  const items = Array.isArray(body) ? body : (body as { items?: unknown } | null)?.items
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Esperado um array de resultados (ou { items: [...] }).' }, { status: 400 })
   }
