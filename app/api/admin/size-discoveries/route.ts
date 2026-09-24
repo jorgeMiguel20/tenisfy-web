@@ -18,14 +18,15 @@ type IncomingItem = {
 
 type ItemResult = { product_id: string | null; store_id: string | null; size: string | null; status: string; error?: string }
 
-function isValidItem(item: any): item is IncomingItem {
+function isValidItem(item: unknown): item is IncomingItem {
   if (!item || typeof item !== 'object') return false
-  if (typeof item.product_id !== 'string' || !item.product_id) return false
-  if (typeof item.store_id !== 'string' || !item.store_id) return false
-  if (typeof item.size !== 'string' || !item.size) return false
-  if (typeof item.url !== 'string' || !item.url) return false
-  if (item.price !== undefined && item.price !== null && typeof item.price !== 'number') return false
-  if (item.in_stock !== undefined && item.in_stock !== null && typeof item.in_stock !== 'boolean') return false
+  const i = item as Record<string, unknown>
+  if (typeof i.product_id !== 'string' || !i.product_id) return false
+  if (typeof i.store_id !== 'string' || !i.store_id) return false
+  if (typeof i.size !== 'string' || !i.size) return false
+  if (typeof i.url !== 'string' || !i.url) return false
+  if (i.price !== undefined && i.price !== null && typeof i.price !== 'number') return false
+  if (i.in_stock !== undefined && i.in_stock !== null && typeof i.in_stock !== 'boolean') return false
   return true
 }
 
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 })
   }
 
-  const items = Array.isArray(body) ? body : (body as any)?.items
+  const items = Array.isArray(body) ? body : (body as { items?: unknown } | null)?.items
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Esperado um array de tamanhos encontrados (ou { items: [...] }).' }, { status: 400 })
   }
