@@ -94,7 +94,17 @@ export default async function Home() {
   const usedProductIds = new Set(
     [vansShowcaseProduct?.id, ...topDeals.map((p) => p.id)].filter((id): id is string => Boolean(id))
   )
+  // Exemplo da secção de alertas de preço: fixo no Nike Air Force 1 '07
+  // (pedido do Jorge), com a foto real desse modelo enviada por ele - para
+  // não repetir o Vans Old Skool que já aparece na secção "A diferença que
+  // ninguém te mostra". Preço sempre o real, da base de dados. Se esse
+  // produto deixar de ter preço, volta à escolha automática de antes (e aí
+  // usa a foto de catálogo do produto escolhido, nunca a foto do AF1).
+  const ALERT_EXAMPLE_SLUG = 'nike-air-force-1'
+  const alertExample =
+    productsWithPrice.find((p) => p.slug === ALERT_EXAMPLE_SLUG && p.lowest_price != null) ?? null
   const alertProduct =
+    alertExample ??
     productsWithPrice
       .filter((p) => p.priceDrop && p.gender !== 'crianca' && !usedProductIds.has(p.id))
       .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)[0] ??
@@ -135,7 +145,17 @@ export default async function Home() {
             (pedido do Jorge, saiu do Hero) - a mesma prioridade do "Como
             funciona": preferir quem tem descida de preco recente, com o
             showcase do "Como funciona" como recurso se nao houver nenhum. */}
-        <PriceAlertBanner product={alertProduct} />
+        <PriceAlertBanner
+          product={alertProduct}
+          lifestyleImage={
+            alertExample
+              ? {
+                  src: '/marketing/alerta-af1-1600.jpg',
+                  srcSet: '/marketing/alerta-af1-800.jpg 800w, /marketing/alerta-af1-1600.jpg 1600w',
+                }
+              : null
+          }
+        />
       </div>
     </main>
   )
