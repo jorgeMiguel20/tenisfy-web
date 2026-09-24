@@ -28,8 +28,24 @@ export default function PesquisaPorFotoButton() {
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="inline-block bg-gray-900 text-white font-semibold text-sm rounded-none px-5 py-2.5 hover:bg-gray-800 transition-colors"
+        // Mesmo botão das outras secções da homepage (comparador e alerta
+        // de preço): verde #123F3A, cantos retos, 44px de altura e ícone de
+        // traço fino à esquerda.
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
       >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+          <circle cx="12" cy="13" r="3.5" />
+        </svg>
         Experimenta a pesquisa por foto
       </button>
       <input

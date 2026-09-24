@@ -1,79 +1,91 @@
 // components/PesquisaPorFoto.tsx
 import PesquisaPorFotoButton from './PesquisaPorFotoButton'
 
-// Secção só ilustrativa/explicativa — a funcionalidade real de pesquisa por
-// foto já existe (app/api/search-by-image/route.ts, usada pelo modal
-// unificado de pesquisa - ver components/SearchModal.tsx). Por isso o
-// rótulo abaixo não inventa uma percentagem de semelhança falsa: diz
-// claramente "exemplo".
+// Secção "Viste uns ténis na rua? Tira uma foto." da homepage.
+//
+// A funcionalidade real de pesquisa por foto já existe
+// (app/api/search-by-image/route.ts, usada pelo modal unificado de pesquisa -
+// ver components/SearchModal.tsx). Esta secção só a explica e abre-a.
+//
+// Redesenho (pedido do Jorge, com as regras visuais combinadas para não
+// parecer "gerado por IA" - as mesmas do comparador e do alerta de preço):
+// - Mesma grelha de 12 colunas, mesmo espaçamento vertical, mesma etiqueta
+//   (11px, maiúsculas), mesmo título e mesmo botão verde #123F3A.
+// - Foto do lado esquerdo no computador (o comparador e o alerta têm a foto
+//   à direita), para as secções alternarem em vez de se repetirem. No
+//   telemóvel o texto vem primeiro, como nas outras secções.
+// - Foto nova enviada pelo Jorge: é a versão inteira e com mais resolução
+//   da foto que já estava aqui. Corte 3:2 (igual ao alerta) com os ténis
+//   verdadeiros desfocados em cima e a foto deles no ecrã do telemóvel -
+//   conta a funcionalidade sem precisar de texto. O corte deixa de fora a
+//   barra da câmara em polaco ("WIDEO / ZDJĘCIE") que aparece mais abaixo
+//   na foto original.
+// - Sem sombra e sem o escurecimento preto em baixo (tapava os ténis no
+//   ecrã do telemóvel e não há texto por cima da foto).
+// - A barra de "scanner" animada fica (pedido anterior do Jorge), mas mais
+//   discreta: uma linha fina sem brilho à volta, e desligada para quem
+//   pede menos animação no sistema (prefers-reduced-motion).
+const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
+
 export default function PesquisaPorFoto() {
   return (
-    <section className="grid sm:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 mt-4">
-      <div>
-        {/* Décimo terceiro ajuste: o Jorge pediu para mudar a cor deste
-            rótulo (escolheu preto/cinza-escuro, a condizer com o título a
-            seguir - por isso "text-gray-900", igual ao h2 logo abaixo, em
-            vez do laranja-700 anterior) e para aumentar o tamanho da letra
-            (de "text-xs" para "text-sm"). Pediu também para "Tira uma
-            foto." ficar numa linha própria, por baixo de "Viste uns ténis
-            na rua?" (<br /> a seguir no h2). */}
-        <span className="text-gray-900 text-sm font-bold uppercase tracking-wide">Pesquisa por foto</span>
-        {/* Escala de títulos comum a todas as secções da homepage (32px no
-            telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
-            mais juntas, linhas equilibradas) - pedido do Jorge para os
-            títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
-        <h2 className="font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] mt-2 mb-3">
-          Viste uns ténis na rua?
-          <br />
-          Tira uma foto.
-        </h2>
-        <p className="text-gray-500 mb-5 max-w-sm">
-          Procuramos no nosso catálogo os ténis mais parecidos com a tua foto, com preço incluído — funciona com
-          fotos da câmara ou imagens guardadas no telemóvel, incluindo screenshots.
-        </p>
-        <PesquisaPorFotoButton />
-      </div>
-
-      {/* Sem sombra (regra visual combinada com o Jorge: nada de sombras,
-          no máximo linhas de 1px) - a foto assenta direto no fundo, como
-          no comparador e no alerta de preço. */}
-      <div className="relative rounded-none overflow-hidden aspect-[4/3]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/marketing/photo-search-bg.jpg"
-          alt="Telemóvel a fotografar um par de ténis"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-transparent"
-        />
-
-        {/* Barra de scanner animada - ilustra visualmente a pesquisa por
-            foto a "ler" a imagem, tal como no mockup v2 do Jorge (foto 7 do
-            feedback). Puramente decorativa (aria-hidden), CSS puro via
-            <style> aqui dentro para nao depender de nenhuma configuracao
-            extra do Tailwind. */}
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 bottom-0 overflow-hidden">
-          <div className="pjt-scan-line absolute inset-x-0 h-12 -top-12" />
+    <section className="py-16 sm:px-6 sm:py-24">
+      <div className="grid gap-10 sm:grid-cols-12 sm:items-center sm:gap-12">
+        <div className="sm:order-2 sm:col-span-5">
+          <p className={LABEL}>Pesquisa por foto</p>
+          <h2 className="mt-2 font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B]">
+            <span className="block text-balance">Viste uns ténis na rua?</span>
+            <span className="block text-balance">Tira uma foto.</span>
+          </h2>
+          {/* Só o que a funcionalidade faz: procura no catálogo os ténis
+              mais parecidos e mostra o preço; aceita fotos da câmara, da
+              galeria e screenshots. */}
+          <p className="mt-3 max-w-[24rem] text-base leading-relaxed text-[#5C6770]">
+            Procuramos no nosso catálogo os ténis mais parecidos e mostramos-te o preço. Funciona com fotos da
+            câmara, da galeria ou screenshots.
+          </p>
+          <div className="mt-6">
+            <PesquisaPorFotoButton />
+          </div>
         </div>
-        <style>{`
-          @keyframes pjt-scan {
-            0% { top: -3rem; }
-            50% { top: 100%; }
-            100% { top: -3rem; }
-          }
-          .pjt-scan-line {
-            background: linear-gradient(
-              to bottom,
-              rgba(255, 255, 255, 0) 0%,
-              rgba(255, 255, 255, 0.85) 50%,
-              rgba(255, 255, 255, 0) 100%
-            );
-            box-shadow: 0 0 16px 2px rgba(255, 255, 255, 0.55);
-            animation: pjt-scan 2.6s ease-in-out infinite;
-          }
-        `}</style>
+
+        <div className="relative aspect-[3/2] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:order-1 sm:col-span-7">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/marketing/pesquisa-foto-1366.jpg"
+            srcSet="/marketing/pesquisa-foto-800.jpg 800w, /marketing/pesquisa-foto-1366.jpg 1366w"
+            sizes="(max-width: 640px) 100vw, 58vw"
+            alt="Telemóvel a fotografar um par de ténis"
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+
+          {/* Barra de scanner - puramente decorativa (aria-hidden). CSS
+              puro via <style> para não depender de configuração extra do
+              Tailwind. */}
+          <div aria-hidden="true" className="pjt-scan absolute inset-0 overflow-hidden">
+            <div className="pjt-scan-line absolute inset-x-0 -top-10 h-10" />
+          </div>
+          <style>{`
+            @keyframes pjt-scan {
+              0% { top: -2.5rem; }
+              50% { top: 100%; }
+              100% { top: -2.5rem; }
+            }
+            .pjt-scan-line {
+              background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.18) 90%,
+                rgba(255, 255, 255, 0.7) 100%
+              );
+              animation: pjt-scan 3.2s ease-in-out infinite;
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .pjt-scan { display: none; }
+            }
+          `}</style>
+        </div>
       </div>
     </section>
   )
