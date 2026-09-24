@@ -22,9 +22,13 @@ export type PickerProduct = {
 export default function ComparePicker({
   allProducts,
   currentSlugs,
+  fullWidth = false,
 }: {
   allProducts: PickerProduct[]
   currentSlugs: string[]
+  // Ocupa a largura toda do sítio onde está (lugar vazio da grelha no
+  // desktop, linha própria no telemóvel), em vez da largura fixa de 300px.
+  fullWidth?: boolean
 }) {
   const router = useRouter()
   const { setCompare } = useCompare()
@@ -91,9 +95,13 @@ export default function ComparePicker({
       <button
         type="button"
         onClick={openPicker}
-        className="inline-flex items-center gap-2 rounded-none border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-colors"
+        // Mesmo estilo das outras peças do site: cantos retos, linha de
+        // 1px, 44px de altura, texto #17232B.
+        className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-none border border-[#17232B]/20 bg-white px-4 text-sm font-semibold text-[#17232B] transition-colors hover:border-[#17232B] ${
+          fullWidth ? 'w-full' : ''
+        }`}
       >
-        <span aria-hidden="true" className="text-base leading-none text-gray-400">
+        <span aria-hidden="true" className="text-base leading-none text-[#5C6770]">
           +
         </span>
         {label}
@@ -107,7 +115,7 @@ export default function ComparePicker({
     // e o próprio input, cada um com o seu border-gray-900). Agora só o
     // input mostra a caixa (cantos retos, com o seu border) - este div é só
     // um contentor de layout, sem aparência visual própria.
-    <div className="w-[300px] max-w-full">
+    <div className={fullWidth ? 'w-full' : 'w-[300px] max-w-full'}>
       <div className="flex items-center gap-2 w-full">
         <input
           ref={inputRef}
@@ -125,23 +133,23 @@ export default function ComparePicker({
           onBlur={() => setTimeout(closePicker, 150)}
           placeholder="Pesquisar produto..."
           aria-label="Pesquisar produto para adicionar à comparação"
-          className="w-full border border-gray-900 rounded-none px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+          className="min-h-[44px] w-full rounded-none border border-[#17232B] bg-white px-4 text-base text-[#17232B] placeholder:text-[#5C6770] focus:outline-none focus:ring-1 focus:ring-[#17232B] sm:text-sm"
         />
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={closePicker}
           aria-label="Fechar seletor"
-          className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors text-lg leading-none px-1"
+          className="flex h-11 w-9 shrink-0 items-center justify-center text-lg leading-none text-[#5C6770] transition-colors hover:text-[#17232B]"
         >
           ×
         </button>
       </div>
 
       {query.trim().length >= 2 && (
-        <div className="w-full mt-3 max-h-[180px] overflow-y-auto flex flex-col gap-1">
+        <div className="mt-3 flex max-h-[240px] w-full flex-col gap-1 overflow-y-auto">
           {results.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center mt-6">Nenhum produto encontrado.</p>
+            <p className="mt-6 text-center text-xs text-[#5C6770]">Nenhum produto encontrado.</p>
           ) : (
             results.map((p, index) => (
               <button
@@ -151,23 +159,23 @@ export default function ComparePicker({
                 onClick={() => selectProduct(p.slug)}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={`flex items-center gap-3 rounded-none p-2 text-left transition-colors ${
-                  index === activeIndex ? 'bg-gray-50' : 'hover:bg-gray-50'
+                  index === activeIndex ? 'bg-[#F9FBFC]' : 'hover:bg-[#F9FBFC]'
                 }`}
               >
-                <div className="h-10 w-10 shrink-0 rounded-none bg-gray-50 overflow-hidden">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-none bg-[#F9FBFC]">
                   {p.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.image_url} alt="" className="h-full w-full object-cover" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 truncate">
+                  <p className="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">
                     {p.brands?.name}
                   </p>
-                  <p className="text-sm font-medium text-gray-900 truncate">{p.model_name}</p>
+                  <p className="truncate text-sm font-medium text-[#17232B]">{p.model_name}</p>
                 </div>
                 {p.lowest_price != null && (
-                  <span className="text-xs font-semibold text-gray-900 shrink-0">
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-[#17232B]">
                     {formatPrice(p.lowest_price)}
                   </span>
                 )}

@@ -1,17 +1,16 @@
 // components/CompareDiff.tsx
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
+import { COMPARE_GRID, COMPARE_LABEL, COMPARE_LINE, valueCellClass } from '@/lib/compareGrid'
 
 // Estado partilhado do toggle "Mostrar só as diferenças" da página
-// /comparar (Provider) - CompareDiffToggle (o interruptor), CompareRows (a
-// versão empilhada, usada em telemóvel/tablet dentro de cada cartão) e
-// CompareTable (a tabela partilhada de desktop, ver abaixo) só se
-// conseguem ver e reagir umas às outras porque a página (Server Component)
-// as monta todas dentro do mesmo Provider; os dados de cada linha (valores,
-// se difere, qual é o "melhor") vêm já calculados do servidor - ver
-// app/comparar/page.tsx.
+// /comparar (Provider) - CompareDiffToggle (o interruptor) e CompareTable
+// (a tabela de características) só se conseguem ver e reagir uma à outra
+// porque a página (Server Component) as monta dentro do mesmo Provider; os
+// dados de cada linha (valores, se difere, qual é o "melhor") vêm já
+// calculados do servidor - ver app/comparar/page.tsx.
 type CompareDiffContextValue = {
   onlyDifferences: boolean
   setOnlyDifferences: (value: boolean) => void
@@ -34,6 +33,9 @@ function useCompareDiff() {
   return ctx
 }
 
+// Interruptor com as cores do site: verde #123F3A quando ligado, sem
+// sombra no círculo (regra visual: nada de sombras). O interruptor é das
+// poucas peças que continua redondo - é a forma própria deste controlo.
 export function CompareDiffToggle() {
   const { onlyDifferences, setOnlyDifferences } = useCompareDiff()
   return (
@@ -42,21 +44,21 @@ export function CompareDiffToggle() {
       role="switch"
       aria-checked={onlyDifferences}
       onClick={() => setOnlyDifferences(!onlyDifferences)}
-      className="flex items-center gap-3"
+      className="flex min-h-[44px] items-center gap-3"
     >
       <span
         aria-hidden="true"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-          onlyDifferences ? 'bg-gray-900' : 'bg-gray-200'
+          onlyDifferences ? 'bg-[#123F3A]' : 'bg-[#17232B]/15'
         }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
             onlyDifferences ? 'translate-x-6' : 'translate-x-1'
           }`}
         />
       </span>
-      <span className="text-sm text-gray-700">Mostrar só as diferenças</span>
+      <span className="text-sm text-[#17232B]">Mostrar só as diferenças</span>
     </button>
   )
 }
@@ -66,12 +68,9 @@ export function CompareDiffToggle() {
 // (different - decide se a linha desaparece quando o toggle está ligado) e
 // qual o índice do "melhor" valor, quando isso faz sentido (best - ex: mais
 // lojas com stock, envio grátis com limiar mais baixo, maior descida de
-// preço esta semana). O "melhor" valor de cada linha fica destacado na
-// mesma cor verde-petróleo usada em todo o site para assinalar vantagem
-// (contadores do cabeçalho, coração de favorito, selo de desconto no
-// catálogo) - antes era um "✓ melhor" a verde-normal, agora é sempre a
-// mesma cor e o mesmo tratamento (texto a negrito + fundo da célula
-// ligeiramente colorido).
+// preço esta semana). O melhor valor fica a verde #123F3A e a meio-negrito,
+// sem fundo colorido na célula (regra visual: superfícies lisas, só linhas
+// de 1px).
 export type CompareRowData = {
   key: string
   label: string
@@ -80,122 +79,82 @@ export type CompareRowData = {
   best: number | null
 }
 
-const BEST_BG = 'bg-[#1F5F58]/5'
-const BEST_TEXT = 'text-[#1F5F58] font-bold'
-
-// Versão empilhada de um cartão (um produto de cada vez) - usada só em
-// telemóvel/tablet (<lg), onde os cartões dos produtos aparecem um a seguir
-// ao outro em vez de lado a lado, por isso não há problema de alinhamento
-// entre colunas: cada cartão mostra as suas próprias linhas, na sua altura
-// natural.
-export function CompareRows({ rows, columnIndex }: { rows: CompareRowData[]; columnIndex: number }) {
-  const { onlyDifferences } = useCompareDiff()
-  const visible = rows.filter((row) => !onlyDifferences || row.different)
-
-  if (visible.length === 0) {
-    return <p className="px-6 py-4 text-sm text-gray-400">Sem diferenças neste critério.</p>
-  }
-
-  return (
-    <div>
-      {visible.map((row, i) => {
-        const isBest = row.best === columnIndex
-        return (
-          <div
-            key={row.key}
-            className={`px-6 py-3 ${isBest ? BEST_BG : i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-          >
-            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-900">{row.label}</p>
-            <p className={`text-sm mt-0.5 ${isBest ? BEST_TEXT : 'font-medium text-gray-900'}`}>
-              {row.display[columnIndex]}
-            </p>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-export type CompareOffer = {
-  store: string
-  price: number
-}
-
-// Tabela partilhada de desktop (>=lg): uma única grelha CSS com uma coluna
-// de rótulos fixa (Sola, Fecho, Cor, ...) seguida de uma coluna por
-// produto, para que cada característica apareça uma única vez em vez de
-// repetida em cima de cada produto - pedido do Jorge, confirmado com
-// mockup (proposta_comparar_final.html). Não mostra preços por loja (o
-// preço mais baixo de cada produto já aparece em cima, no cartão do
-// produto - repetir a lista de lojas aqui ficava grande demais com
-// produtos com muitas lojas em stock, pedido do Jorge). O botão "Ver
-// detalhe" de cada produto fica sempre visível mesmo com o toggle "só
-// diferenças" ligado.
+// Tabela de características: usa exatamente a mesma grelha que as fotos e
+// os nomes por cima (ver lib/compareGrid.ts), por isso cada valor fica
+// sempre por baixo do ténis a que pertence - no telemóvel e no desktop.
+// No telemóvel o nome da característica ocupa uma linha inteira e os
+// valores dos ténis aparecem lado a lado por baixo (em vez de um cartão
+// por ténis, empilhados, que obrigava a descer a página toda e a decorar
+// os valores do primeiro para os comparar com o segundo).
 export function CompareTable({
   rows,
-  columnCount,
   slugs,
+  withSlot,
+  gridStyle,
 }: {
   rows: CompareRowData[]
-  columnCount: number
   slugs: string[]
+  withSlot: boolean
+  gridStyle: CSSProperties
 }) {
   const { onlyDifferences } = useCompareDiff()
   const visibleRows = rows.filter((row) => !onlyDifferences || row.different)
-  // Tem de ser exactamente a mesma grelha (160px + colunas de 240px) da
-  // linha dos produtos em app/comparar/page.tsx, para as colunas ficarem
-  // alinhadas por baixo de cada foto - se um dia um dos dois lados mudar,
-  // o outro tem de mudar também.
-  const gridCols = `160px repeat(${columnCount}, minmax(0, 240px))`
+
+  // Célula vazia da coluna "Adicionar outro produto" (só a partir de md),
+  // para as linhas seguintes não "subirem" para essa coluna.
+  const slotSpacer = withSlot ? (
+    <div aria-hidden="true" className={`hidden md:block md:border-l md:border-t ${COMPARE_LINE}`} />
+  ) : null
 
   return (
-    <div className="rounded-none border border-gray-100 bg-white overflow-hidden">
-      {visibleRows.map((row, rowIndex) => (
-        <div
-          key={row.key}
-          className={`grid items-start ${rowIndex % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-          style={{ gridTemplateColumns: gridCols }}
-        >
-          <div className="px-4 py-3.5 text-[11px] font-bold uppercase tracking-wide text-gray-900">
+    <div className={`${COMPARE_GRID} border-b ${COMPARE_LINE}`} style={gridStyle}>
+      {visibleRows.map((row) => (
+        <div key={row.key} className="contents">
+          <p className={`col-span-full border-t px-3 pt-4 md:col-span-1 md:py-5 md:pl-0 md:pr-6 md:leading-6 ${COMPARE_LINE} ${COMPARE_LABEL}`}>
             {row.label}
-          </div>
-          {Array.from({ length: columnCount }, (_, i) => {
+          </p>
+          {slugs.map((slug, i) => {
             const isBest = row.best === i
             const isEmpty = row.display[i] === '—'
             return (
-              <div
-                key={i}
-                className={`px-4 py-3 border-l border-gray-100 text-sm ${isBest ? BEST_BG : ''} ${
-                  isEmpty ? 'text-gray-300' : 'text-gray-700'
+              <p
+                key={slug}
+                className={`${valueCellClass(i)} hyphens-auto break-words pb-4 pt-1.5 text-sm leading-relaxed md:hyphens-manual md:border-t md:py-5 md:text-[15px] md:leading-6 ${
+                  isBest
+                    ? 'font-semibold text-[#123F3A]'
+                    : isEmpty
+                      ? 'text-[#17232B]/30'
+                      : 'text-[#17232B]'
                 }`}
               >
-                <span className={isBest ? BEST_TEXT : ''}>{row.display[i]}</span>
-              </div>
+                {row.display[i]}
+              </p>
             )
           })}
+          {slotSpacer}
         </div>
       ))}
 
       {onlyDifferences && visibleRows.length === 0 && (
-        <div className="px-4 py-3 text-sm text-gray-400 bg-white">
+        <p className={`col-span-full border-t px-3 py-5 text-sm text-[#5C6770] md:px-0 ${COMPARE_LINE}`}>
           Sem diferenças nas restantes características.
-        </div>
+        </p>
       )}
 
-      {/* Ver detalhe */}
-      <div className="grid items-center bg-gray-50" style={{ gridTemplateColumns: gridCols }}>
-        <div />
-        {slugs.map((slug, i) => (
-          <div key={slug} className="px-4 py-4 border-l border-gray-100">
-            <Link
-              href={`/produto/${slug}`}
-              className="flex items-center justify-center w-full rounded-none bg-gray-900 text-white text-sm font-semibold py-2.5 hover:bg-gray-700 transition-colors"
-            >
-              Ver detalhe
-            </Link>
-          </div>
-        ))}
-      </div>
+      {/* Ver detalhe - sempre visível, mesmo com "só diferenças" ligado. */}
+      <div aria-hidden="true" className={`hidden md:block md:border-t ${COMPARE_LINE}`} />
+      {slugs.map((slug, i) => (
+        <div key={slug} className={`${valueCellClass(i)} border-t py-4 md:py-6`}>
+          <Link
+            href={`/produto/${slug}`}
+            prefetch={false}
+            className="flex min-h-[44px] w-full items-center justify-center whitespace-nowrap rounded-none bg-[#123F3A] px-1 text-[13px] font-semibold text-white transition-colors hover:bg-[#0d2f2b] md:px-2 md:text-sm"
+          >
+            Ver detalhe
+          </Link>
+        </div>
+      ))}
+      {slotSpacer}
     </div>
   )
 }
