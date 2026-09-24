@@ -40,7 +40,7 @@ export default async function CatalogoPage() {
       <div className="px-6">
         <CatalogoBackBar />
 
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-8">Catálogo</h1>
+        <h1 className="mt-2 mb-8 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] md:text-[44px]">Catálogo</h1>
       </div>
 
       <Suspense fallback={null}>
@@ -48,8 +48,8 @@ export default async function CatalogoPage() {
       </Suspense>
 
       {recentDrops.length > 0 && (
-        <section className="mt-12 pt-10 border-t border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Descidas de preço recentes</h2>
+        <section className="mt-12 border-t border-[#17232B]/10 px-6 pt-10">
+          <h2 className="mb-4 font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B]">Descidas de preço recentes</h2>
           <RecentDropsGrid products={recentDrops} />
         </section>
       )}
