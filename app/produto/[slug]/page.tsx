@@ -501,9 +501,9 @@ export default async function ProdutoPage({
 
 
 
-      <nav className="text-sm text-gray-500 mb-4">
+      <nav className="mb-4 text-[13px] text-[#5C6770]">
 
-        <Link href="/" className="hover:underline">Parjusto</Link>
+        <Link href="/" className="transition-colors hover:text-[#17232B]">Parjusto</Link>
 
         <span className="mx-1.5">/</span>
 
@@ -511,13 +511,13 @@ export default async function ProdutoPage({
 
         <span className="mx-1.5">/</span>
 
-        <span className="text-gray-400">{product.model_name}</span>
+        <span className="text-[#17232B]">{product.model_name}</span>
 
       </nav>
 
 
 
-      <Link href="/catalogo" className="inline-block py-1 text-gray-500 text-sm hover:underline">&larr; Voltar</Link>
+      <Link href="/catalogo" className="inline-flex min-h-[36px] items-center text-[13px] text-[#5C6770] transition-colors hover:text-[#17232B]">&larr; Voltar</Link>
 
 
 
@@ -533,10 +533,10 @@ export default async function ProdutoPage({
 
         <div>
 
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{product.brands?.name}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">{product.brands?.name}</p>
 
           <div className="flex items-center gap-2 mt-1">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">{product.model_name}</h1>
+            <h1 className="font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] md:text-[40px]">{product.model_name}</h1>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <FavoriteButton slug={product.slug} />
@@ -569,7 +569,7 @@ export default async function ProdutoPage({
 
           {groupedOffers.length === 0 ? (
 
-            <p className="text-gray-400 mt-6">Sem ofertas disponíveis de momento.</p>
+            <p className="mt-6 text-[#5C6770]">Sem ofertas disponíveis de momento.</p>
 
           ) : (
 
@@ -584,7 +584,7 @@ export default async function ProdutoPage({
 
 
               {updatedLabel && (
-                <p className="text-sm text-gray-500 mt-4 mb-2 font-medium">Preços atualizados em {updatedLabel}</p>
+                <p className="mt-4 mb-2 text-[13px] text-[#5C6770]">Preços atualizados em {updatedLabel}</p>
               )}
 
 
@@ -607,14 +607,14 @@ export default async function ProdutoPage({
 
       {specs.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalhes do produto</h2>
+          <h2 className="mb-4 font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B]">Detalhes do produto</h2>
           <div className="border border-[#17232B]/10 rounded-none overflow-hidden">
             <table className="w-full border-collapse">
               <tbody>
                 {specs.map((spec, index) => (
-                  <tr key={spec.label} className={index !== specs.length - 1 ? 'border-b border-gray-50' : ''}>
-                    <td className="p-4 text-sm font-medium text-gray-500 bg-gray-50 w-1/3">{spec.label}</td>
-                    <td className="p-4 text-gray-900">{spec.value}</td>
+                  <tr key={spec.label} className={index !== specs.length - 1 ? 'border-b border-[#17232B]/10' : ''}>
+                    <td className="w-1/3 p-4 align-top text-[11px] font-medium uppercase leading-6 tracking-[0.08em] text-[#5C6770]">{spec.label}</td>
+                    <td className="p-4 text-[15px] leading-6 text-[#17232B]">{spec.value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -625,7 +625,7 @@ export default async function ProdutoPage({
 
       {showSimilar && (
         <div className="mt-10">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Modelos semelhantes</h2>
+          <h2 className="mb-4 font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B]">Modelos semelhantes</h2>
           <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 sm:mx-0 sm:px-0">
             {similarProducts.map((p) => (
               <div key={p.id} className="w-44 shrink-0">
