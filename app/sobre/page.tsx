@@ -34,7 +34,7 @@ export default function SobrePage() {
         <p>
           Tens alguma sugestão, encontraste um erro, ou queres propor uma
           parceria? Contacta-nos através de{' '}
-          <a href="mailto:geral@parjusto.pt" className="text-orange-600 hover:underline">
+          <a href="mailto:geral@parjusto.pt" className="font-medium text-[#123F3A] underline decoration-[#123F3A]/30 underline-offset-4 hover:decoration-[#123F3A]">
             geral@parjusto.pt
           </a>
           .
