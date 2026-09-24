@@ -1,25 +1,22 @@
 // app/comparar/page.tsx
-import { Fragment } from 'react'
 import { supabase } from '@/lib/supabase'
 import { productSelect } from '@/lib/productColumns'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import ComparePicker, { type PickerProduct } from '@/components/ComparePicker'
-import ProductGallery from '@/components/ProductGallery'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
 import CompareRestoreFromStorage from '@/components/CompareRestoreFromStorage'
 import {
   CompareDiffProvider,
   CompareDiffToggle,
-  CompareRows,
   CompareTable,
   type CompareRowData,
 } from '@/components/CompareDiff'
-import type { ProductWithPrice } from '@/lib/types'
 import { formatPrice } from '@/lib/formatPrice'
 import { computePriceDrop } from '@/lib/priceDrop'
 import { dedupeColor } from '@/lib/formatColor'
+import { COMPARE_GRID, COMPARE_LABEL, COMPARE_LINE, compareGridStyle, valueCellClass } from '@/lib/compareGrid'
 
 function parseSlugs(produtos?: string): string[] {
   return (produtos ?? '')
@@ -62,13 +59,36 @@ export async function generateMetadata({
   }
 }
 
+// Só os campos que esta página usa de cada ténis e de cada oferta (a
+// consulta traz as colunas de lib/productColumns.ts + marca + ofertas).
+type CompareOfferRow = {
+  id: string
+  price: number
+  in_stock: boolean
+  discontinued_at: string | null
+  stores: { name: string; shipping_free_threshold: number | null } | null
+}
+
+type CompareProductRow = {
+  id: string
+  slug: string
+  model_name: string
+  image_url: string | null
+  gender: string | null
+  color: string | null
+  sole_type: string | null
+  closure_type: string | null
+  brands: { name: string } | null
+  product_offers: CompareOfferRow[] | null
+}
+
 type GroupedOffer = {
   store: string
   price: number
   shippingFreeThreshold: number | null
 }
 
-function groupOffers(offers: any[]): GroupedOffer[] {
+function groupOffers(offers: CompareOfferRow[]): GroupedOffer[] {
   const inStock = offers.filter((o) => o.in_stock && !o.discontinued_at)
   const grouped: Record<string, GroupedOffer> = {}
 
@@ -127,14 +147,18 @@ function bestIndexMin(values: (number | null)[]): number | null {
   return withMin.length === 1 ? withMin[0].i : null
 }
 
+// Página sem produtos encontrados (slugs do URL que já não existem) -
+// mesmas regras visuais do resto do site.
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <main className="max-w-4xl mx-auto px-6 py-16 text-center">
-      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-      <p className="text-gray-500 mt-2">{description}</p>
+    <main className="mx-auto max-w-5xl px-6 py-16 text-center md:py-24">
+      <h1 className="font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] md:text-[44px]">
+        {title}
+      </h1>
+      <p className="mt-3 text-base text-[#5C6770]">{description}</p>
       <Link
         href="/catalogo"
-        className="inline-block mt-6 bg-gray-900 text-white px-5 py-2.5 rounded-none text-sm font-medium hover:bg-gray-700 transition-colors"
+        className="mt-6 inline-flex min-h-[44px] items-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
       >
         Ver catálogo
       </Link>
@@ -142,59 +166,11 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
-// Bloco "Preços por loja" + botão "Ver detalhe" de um produto - usado só em
-// telemóvel/tablet (<lg), dentro do próprio cartão empilhado, depois das
-// características. A partir de lg os preços por loja e o "Ver detalhe"
-// passam a ser uma linha da tabela partilhada (ver CompareTable), em vez
-// de esta caixa repetida por baixo de cada cartão.
-function StorePricesBlock({ offers, slug }: { offers: GroupedOffer[]; slug: string }) {
-  const storeBox = offers.length > 0 && (
-    <div className="border border-gray-100 rounded-none overflow-hidden">
-      <p className="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-        Preços por loja
-      </p>
-      {/* Colunas 1 e 2 podem encolher/quebrar linha se o espaço for
-          apertado (minmax(0,...)); a coluna do preço fica sempre
-          "auto" pura, sem encolher, para nunca cortar o valor. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center text-sm">
-        {offers.map((offer, offerIndex) => {
-          const isLast = offerIndex === offers.length - 1
-          const cellBorder = isLast ? '' : 'border-b border-gray-50'
-          return (
-            <Fragment key={offer.store}>
-              <div className={`p-3 text-gray-700 ${cellBorder}`}>{offer.store}</div>
-              <div className={`p-3 text-center ${cellBorder}`}>
-                {offerIndex === 0 && offers.length > 1 && (
-                  <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                    Melhor preço
-                  </span>
-                )}
-              </div>
-              <div className={`p-3 text-right font-semibold text-gray-900 whitespace-nowrap ${cellBorder}`}>
-                {formatPrice(offer.price)}
-              </div>
-            </Fragment>
-          )
-        })}
-      </div>
-    </div>
-  )
-
-  const detailLink = (
-    <Link
-      href={`/produto/${slug}`}
-      className="mt-3 flex items-center justify-center w-full min-h-[48px] rounded-none bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
-    >
-      Ver detalhe
-    </Link>
-  )
-
-  return (
-    <>
-      {storeBox}
-      {detailLink}
-    </>
-  )
+// "homem" -> "Homem", "unissexo" -> "Unissexo" (o valor vem em minúsculas
+// da base de dados; só muda a primeira letra, nunca o conteúdo).
+function capitalize(value: string | null): string | null {
+  if (!value) return value
+  return value.charAt(0).toLocaleUpperCase('pt-PT') + value.slice(1)
 }
 
 // Frase de resumo no topo da página (ex.: "Nike Dunk Low é 51,00 € mais
@@ -235,7 +211,7 @@ export default async function CompararPage({
   const { produtos } = await searchParams
   const slugs = parseSlugs(produtos)
 
-  let ordered: any[] = []
+  let ordered: CompareProductRow[] = []
   if (slugs.length > 0) {
     const { data: products } = await supabase
       .from('products')
@@ -248,9 +224,10 @@ export default async function CompararPage({
       `))
       .in('slug', slugs)
 
+    const rowsFromDb = (products ?? []) as unknown as CompareProductRow[]
     ordered = slugs
-      .map((slug) => (products ?? []).find((p) => p.slug === slug))
-      .filter(Boolean) as any[]
+      .map((slug) => rowsFromDb.find((p) => p.slug === slug))
+      .filter((p): p is CompareProductRow => p != null)
 
     if (ordered.length === 0) {
       return (
@@ -263,7 +240,6 @@ export default async function CompararPage({
   }
 
   const placeholderCount = Math.max(0, 3 - ordered.length)
-  const containerMaxWidth = ordered.length < 3 ? 'max-w-4xl' : 'max-w-5xl'
 
   // Catálogo para o seletor "+ Adicionar produto" (mesma pesquisa
   // client-side da homepage, ver lib/searchProducts.ts) - só é preciso
@@ -314,7 +290,7 @@ export default async function CompararPage({
   // homepage, nunca inventa uma descida sem dois dias distintos no
   // histórico.
   const visibleOfferIds = ordered.flatMap((p) =>
-    (p.product_offers ?? []).filter((o: any) => o.in_stock && !o.discontinued_at).map((o: any) => o.id)
+    (p.product_offers ?? []).filter((o) => o.in_stock && !o.discontinued_at).map((o) => o.id)
   )
   const offerIdToProductId = new Map<string, string>()
   for (const p of ordered) {
@@ -365,7 +341,7 @@ export default async function CompararPage({
 
   const summary = buildSummary(
     ordered
-      .map((p, i) => ({ name: p.model_name as string, price: compareData[i].lowestPrice, stock: compareData[i].storeCount }))
+      .map((p, i) => ({ name: p.model_name, price: compareData[i].lowestPrice, stock: compareData[i].storeCount }))
       .filter((x): x is { name: string; price: number; stock: number } => x.price != null)
   )
 
@@ -379,12 +355,16 @@ export default async function CompararPage({
   // Cor sem partes repetidas ("Core Black / Core Black / Core Black" ->
   // "Core Black") - mesma regra da homepage, ver lib/formatColor.ts.
   const colorValues = ordered.map((p) => dedupeColor(p.color))
-  const genderValues = ordered.map((p) => p.gender ?? null)
+  const genderValues = ordered.map((p) => capitalize(p.gender ?? null))
   const storeCountValues = compareData.map((d) => d.storeCount)
+  // Nome da loja com o preço mais baixo de cada ténis (dado real das
+  // ofertas em stock) - substitui a lista "Preços por loja" que só existia
+  // no telemóvel; a lista completa continua na página de cada produto.
+  const cheapestStoreValues = compareData.map((d) => d.offers[0]?.store ?? null)
   const shippingValues = compareData.map((d) => d.shippingFreeThreshold)
   const discountValues = compareData.map((d) => d.discountPercent)
 
-  const rows: CompareRowData[] = [
+  const allRows: CompareRowData[] = [
     {
       key: 'sole',
       label: 'Sola',
@@ -421,6 +401,13 @@ export default async function CompararPage({
       best: bestIndexMax(storeCountValues),
     },
     {
+      key: 'cheapestStore',
+      label: 'Loja mais barata',
+      display: cheapestStoreValues.map((v) => v ?? '—'),
+      different: rowIsDifferent(cheapestStoreValues),
+      best: null,
+    },
+    {
       key: 'shipping',
       label: 'Envio grátis',
       display: shippingValues.map((v) => (v != null ? `Acima de ${formatPrice(v)}` : '—')),
@@ -441,271 +428,227 @@ export default async function CompararPage({
     },
   ]
 
+  // Linhas sem nenhum dado em nenhum dos ténis (ex.: "Desceu esta semana"
+  // quando nenhum desceu) não mostram nada de útil - só aparecem quando
+  // pelo menos um ténis tem esse dado. Nunca se inventa um valor.
+  const rows = allRows.filter((row) => row.display.some((v) => v !== '—'))
+
+  // Redesenho da página (pedido do Jorge: melhorar o desktop e,
+  // sobretudo, o telemóvel), com as mesmas regras visuais da homepage:
+  // cantos retos, linhas de 1px numa só cor, sem sombras nem fundos
+  // cinzentos alternados, etiquetas de 11px, título na escala 32/44px,
+  // botões verdes #123F3A.
+  // - Uma só grelha para fotos, nomes, preços e características (ver
+  //   lib/compareGrid.ts): as colunas ficam sempre alinhadas.
+  // - Telemóvel: os ténis ficam lado a lado (como no comparador da
+  //   homepage), em vez de um cartão enorme por ténis empilhados.
+  // - Nome e preço de cada ténis ficam presos no topo ao descer a página
+  //   (logo abaixo do cabeçalho do site, que tem 76px), para se saber
+  //   sempre a que ténis pertence cada coluna.
+  const withSlot = placeholderCount > 0 && ordered.length > 0
+  const gridStyle = compareGridStyle(ordered.length, withSlot)
+  const orderedSlugs = ordered.map((p) => p.slug)
+
+  // Célula vazia da coluna dos nomes das características (só a partir de md).
+  const labelSpacer = <div aria-hidden="true" className="hidden md:block" />
+
+  const mobilePicker = withSlot ? (
+    <div className="md:hidden">
+      <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} fullWidth />
+    </div>
+  ) : null
+
   return (
-    <main className={`${containerMaxWidth} mx-auto px-6 py-10`}>
+    <main className="mx-auto max-w-5xl px-6 pb-16 pt-8 md:pb-24">
       {/* Só sincroniza a seleção partilhada quando o URL traz um ?produtos=
           explícito - visitar /comparar "em branco" não deve apagar uma
           seleção já feita algures (ex.: header, barra flutuante). */}
-      {slugs.length > 0 && <CompareSelectionSync slugs={ordered.map((p) => p.slug)} />}
+      {slugs.length > 0 && <CompareSelectionSync slugs={orderedSlugs} />}
 
       {/* Sentido inverso: URL vazio mas já pode haver uma seleção guardada
           (localStorage) - restaura-a para o URL em vez de mostrar a página vazia. */}
       {slugs.length === 0 && <CompareRestoreFromStorage />}
 
-      <nav className="text-sm text-gray-400">
-        <Link href="/" className="hover:text-gray-600 transition-colors">
+      <nav className="text-[13px] text-[#5C6770]">
+        <Link href="/" className="transition-colors hover:text-[#17232B]">
           Início
         </Link>
         <span className="mx-1.5">/</span>
-        <span className="text-gray-500">Comparar</span>
+        <span className="text-[#17232B]">Comparar</span>
       </nav>
 
       <CompareDiffProvider>
-        {/* flex-col no telemóvel, flex-row a partir de sm (pedido do Jorge):
-            com o título "Comparar ténis" a competir por largura com o
-            interruptor "Mostrar só as diferenças" na mesma linha, em ecrãs
-            estreitos o título era obrigado a quebrar ("Comparar" / "ténis")
-            e o interruptor ficava espremido logo a seguir à primeira
-            palavra - com mau aspeto. Agora o interruptor cai para a sua
-            própria linha, por baixo do título/texto, só no telemóvel; a
-            partir de sm mantém-se tal e qual como antes (lado a lado). */}
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mt-3">
+        <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-8">
           <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-gray-900 mb-2">
+            <p className={COMPARE_LABEL}>Comparador</p>
+            <h1 className="mt-2 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] md:text-[44px]">
               Comparar ténis
             </h1>
-            {placeholderCount > 0 ? (
-              <p className="text-sm text-gray-500">Escolhe até 3 produtos no catálogo para comparar.</p>
-            ) : (
-              <p className="text-gray-500 max-w-xl">
-                Três modelos lado a lado, linha a linha. As diferenças ficam marcadas e a melhor opção
-                de cada critério fica destacada.
-              </p>
-            )}
+            <p className="mt-3 max-w-[34rem] text-pretty text-base leading-relaxed text-[#5C6770]">
+              {ordered.length === 0
+                ? 'Escolhe até 3 ténis do catálogo para os veres lado a lado.'
+                : 'Até 3 ténis lado a lado. Quando um leva vantagem, como no preço ou nas lojas com stock, o valor fica a verde.'}
+            </p>
           </div>
           {ordered.length > 1 && (
-            <div className="sm:pt-2 shrink-0">
+            <div className="shrink-0">
               <CompareDiffToggle />
             </div>
           )}
         </div>
 
+        {/* Resumo numa linha simples entre duas linhas de 1px (antes era
+            uma caixa com fundo verde e ícone). Só aparece com uma
+            diferença de preço real - ver buildSummary. */}
         {summary && (
-          <div className="mt-5 flex items-center gap-3 rounded-none bg-[#1F5F58]/5 border border-[#1F5F58]/20 px-4 py-3">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0 text-[#1F5F58]"
-              aria-hidden="true"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" />
-            </svg>
-            <p className="text-sm text-gray-800">
-              <span className="font-semibold">{summary.cheapestName}</span>{' '}
-              {summary.superlative ? (
-                <>
-                  é o mais barato — <span className="font-semibold text-[#1F5F58]">{summary.diffLabel} menos</span>{' '}
-                  que {summary.priciestName}
-                </>
-              ) : (
-                <>
-                  é <span className="font-semibold text-[#1F5F58]">{summary.diffLabel} mais barato</span> que{' '}
-                  {summary.priciestName}
-                </>
-              )}
-              {summary.stockAdvantage && ' e está disponível em mais lojas'}.
-            </p>
+          <p className={`-mx-3 mt-8 border-y px-3 py-4 text-[15px] leading-relaxed text-[#17232B] md:mx-0 md:px-0 ${COMPARE_LINE}`}>
+            <span className="font-semibold">{summary.cheapestName}</span>{' '}
+            {summary.superlative ? (
+              <>
+                é o mais barato: <span className="font-semibold text-[#123F3A]">{summary.diffLabel} menos</span> que{' '}
+                {summary.priciestName}
+              </>
+            ) : (
+              <>
+                é <span className="font-semibold text-[#123F3A]">{summary.diffLabel} mais barato</span> que{' '}
+                {summary.priciestName}
+              </>
+            )}
+            {summary.stockAdvantage && ' e está disponível em mais lojas'}.
+          </p>
+        )}
+
+        {/* Sem produtos: só o lugar vazio com o seletor. */}
+        {ordered.length === 0 && (
+          <div className="mt-10 flex min-h-[240px] items-center justify-center bg-[#F9FBFC] p-6">
+            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
           </div>
         )}
 
-        {/* Telemóvel/tablet (<lg): cada produto continua num cartão próprio,
-            empilhado, com as suas características e preços por loja logo a
-            seguir - mais fácil de ler que uma tabela larga num ecrã
-            estreito. A partir de lg este bloco desaparece por completo e dá
-            lugar ao bloco novo mais abaixo (cartão único com a tabela
-            partilhada). */}
-        <div className="grid gap-6 mt-8 sm:grid-cols-2 lg:hidden items-start">
-          {ordered.map((product, index) => {
-            const data = compareData[index]
-            const isCheapest = cheapestPrice != null && data.lowestPrice === cheapestPrice
-            const remainingSlugs = slugs.filter((s) => s !== product.slug)
+        {/* Com 1 só ténis, no telemóvel o botão para adicionar o segundo
+            vem logo antes da comparação (é o passo seguinte). */}
+        {ordered.length === 1 && <div className="mt-8">{mobilePicker}</div>}
 
-            return (
-              <div
-                key={product.id}
-                className="relative flex flex-col rounded-none border border-gray-100 bg-white overflow-hidden"
-              >
-                <div className="p-6 pb-5">
-                  <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
-
-                  <ProductGallery
-                    images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
-                    alt={product.model_name}
-                    compact
-                    imageBoxClassName="aspect-square"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-3">
-                    {product.brands?.name}
-                  </p>
-                  {/* Altura fixa (2 linhas) para o nome - mesmo motivo da
-                      versão de desktop: o preço tem de ficar sempre
-                      alinhado, mesmo quando os produtos ao lado têm nomes
-                      de tamanhos diferentes. */}
-                  <h2 className="font-semibold text-gray-900 mt-0.5 leading-6 min-h-[3rem]">
-                    {product.model_name}
-                  </h2>
-
-                  {data.lowestPrice != null ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
-                      {isCheapest && (
-                        <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                          Mais barato
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 text-sm mt-2">Sem oferta disponível</p>
-                  )}
-                </div>
-
-                <div className="border-t border-gray-100">
-                  <CompareRows rows={rows} columnIndex={index} />
-                </div>
-                <div className="p-4 mt-auto border-t border-gray-100">
-                  <StorePricesBlock offers={data.offers} slug={product.slug} />
-                </div>
-              </div>
-            )
-          })}
-
-          {placeholderCount > 0 && (
-            <div className="flex items-center justify-center py-6">
-              <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
-            </div>
-          )}
-        </div>
-
-        {/* Desktop (>=lg): um único cartão com a linha dos produtos (foto,
-            nome, preço) seguida da tabela partilhada - características e
-            "Ver detalhe" alinhados por baixo de cada produto, cada
-            característica escrita uma única vez à esquerda. */}
         {ordered.length > 0 && (
-          <div className="hidden lg:block mt-8 rounded-none border border-gray-100 bg-white p-6">
-            <div className="flex items-start gap-0">
-              {/* Tem de ser exactamente a mesma grelha (160px + colunas de
-                  240px) do CompareTable em components/CompareDiff.tsx, para
-                  as fotos ficarem alinhadas com as colunas da tabela por
-                  baixo - se um dia um dos dois lados mudar, o outro tem de
-                  mudar também. */}
-              <div
-                className="grid"
-                style={{ gridTemplateColumns: `160px repeat(${ordered.length}, minmax(0, 240px))` }}
-              >
-                <div />
-                {ordered.map((product, index) => {
-                  const data = compareData[index]
-                  const isCheapest = cheapestPrice != null && data.lowestPrice === cheapestPrice
-                  const remainingSlugs = slugs.filter((s) => s !== product.slug)
-                  return (
-                    <div
-                      key={product.id}
-                      className={`relative pb-4 ${
-                        index > 0 ? 'pl-4 border-l border-gray-100' : 'pr-4 border-r border-transparent'
-                      }`}
-                    >
-                      <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
-                      <ProductGallery
-                        images={product.image_urls?.length ? product.image_urls : product.image_url ? [product.image_url] : []}
-                        alt={product.model_name}
-                        compact
-                        imageBoxClassName="aspect-square"
-                        sizes="240px"
-                      />
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mt-3">
-                        {product.brands?.name}
-                      </p>
-                      {/* Altura fixa (2 linhas) para o nome do produto -
-                          nomes com tamanhos diferentes ("Dunk Low" vs.
-                          "Gel-Kayano 14 Black Pure Silver") não podem empurrar
-                          o preço para alturas diferentes em cada coluna;
-                          pedido do Jorge, os preços têm de ficar sempre
-                          alinhados. */}
-                      <h2 className="text-sm font-semibold text-gray-900 mt-0.5 leading-5 min-h-[2.5rem]">
+          // Com o resumo por cima, a linha de baixo do resumo serve de
+          // topo da tabela (evita duas linhas paralelas muito próximas).
+          <div className={summary ? '' : 'mt-10'}>
+            {/* Fotos */}
+            <div className={`${COMPARE_GRID} ${summary ? '' : `border-t ${COMPARE_LINE}`}`} style={gridStyle}>
+              {labelSpacer}
+              {ordered.map((product, index) => {
+                const remainingSlugs = slugs.filter((s) => s !== product.slug)
+                return (
+                  <div key={product.id} className={`${valueCellClass(index)} pt-4 md:pt-6`}>
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-none bg-[#F9FBFC]">
+                      <Link href={`/produto/${product.slug}`} prefetch={false} className="group absolute inset-0 block">
+                        {product.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.image_url}
+                            alt={product.model_name}
+                            className="absolute inset-0 h-full w-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                          />
+                        ) : (
+                          <span className="sr-only">{product.model_name}</span>
+                        )}
+                      </Link>
+                      {/* × por cima da foto só a partir de md; no telemóvel as
+                          fotos são pequenas e o círculo tapava o ténis, por
+                          isso aí é um botão de texto por baixo da foto. */}
+                      <div className="hidden md:block">
+                        <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} />
+                      </div>
+                    </div>
+                    <div className="md:hidden">
+                      <RemoveCompareButton remainingSlugs={remainingSlugs} label={product.model_name} variant="text" />
+                    </div>
+                  </div>
+                )
+              })}
+              {withSlot && (
+                <div className={`hidden md:block md:border-l md:px-6 md:pt-6 ${COMPARE_LINE}`}>
+                  {/* Lugar livre, com o mesmo tamanho e fundo das fotos. */}
+                  <div className="flex aspect-[4/3] w-full items-center justify-center bg-[#F9FBFC] p-4">
+                    <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} fullWidth />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Nome e preço - ficam presos no topo ao descer a página. */}
+            <div
+              // -mb-px: a linha de baixo desta faixa fica exatamente por cima
+              // da linha de cima da primeira característica (senão viam-se
+              // duas linhas juntas); quando a faixa fica presa no topo, a
+              // sua própria linha separa-a do conteúdo que passa por baixo.
+              className={`${COMPARE_GRID} sticky top-[76px] z-20 -mb-px border-b bg-white ${COMPARE_LINE}`}
+              style={gridStyle}
+            >
+              <p className={`hidden md:block md:pr-6 md:pt-4 ${COMPARE_LABEL}`}>Modelo e preço</p>
+              {ordered.map((product, index) => {
+                const data = compareData[index]
+                const isCheapest = cheapestPrice != null && data.lowestPrice === cheapestPrice
+                return (
+                  <div key={product.id} className={`${valueCellClass(index)} py-3 md:py-4`}>
+                    <p className={`truncate ${COMPARE_LABEL}`}>{product.brands?.name}</p>
+                    <h2 className="mt-0.5 line-clamp-3 text-[13px] font-medium leading-snug text-[#17232B] md:text-[15px]">
+                      <Link
+                        href={`/produto/${product.slug}`}
+                        prefetch={false}
+                        className="decoration-[#17232B]/30 underline-offset-4 hover:underline"
+                      >
                         {product.model_name}
-                      </h2>
-                      {data.lowestPrice != null ? (
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <p className="text-2xl font-extrabold text-gray-900">{formatPrice(data.lowestPrice)}</p>
-                          {isCheapest && (
-                            <span className="inline-flex items-center bg-[#1F5F58]/10 text-[#1F5F58] text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                      </Link>
+                    </h2>
+                    {data.lowestPrice != null ? (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p
+                          className={`text-base font-bold tabular-nums md:text-xl ${
+                            isCheapest ? 'text-[#123F3A]' : 'text-[#17232B]'
+                          }`}
+                        >
+                          {formatPrice(data.lowestPrice)}
+                        </p>
+                        {isCheapest && (
+                          <>
+                            <span className="text-[11px] font-medium text-[#123F3A] md:hidden">Mais barato</span>
+                            <span className="hidden items-center whitespace-nowrap rounded-full bg-[#E8F2EF] px-2.5 py-1 text-[11px] font-medium text-[#123F3A] md:inline-flex">
                               Mais barato
                             </span>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-sm mt-2">Sem oferta disponível</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {placeholderCount > 0 && (
-                <div className="pb-4 pl-4">
-                  <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
-                </div>
-              )}
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-[13px] text-[#5C6770]">Sem oferta disponível</p>
+                    )}
+                  </div>
+                )
+              })}
+              {withSlot && <div aria-hidden="true" className={`hidden md:block md:border-l ${COMPARE_LINE}`} />}
             </div>
 
-            <div className="mt-2">
-              <CompareTable
-                rows={rows}
-                columnCount={ordered.length}
-                slugs={ordered.map((p) => p.slug)}
-              />
-            </div>
-          </div>
-        )}
-
-        {ordered.length === 0 && (
-          <div className="hidden lg:flex mt-8 rounded-none border border-gray-100 bg-white p-10 items-center justify-center">
-            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+            <CompareTable rows={rows} slugs={orderedSlugs} withSlot={withSlot} gridStyle={gridStyle} />
           </div>
         )}
       </CompareDiffProvider>
 
+      {/* Com 2 ténis, no telemóvel o botão para juntar um terceiro fica
+          no fim da comparação. */}
+      {ordered.length === 2 && <div className="mt-8">{mobilePicker}</div>}
+
+      {/* Antes era um cartão com ícone num círculo cinzento; agora é só uma
+          linha de texto com o link. */}
       {ordered.length > 1 && (
-        <div className="mt-6">
-          <div className="rounded-none border border-gray-200 bg-white p-6 flex items-center gap-4 flex-wrap">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500" aria-hidden="true">
-                <path
-                  d="M17 2l4 4-4 4M3 12v-2a4 4 0 014-4h14M7 22l-4-4 4-4M21 12v2a4 4 0 01-4 4H3"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-[160px]">
-              <h3 className="font-semibold text-gray-900">Trocar um modelo</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Remove um dos produtos e escolhe outro no catálogo.</p>
-            </div>
-            <Link
-              href="/catalogo"
-              className="inline-flex items-center justify-center rounded-none border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 hover:border-gray-400 transition-colors"
-            >
-              Escolher no catálogo
-            </Link>
-          </div>
-        </div>
+        <p className="mt-8 text-sm leading-relaxed text-[#5C6770]">
+          Para trocar um modelo, remove-o e escolhe outro.{' '}
+          <Link
+            href="/catalogo"
+            className="font-semibold text-[#17232B] underline decoration-[#17232B]/30 underline-offset-4 transition-colors hover:decoration-[#17232B]"
+          >
+            Ver catálogo
+          </Link>
+        </p>
       )}
     </main>
   )
