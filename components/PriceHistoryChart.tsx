@@ -38,6 +38,27 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
   const hasAnyData = data.length > 0
   const hasEnoughForRange = filtered.length >= 2
 
+  // Escala vertical honesta (antes era "auto" e uma diferença de 1 cêntimo,
+  // 119,99 € -> 120,00 €, ocupava a altura toda do gráfico, parecendo uma
+  // grande oscilação; o eixo também repetia valores como "120,00 €" duas
+  // vezes). Agora:
+  // - a escala tem sempre uma folga de pelo menos 5% do preço acima e
+  //   abaixo, em euros inteiros - variações pequenas parecem pequenas;
+  // - o eixo mostra só 3 valores, todos diferentes (mínimo, meio, máximo
+  //   da escala). O valor exato de cada dia continua no tooltip.
+  const yAxis = useMemo(() => {
+    if (filtered.length === 0) return null
+    const prices = filtered.map((p) => p.price)
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    const pad = Math.max((max - min) * 0.25, max * 0.05, 1)
+    const lo = Math.max(0, Math.floor(min - pad))
+    const hi = Math.ceil(max + pad)
+    const mid = Math.round((lo + hi) / 2)
+    const ticks = Array.from(new Set([lo, mid, hi]))
+    return { domain: [lo, hi] as [number, number], ticks }
+  }, [filtered])
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
@@ -66,19 +87,32 @@ export default function PriceHistoryChart({ data }: { data: PricePoint[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={filtered} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="date" tickFormatter={formatAxisDate} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+              <XAxis dataKey="date" tickFormatter={formatAxisDate} tick={{ fontSize: 12, fill: '#5C6770' }} />
               <YAxis
                 width={70}
                 tickFormatter={(v) => formatPrice(v)}
-                tick={{ fontSize: 12, fill: '#9ca3af' }}
-                domain={['auto', 'auto']}
+                tick={{ fontSize: 12, fill: '#5C6770' }}
+                domain={yAxis?.domain ?? ['auto', 'auto']}
+                ticks={yAxis?.ticks}
+                allowDataOverflow={false}
               />
               <Tooltip
                 formatter={(value) => [formatPrice(Number(value)), 'Melhor preço']}
                 labelFormatter={(label) => formatFullDate(String(label))}
               />
-              {/* Linha no verde do site (#123F3A) em vez do laranja antigo. */}
-              <Line type="monotone" dataKey="price" stroke="#123F3A" strokeWidth={2} dot={{ r: 3 }} />
+              {/* Linha em degraus ("stepAfter"): o preço mantém-se igual até à
+                  verificação seguinte que o encontra diferente. A linha curva
+                  anterior ("monotone") desenhava subidas e descidas entre os
+                  pontos que nunca aconteceram. Verde do site (#123F3A). */}
+              <Line
+                type="stepAfter"
+                dataKey="price"
+                stroke="#123F3A"
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#123F3A', stroke: '#123F3A' }}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
