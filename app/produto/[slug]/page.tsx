@@ -495,11 +495,9 @@ export default async function ProdutoPage({
         />
       )}
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center">
-
-        <div className="h-72 w-[36rem] rounded-full bg-orange-100/40 blur-3xl" />
-
-      </div>
+      {/* Saiu a mancha laranja desfocada que ficava por trás do topo da
+          página (efeito típico de "site gerado por IA" e cor fora da paleta
+          atual do site). */}
 
 
 
@@ -579,7 +577,7 @@ export default async function ProdutoPage({
 
               {savingsResult && (
 
-                <div className="inline-flex items-center gap-1.5 bg-emerald-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg mt-4 shadow-[0_2px_8px_rgba(5,150,105,0.28)]">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
+                <div className="mt-4 inline-flex items-center rounded-full bg-[#E8F2EF] px-3 py-1.5 text-sm font-medium text-[#123F3A]">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
 
               )}
 
@@ -610,7 +608,7 @@ export default async function ProdutoPage({
       {specs.length > 0 && (
         <div className="mt-10">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalhes do produto</h2>
-          <div className="border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="border border-[#17232B]/10 rounded-none overflow-hidden">
             <table className="w-full border-collapse">
               <tbody>
                 {specs.map((spec, index) => (
