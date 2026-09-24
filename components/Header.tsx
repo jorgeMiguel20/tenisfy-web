@@ -1,8 +1,9 @@
 // components/Header.tsx
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import CompareNavLink from './CompareNavLink'
 import FavoritesNavLink from './FavoritesNavLink'
 import HeaderSearchButton from './HeaderSearchButton'
@@ -24,12 +25,125 @@ const NAV_LINKS: { label: string; value: GenderGroupValue }[] = [
 const NAV_LINK_CLASS =
   'group relative inline-flex min-h-[44px] items-center whitespace-nowrap text-sm font-medium text-[#5C6770] transition-colors duration-200 hover:text-[#17232B] focus-visible:text-[#17232B]'
 
-const navUnderline = (
-  <span
-    aria-hidden="true"
-    className="pointer-events-none absolute inset-x-0 bottom-2 h-[2px] origin-left scale-x-0 bg-[#17232B] transition-transform duration-200 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100"
-  />
-)
+function NavUnderline({ active }: { active: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-0 bottom-2 h-[2px] origin-left bg-[#17232B] transition-transform duration-200 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100 ${
+        active ? 'scale-x-100' : 'scale-x-0'
+      }`}
+    />
+  )
+}
+
+// Secção onde a pessoa está, para o menu a marcar (pedido do Jorge, como
+// na Nike): a linha por baixo fica sempre visível no link dessa secção,
+// e não só ao passar o rato.
+// - "/catalogo?genero=homem" (e mulher/crianca) -> esse género;
+// - "/catalogo" sem género -> "marcas" (é para aí que "Marcas" leva);
+// - qualquer outra página -> nenhuma secção marcada.
+type ActiveSection = GenderGroupValue | 'marcas' | null
+
+function useActiveSection(): ActiveSection {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  if (pathname !== '/catalogo') return null
+  const genero = searchParams.get('genero')
+  const match = NAV_LINKS.find((link) => link.value === genero)
+  if (match) return match.value
+  return genero ? null : 'marcas'
+}
+
+function DesktopNav({ active }: { active: ActiveSection }) {
+  const linkClass = (isActive: boolean) =>
+    `${NAV_LINK_CLASS} ${isActive ? 'text-[#17232B]' : ''}`
+  return (
+    // No mobile, Homem/Mulher/Crianças/Marcas/Promoções vivem só dentro do
+    // menu hamburger - aqui o nav fica escondido e só aparece no desktop.
+    // prefetch=false nestes links: /catalogo é uma Server Component que não
+    // lê ?genero=/?q= no próprio servidor (quem lê é o ProductGrid, no
+    // cliente) - o Next.js estava a pré-carregar o mesmo payload várias
+    // vezes, gastando dados à toa sem ganho real de velocidade.
+    <nav className="hidden sm:flex items-center gap-6">
+      <Link
+        href="/catalogo"
+        prefetch={false}
+        aria-current={active === 'marcas' ? 'page' : undefined}
+        className={linkClass(active === 'marcas')}
+      >
+        Marcas
+        <NavUnderline active={active === 'marcas'} />
+      </Link>
+      {NAV_LINKS.map((link) => (
+        <Link
+          key={link.label}
+          href={`/catalogo?genero=${link.value}`}
+          prefetch={false}
+          aria-current={active === link.value ? 'page' : undefined}
+          className={linkClass(active === link.value)}
+        >
+          {link.label}
+          <NavUnderline active={active === link.value} />
+        </Link>
+      ))}
+      <Link href="/#promocoes" className={linkClass(false)}>
+        Promoções
+        <NavUnderline active={false} />
+      </Link>
+    </nav>
+  )
+}
+
+function DesktopNavWithActive() {
+  return <DesktopNav active={useActiveSection()} />
+}
+
+// Menu do telemóvel (dentro do hamburger): a secção atual fica a verde e
+// a meio-negrito.
+function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: () => void }) {
+  const linkClass = (isActive: boolean) =>
+    `py-2.5 text-sm transition-colors hover:text-[#123F3A] ${
+      isActive ? 'font-semibold text-[#123F3A]' : 'font-medium text-[#17232B]'
+    }`
+  return (
+    <nav className="flex flex-col">
+      {/* "Ver catálogo" - antes era um botão flutuante sobre a página
+          (tapava conteúdo); o Jorge pediu para o mover para aqui, com o
+          mesmo estilo simples dos restantes links. */}
+      <Link
+        href="/catalogo"
+        prefetch={false}
+        onClick={onNavigate}
+        aria-current={active === 'marcas' ? 'page' : undefined}
+        className={linkClass(active === 'marcas')}
+      >
+        Ver catálogo
+      </Link>
+      {NAV_LINKS.map((link) => (
+        <Link
+          key={link.label}
+          href={`/catalogo?genero=${link.value}`}
+          prefetch={false}
+          onClick={onNavigate}
+          aria-current={active === link.value ? 'page' : undefined}
+          className={linkClass(active === link.value)}
+        >
+          {link.label}
+        </Link>
+      ))}
+      <Link href="/catalogo" prefetch={false} onClick={onNavigate} className={linkClass(false)}>
+        Marcas
+      </Link>
+      <Link href="/#promocoes" onClick={onNavigate} className={linkClass(false)}>
+        Promoções
+      </Link>
+    </nav>
+  )
+}
+
+function MobileNavWithActive({ onNavigate }: { onNavigate: () => void }) {
+  return <MobileNav active={useActiveSection()} onNavigate={onNavigate} />
+}
 
 export default function Header() {
   // Ao clicar na lupa (ou no ícone de câmara do Hero / botão "Experimenta a
@@ -83,44 +197,13 @@ export default function Header() {
           </>
         ) : (
           <>
-            {/* No mobile, Homem/Mulher/Crianças/Marcas/Promoções vivem só
-                dentro do menu hamburger (ver painel abaixo) - aqui o nav
-                fica escondido e só aparece no desktop. */}
-            <nav className="hidden sm:flex items-center gap-6">
-              {/* prefetch=false nestes links: /catalogo é uma Server Component
-                  que não lê ?genero=/?q= no próprio servidor (quem lê é o
-                  ProductGrid, no cliente, via useSearchParams) - por isso o
-                  Next.js estava a pré-carregar o mesmo payload do servidor
-                  várias vezes (uma por cada link "Marcas"/Homem/Mulher/
-                  Crianças), gastando dados à toa em ligações móveis mais
-                  fracas sem qualquer ganho de velocidade real. */}
-              <Link
-                href="/catalogo"
-                prefetch={false}
-                className={NAV_LINK_CLASS}
-              >
-                Marcas
-                {navUnderline}
-              </Link>
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.label}
-                  href={`/catalogo?genero=${link.value}`}
-                  prefetch={false}
-                  className={NAV_LINK_CLASS}
-                >
-                  {link.label}
-                  {navUnderline}
-                </Link>
-              ))}
-              <Link
-                href="/#promocoes"
-                className={NAV_LINK_CLASS}
-              >
-                Promoções
-                {navUnderline}
-              </Link>
-            </nav>
+            {/* Links do desktop com a secção atual marcada (ver DesktopNav
+                mais acima). O Suspense é obrigatório no Next.js para ler
+                o ?genero= do URL no cliente; enquanto isso não acontece,
+                mostra o mesmo menu sem nenhuma secção marcada. */}
+            <Suspense fallback={<DesktopNav active={null} />}>
+              <DesktopNavWithActive />
+            </Suspense>
 
             {/* Lupa + comparar + favorito: sempre visíveis (mobile e
                 desktop). No mobile ganham flex-1 para equilibrar o espaço
@@ -138,48 +221,9 @@ export default function Header() {
 
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-2">
-          <nav className="flex flex-col">
-            {/* "Ver catálogo" - antes era um botão flutuante sobre a página
-                (tapava conteúdo, incl. os ícones de um card vizinho no
-                mobile); o Jorge pediu para tirar o botão flutuante e mover a
-                mesma ação para aqui dentro do menu hamburger, com o mesmo
-                estilo simples dos restantes links (o destaque em pill
-                laranja ficava feio, segundo o Jorge). */}
-            <Link
-              href="/catalogo"
-              prefetch={false}
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
-            >
-              Ver catálogo
-            </Link>
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={`/catalogo?genero=${link.value}`}
-                prefetch={false}
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              href="/catalogo"
-              prefetch={false}
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
-            >
-              Marcas
-            </Link>
-            <Link
-              href="/#promocoes"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2.5 text-sm font-medium text-gray-700 hover:text-[#123F3A] transition-colors"
-            >
-              Promoções
-            </Link>
-          </nav>
+          <Suspense fallback={<MobileNav active={null} onNavigate={() => setMobileMenuOpen(false)} />}>
+            <MobileNavWithActive onNavigate={() => setMobileMenuOpen(false)} />
+          </Suspense>
         </div>
       )}
     </header>
