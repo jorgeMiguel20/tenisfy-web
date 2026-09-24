@@ -34,7 +34,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const targets = (data ?? []).map((row: any) => ({
+  // Forma das linhas devolvidas pela consulta acima (só os campos usados).
+  type TargetRow = {
+    id: string
+    size: string | null
+    price: number
+    in_stock: boolean
+    affiliate_url: string
+    last_checked_at: string | null
+    products: { model_name: string; slug: string | null; brands: { name: string } | null } | null
+    stores: { name: string } | null
+  }
+
+  const targets = ((data ?? []) as unknown as TargetRow[]).map((row) => ({
     product_offer_id: row.id,
     product_name: `${row.products?.brands?.name ?? ''} ${row.products?.model_name ?? ''}`.trim(),
     product_slug: row.products?.slug ?? null,
