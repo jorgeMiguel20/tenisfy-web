@@ -62,7 +62,7 @@ export default async function CancelarAlertaPage({
       )}
       <Link
         href="/"
-        className="inline-block bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors"
+        className="inline-flex min-h-[44px] items-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
       >
         Ir para o Parjusto
       </Link>
