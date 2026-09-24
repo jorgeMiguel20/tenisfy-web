@@ -47,6 +47,7 @@ export default function PriceAlertButton({
   imageUrl = null,
   brandName = '',
   modelName = '',
+  label = 'Criar alerta grátis',
 }: {
   productId: string
   currentPrice: number | null
@@ -55,6 +56,8 @@ export default function PriceAlertButton({
   imageUrl?: string | null
   brandName?: string
   modelName?: string
+  // Texto do botão grande (variant "large").
+  label?: string
 }) {
   const id = useId()
   const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
@@ -106,18 +109,6 @@ export default function PriceAlertButton({
   const [durationMonths, setDurationMonths] = useState<1 | 2>(1)
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
-  // Décimo primeiro ajuste: a "seta" (dica de toque) do botão grande
-  // ("Criar alerta grátis" da homepage) só aparecia uns segundos a cada 9s,
-  // com um atraso inicial de 9s antes da primeira aparição - o Jorge pediu
-  // para deixar de ter atraso e ficar sempre visível/a animar, para chamar
-  // logo a atenção do utilizador para o botão. Antes disto usava-se um
-  // temporizador (setInterval + setTimeout) a alternar entre aparecer e
-  // desaparecer, com o objetivo de não "piscar" continuamente - esse
-  // objetivo foi substituído por este pedido mais recente do Jorge, por
-  // isso a dica fica agora sempre visível (variant "large" e ainda não
-  // aberto), sem qualquer temporizador: aparece de imediato e mantém o
-  // mesmo efeito de "pulso" (halo + seta), já contínuo (animation: infinite).
-  const showTapHint = variant === 'large' && !open
 
   useEffect(() => setMounted(true), [])
 
@@ -164,26 +155,17 @@ export default function PriceAlertButton({
 
   return (
     // inline-block (em vez de block, que ocupava a largura toda do
-    // container): assim a seta que simula um toque fica sempre encostada
-    // ao canto do botão "Criar alerta grátis" (-bottom-2 -right-3 abaixo),
-    // em vez de aparecer longe do botão, a meio do espaço vazio à direita.
+    // container): o botão fica só com a largura do próprio texto.
     <div className={`relative inline-block ${className}`}>
       {/* variant "large" (usado no PriceAlertBanner.tsx da homepage) mostra
           um botao cheio com texto, em vez do circulo pequeno so com o sino
           usado nos cards do catalogo - a logica do alerta em si (modal,
           submissao) e sempre a mesma, so muda o aspeto do botao. */}
-      {/* Pedido do Jorge: dar "vida" ao botao grande sem parecer amador -
-          nada de piscar (aparecer/desaparecer). Em vez disso, um anel de luz
-          suave que cresce e desvanece (como o aviso de notificacoes do
-          WhatsApp/Instagram) e, de vez em quando, uma seta a simular um
-          toque - nunca em continuo. So na variante "large" e so enquanto o
-          alerta ainda nao esta aberto. */}
-      {variant === 'large' && !open && (
-        <span
-          className="alert-pulse-ring pointer-events-none absolute inset-0 rounded-full bg-gray-900/10"
-          aria-hidden="true"
-        />
-      )}
+      {/* Botão grande: retângulo verde da marca, como os outros botões
+          principais da homepage ("Ver este par", "Ir para o comparador"),
+          sem anel a pulsar nem seta a simular um toque - esses efeitos
+          davam ao botão o ar de modelo genérico que se quis tirar do site
+          (pedido do Jorge: "não pode parecer que foi criado com IA"). */}
       <button
         type="button"
         onClick={(e) => {
@@ -194,8 +176,8 @@ export default function PriceAlertButton({
         aria-label="Avisa-me quando o preço descer"
         className={
           variant === 'large'
-            ? `relative inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors ${
-                open ? 'bg-gray-700 text-white' : 'bg-gray-900 text-white hover:bg-gray-800'
+            ? `relative inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-none px-5 text-sm font-semibold transition-colors ${
+                open ? 'bg-[#0d2f2b] text-white' : 'bg-[#123F3A] text-white hover:bg-[#0d2f2b]'
               }`
             : `inline-flex items-center justify-center rounded-full shadow-sm p-2 transition-colors ${
                 open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'
@@ -205,46 +187,8 @@ export default function PriceAlertButton({
         <BellIcon
           className={`h-4 w-4 ${variant === 'large' || open ? 'text-white' : 'text-gray-400'}`}
         />
-        {variant === 'large' && 'Criar alerta grátis'}
+        {variant === 'large' && label}
       </button>
-      {variant === 'large' && (
-        <span
-          className={`pointer-events-none absolute -bottom-2 -right-3 transition-opacity duration-700 ${
-            showTapHint ? 'opacity-100' : 'opacity-0'
-          }`}
-          aria-hidden="true"
-        >
-          <span className="relative flex h-6 w-6 items-center justify-center">
-            <span className="alert-tap-ripple absolute inline-flex h-full w-full rounded-full bg-orange-400/50" />
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="white"
-              stroke="#111827"
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-              className="relative drop-shadow-sm"
-            >
-              <path d="M3 2.5L19 9.5L11.5 11L9 19.5L3 2.5Z" />
-            </svg>
-          </span>
-        </span>
-      )}
-      {variant === 'large' && (
-        <style>{`
-          @keyframes alertPulseRing {
-            0% { transform: scale(1); opacity: 0.55; }
-            70%, 100% { transform: scale(1.4); opacity: 0; }
-          }
-          .alert-pulse-ring { animation: alertPulseRing 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-          @keyframes alertTapRipple {
-            0% { transform: scale(0.7); opacity: 0.6; }
-            100% { transform: scale(1.9); opacity: 0; }
-          }
-          .alert-tap-ripple { animation: alertTapRipple 1.1s ease-out infinite; }
-        `}</style>
-      )}
 
       {/* Estilo do slider de "Valor máximo desejado" - input nativo type=range
           com aparencia customizada (faixa preenchida a preto ate ao ponto
@@ -293,13 +237,15 @@ export default function PriceAlertButton({
           onClick={close}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         >
-          <div onClick={stopNav} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+          {/* Janela com cantos retos e sem sombra (o fundo escurecido já a
+              separa da página) - mesmas regras visuais do resto do site. */}
+          <div onClick={stopNav} className="w-full max-w-sm rounded-none bg-white p-5">
             {/* Cabeçalho com o produto (foto/marca/nome/preço atual) - pedido
                 do Jorge para o modal deixar claro para que ténis é o alerta,
                 em vez de aparecer "às cegas". */}
             {hasHeaderInfo && (
               <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-50">
+                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-none bg-[#F9FBFC]">
                   {imageUrl && (
                     <Image src={imageUrl} alt={modelName} fill sizes="48px" className="object-cover" />
                   )}
@@ -322,7 +268,7 @@ export default function PriceAlertButton({
                 <button
                   type="button"
                   onClick={close}
-                  className="mt-3 w-full bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
+                  className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-none bg-[#123F3A] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
                 >
                   Fechar
                 </button>
@@ -357,7 +303,7 @@ export default function PriceAlertButton({
                           e.currentTarget.blur()
                         }
                       }}
-                      className="w-14 rounded-md border border-gray-300 bg-white px-1.5 py-1 text-sm font-bold text-gray-900 text-center focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                      className="w-14 rounded-none border border-gray-300 bg-white px-1.5 py-1 text-sm font-bold text-gray-900 text-center focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                       aria-label="Valor máximo desejado, em euros"
                     />
                     <span className="text-sm font-bold text-gray-900">€</span>
@@ -388,7 +334,7 @@ export default function PriceAlertButton({
                     <button
                       type="button"
                       onClick={() => setDurationMonths(1)}
-                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                      className={`flex-1 rounded-none border px-3 py-2 text-xs font-semibold transition-colors ${
                         durationMonths === 1
                           ? 'border-gray-900 bg-gray-900 text-white'
                           : 'border-gray-200 bg-white text-gray-900'
@@ -399,7 +345,7 @@ export default function PriceAlertButton({
                     <button
                       type="button"
                       onClick={() => setDurationMonths(2)}
-                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                      className={`flex-1 rounded-none border px-3 py-2 text-xs font-semibold transition-colors ${
                         durationMonths === 2
                           ? 'border-gray-900 bg-gray-900 text-white'
                           : 'border-gray-200 bg-white text-gray-900'
@@ -419,7 +365,7 @@ export default function PriceAlertButton({
                     placeholder="o-teu-email@exemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                    className="mt-2 w-full rounded-none border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#17232B]"
                   />
                 </div>
 
@@ -429,11 +375,11 @@ export default function PriceAlertButton({
                   <button
                     type="submit"
                     disabled={status === 'loading'}
-                    className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+                    className="inline-flex min-h-[44px] items-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b] disabled:opacity-50"
                   >
                     {status === 'loading' ? 'A criar...' : 'Criar alerta'}
                   </button>
-                  <button type="button" onClick={close} className="text-sm text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={close} className="text-sm text-[#5C6770] hover:text-[#17232B]">
                     Cancelar
                   </button>
                 </div>

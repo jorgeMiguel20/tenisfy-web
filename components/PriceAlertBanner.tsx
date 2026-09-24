@@ -1,185 +1,136 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import Image from 'next/image'
+// components/PriceAlertBanner.tsx
+import Link from 'next/link'
 import PriceAlertButton from './PriceAlertButton'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
 
-// Redesign pedido pelo Jorge (feito primeiro no Claude Design, aqui adaptado
-// ao componente real): passa de bloco escuro para um cartao claro e
-// profissional, com a funcionalidade de "preco alvo" explicada por uma
-// pequena animacao em loop de 3 passos, em vez de texto solto. O botao
-// "Criar alerta gratis" continua a ser o PriceAlertButton real (mesma logica
-// de sempre) - a animacao a direita e so uma demonstracao visual do
-// conceito, por isso o "preco alvo" que aparece nela e um exemplo ilustrativo
-// (~10% abaixo do preco atual), nunca um valor inventado apresentado como
-// real.
-function BellIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-    </svg>
-  )
+// Secção "Tu defines o preço. Nós avisamos quando descer." da homepage.
+//
+// Redesenho (pedido do Jorge, com mockup próprio de referência e as regras
+// visuais combinadas para não parecer "gerado por IA"):
+// - Deixou de ser um cartão com cantos redondos e sombra dentro da página:
+//   fundo branco, cantos retos, linhas de 1px - como o comparador.
+// - Saíram a animação de 3 passos, o sino amarelo, as pílulas "100% grátis"
+//   / "24/7", os pontos de carrossel e o email de exemplo: muitos elementos
+//   de "interface falsa" a competir entre si.
+// - À direita fica uma foto real do ténis usado como exemplo e, por baixo,
+//   uma linha simples com o modelo, o preço atual (real, da base de dados)
+//   e um preço alvo de EXEMPLO (10% abaixo) - assinalado como exemplo, nunca
+//   apresentado como um alerta real de alguém.
+// - Texto corrigido para dizer só o que é verdade: os preços são
+//   verificados todos os dias (não "24/7") e o email chega quando uma
+//   verificação encontra um preço abaixo do valor escolhido.
+//
+// A foto só é usada quando é mesmo do produto mostrado (ver app/page.tsx,
+// "lifestyleImage"); se o produto do exemplo mudar, cai para a foto de
+// catálogo desse produto.
+const LINE = 'border-[#17232B]/10'
+const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
+
+export type AlertLifestyleImage = {
+  src: string
+  srcSet: string
 }
 
-export default function PriceAlertBanner({ product }: { product: ProductWithPrice | null }) {
-  const [step, setStep] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => setStep((s) => (s + 1) % 3), 3200)
-    return () => clearInterval(interval)
-  }, [])
-
+export default function PriceAlertBanner({
+  product,
+  lifestyleImage = null,
+}: {
+  product: ProductWithPrice | null
+  lifestyleImage?: AlertLifestyleImage | null
+}) {
   if (!product || product.lowest_price == null) return null
 
-  const image = product.image_url ?? product.image_urls?.[0] ?? null
+  const catalogImage = product.image_url ?? product.image_urls?.[0] ?? null
   const current = product.lowest_price
   const target = Math.max(1, Math.round(current * 0.9 * 100) / 100)
   const brand = product.brands?.name ?? ''
+  const name = `${brand} ${product.model_name}`.trim()
 
   return (
-    <section className="mb-12">
-      <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-10">
-        <div className="grid items-center gap-10 sm:grid-cols-2">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-gray-900" />
-              Alerta de preço inteligente
-            </span>
-            {/* Escala de títulos comum a todas as secções da homepage (32px no
-                telemóvel, 44px no desktop, entrelinha 1,05, letras ligeiramente
-                mais juntas, linhas equilibradas) - pedido do Jorge para os
-                títulos deixarem de ter 3 tamanhos diferentes (30/36/44px). */}
-            <h2 className="font-display mt-4 text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] text-balance">
-              {/* Cada frase numa linha própria (block) com text-balance - com
-                  <br /> o equilíbrio de linhas não se aplicava e sobrava
-                  "descer." sozinho numa linha. 2.ª frase em #5C6770 (era
-                  gray-400, 2,46:1 de contraste - abaixo do mínimo mesmo
-                  para texto grande). */}
-              <span className="block text-balance text-gray-900">Tu defines o preço.</span>
-              <span className="block text-balance text-[#5C6770]">Nós avisamos quando descer.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-sm text-gray-600">
-              Define o teu preço limite para qualquer ténis do catálogo e recebe um email
-              automático assim que uma loja parceira atingir o valor que pretendes.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <span className="rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-700">
-                100% grátis
-              </span>
-              <span className="rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-700">
-                24/7 lojas parceiras monitorizadas
-              </span>
-            </div>
-            <div className="mt-7">
-              <PriceAlertButton
-                  productId={product.id}
-                  currentPrice={product.lowest_price}
-                  variant="large"
-                  imageUrl={image}
-                  brandName={brand}
-                  modelName={product.model_name}
-                />
-            </div>
+    <section className="py-16 sm:px-6 sm:py-24">
+      <div className="grid gap-10 sm:grid-cols-12 sm:items-center sm:gap-12">
+        <div className="sm:col-span-5">
+          <p className={LABEL}>Alerta de preço</p>
+          <h2 className="mt-2 font-display text-[32px] sm:text-[44px] font-bold leading-[1.05] tracking-[-0.02em]">
+            <span className="block text-balance text-[#17232B]">Tu defines o preço.</span>
+            <span className="block text-balance text-[#5C6770]">Nós avisamos quando descer.</span>
+          </h2>
+          {/* Texto curto (como nas páginas de referência do Jorge: Nike, BSTN)
+              e só com o que é verdade: os preços são verificados uma vez por
+              dia, não "24/7". */}
+          <p className="mt-3 max-w-[24rem] text-base leading-relaxed text-[#5C6770]">
+            Escolhe quanto queres pagar. Verificamos as lojas todos os dias e avisamos-te por email
+            quando o preço baixar.
+          </p>
+          {/* O botão cria o alerta para o ténis mostrado à direita (é esse o
+              produto que o PriceAlertButton recebe) - por isso o texto diz
+              "este par", em vez de prometer "qualquer ténis". Para outro
+              modelo, o link ao lado leva ao catálogo, onde cada ténis tem o
+              seu próprio botão de alerta. */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <PriceAlertButton
+              productId={product.id}
+              currentPrice={product.lowest_price}
+              variant="large"
+              imageUrl={catalogImage}
+              brandName={brand}
+              modelName={product.model_name}
+              label="Criar alerta para este par"
+            />
+            <Link
+              href="/catalogo"
+              prefetch={false}
+              className="text-sm font-semibold text-[#17232B] underline decoration-[#17232B]/30 underline-offset-4 transition-colors hover:decoration-[#17232B]"
+            >
+              Escolher outro ténis
+            </Link>
           </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
-            <div className="relative h-[300px] sm:h-[280px]">
-              {/* Passo 1: escolher o preco alvo (exemplo ilustrativo, nao um valor real gravado) */}
-              <div
-                className="absolute inset-0 p-6 transition-opacity duration-700"
-                style={{ opacity: step === 0 ? 1 : 0 }}
-                aria-hidden={step !== 0}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50">
-                    {image && (
-                      <Image src={image} alt={product.model_name} fill sizes="56px" className="object-cover" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                      {brand}
-                    </p>
-                    <p className="truncate text-sm font-semibold text-gray-900">{product.model_name}</p>
-                    <p className="text-xs text-gray-500">Preço atual {formatPrice(current)}</p>
-                  </div>
-                </div>
-                <p className="mt-5 text-xs font-medium text-gray-500">Avisar-me abaixo de</p>
-                <div className="mt-1 rounded-xl border border-gray-200 px-4 py-3 text-2xl font-bold text-gray-900">
-                  {formatPrice(target)}
-                </div>
-                <div className="relative mt-4 h-1.5 rounded-full bg-gray-100">
-                  <div className="absolute inset-y-0 left-0 rounded-full bg-gray-900" style={{ width: '75%' }} />
-                  <div
-                    className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-gray-900 bg-white"
-                    style={{ left: 'calc(75% - 7px)' }}
-                  />
-                </div>
-              </div>
-
-              {/* Passo 2: alerta ativado */}
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700"
-                style={{ opacity: step === 1 ? 1 : 0 }}
-                aria-hidden={step !== 1}
-              >
-                <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-50 text-yellow-500">
-                  <BellIcon className="h-5 w-5" />
-                </span>
-                <p className="text-lg font-bold text-gray-900">Alerta ativado!</p>
-                <p className="mt-2 max-w-[240px] text-xs text-gray-500">
-                  Vamos monitorizar o {brand} {product.model_name} nas lojas parceiras e avisar-te abaixo de{' '}
-                  {formatPrice(target)}.
-                </p>
-                <span className="mt-3 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-gray-600">
-                  A monitorizar 24/7
-                </span>
-              </div>
-
-              {/* Passo 3: exemplo do email que chega quando o preco desce */}
-              <div
-                className="absolute inset-0 p-6 transition-opacity duration-700"
-                style={{ opacity: step === 2 ? 1 : 0 }}
-                aria-hidden={step !== 2}
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Novo email</p>
-                <div className="mt-3 flex items-start gap-3 rounded-xl border border-gray-100 p-3">
-                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">
-                    <BellIcon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-gray-900">
-                      Preço desceu para {formatPrice(target)}!
-                    </p>
-                    <p className="text-[11px] text-gray-400">alertas@parjusto.pt · agora</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-xs text-gray-600">
-                  O {brand} {product.model_name} atingiu o teu preço alvo numa loja parceira.
-                </p>
-                <p className="mt-3 text-xl font-bold text-gray-900">
-                  {formatPrice(target)}{' '}
-                  <span className="text-sm font-normal text-gray-400 line-through">{formatPrice(current)}</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between px-6 pb-5">
-              <div className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${i === step ? 'bg-gray-900' : 'bg-gray-200'}`}
-                  />
-                ))}
-              </div>
-              <p className="text-[11px] text-gray-400">Sem spam. Cancela o alerta num clique.</p>
-            </div>
-          </div>
+          {/* Só o que é verdade: não é preciso conta (só o email) e o alerta
+              termina sozinho ao fim de 1 ou 2 meses (escolha feita no próprio
+              alerta - ver PriceAlertButton.tsx / priceAlertActions.ts). */}
+          <p className="mt-4 text-sm text-[#5C6770]">Grátis e sem registo. O alerta termina sozinho ao fim de 1 ou 2 meses.</p>
         </div>
+
+        <figure className="sm:col-span-7">
+          <div className="relative aspect-[3/2] w-full overflow-hidden rounded-none bg-[#F9FBFC]">
+            {lifestyleImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={lifestyleImage.src}
+                srcSet={lifestyleImage.srcSet}
+                sizes="(max-width: 640px) 100vw, 58vw"
+                alt={name}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : catalogImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={catalogImage}
+                alt={name}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            ) : null}
+          </div>
+          {/* Linha de exemplo: modelo real, preço atual real e um preço alvo
+              de exemplo (10% abaixo). */}
+          <figcaption className={`grid grid-cols-2 border-x border-b sm:grid-cols-[1.4fr_1fr_1fr] ${LINE}`}>
+            <div className={`col-span-2 border-b px-4 py-4 sm:col-span-1 sm:border-b-0 sm:border-r sm:px-6 sm:py-5 ${LINE}`}>
+              <p className={LABEL}>Exemplo · {brand}</p>
+              <p className="mt-1 text-[15px] font-medium leading-snug text-[#17232B]">{product.model_name}</p>
+            </div>
+            <div className={`border-r px-4 py-4 sm:px-6 sm:py-5 ${LINE}`}>
+              <p className={LABEL}>Preço atual</p>
+              <p className="mt-1 text-xl font-bold tabular-nums text-[#17232B]">{formatPrice(current)}</p>
+            </div>
+            <div className="px-4 py-4 sm:px-6 sm:py-5">
+              <p className={LABEL}>Avisar abaixo de</p>
+              <p className="mt-1 text-xl font-bold tabular-nums text-[#123F3A]">{formatPrice(target)}</p>
+            </div>
+          </figcaption>
+        </figure>
       </div>
     </section>
   )
