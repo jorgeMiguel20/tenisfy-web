@@ -14,12 +14,11 @@ import PesquisaPorFotoButton from './PesquisaPorFotoButton'
 // - Foto do lado esquerdo no computador (o comparador e o alerta têm a foto
 //   à direita), para as secções alternarem em vez de se repetirem. No
 //   telemóvel o texto vem primeiro, como nas outras secções.
-// - Foto nova enviada pelo Jorge: é a versão inteira e com mais resolução
-//   da foto que já estava aqui. Corte 3:2 (igual ao alerta) com os ténis
-//   verdadeiros desfocados em cima e a foto deles no ecrã do telemóvel -
-//   conta a funcionalidade sem precisar de texto. O corte deixa de fora a
-//   barra da câmara em polaco ("WIDEO / ZDJĘCIE") que aparece mais abaixo
-//   na foto original.
+// - Foto escolhida pelo Jorge (setembro de 2026) para acertar o estilo das
+//   fotos da homepage: luz natural e clara, mãos a fotografar um par de
+//   ténis com o telemóvel e os ténis visíveis no ecrã - conta a
+//   funcionalidade sem precisar de texto, sem texto da câmara noutra
+//   língua. Formato 3:2 (igual ao alerta), em 800 e 1600px.
 // - Sem sombra e sem o escurecimento preto em baixo (tapava os ténis no
 //   ecrã do telemóvel e não há texto por cima da foto).
 // - A barra de "scanner" animada fica (pedido anterior do Jorge), mas mais
@@ -52,8 +51,8 @@ export default function PesquisaPorFoto() {
         <div className="relative aspect-[3/2] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:order-1 sm:col-span-7">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/marketing/pesquisa-foto-1366.jpg"
-            srcSet="/marketing/pesquisa-foto-800.jpg 800w, /marketing/pesquisa-foto-1366.jpg 1366w"
+            src="/marketing/pesquisa-foto-v2-1600.jpg"
+            srcSet="/marketing/pesquisa-foto-v2-800.jpg 800w, /marketing/pesquisa-foto-v2-1600.jpg 1600w"
             sizes="(max-width: 640px) 100vw, 58vw"
             alt="Telemóvel a fotografar um par de ténis"
             loading="lazy"
