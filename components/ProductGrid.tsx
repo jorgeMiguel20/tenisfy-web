@@ -90,7 +90,7 @@ function priceBoundsFromProducts(products: ProductWithPrice[]) {
 
 function sidebarItemClass(active: boolean) {
   return `flex items-center gap-2.5 px-3 py-2 rounded-none text-sm font-medium text-left transition-colors ${
-    active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
+    active ? 'bg-[#123F3A] text-white' : 'text-[#5C6770] hover:bg-[#F9FBFC] hover:text-[#17232B]'
   }`
 }
 
@@ -148,7 +148,7 @@ function DesktopGridViewToggle({
           aria-label={`Ver em grelha de ${cols} colunas`}
           aria-pressed={value === cols}
           className={`flex items-center justify-center h-7 w-7 rounded-none transition-colors ${
-            value === cols ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'
+            value === cols ? 'bg-[#17232B] text-white' : 'text-[#5C6770] hover:text-[#17232B]'
           }`}
         >
           <GridColumnsIcon cols={cols} className="h-4 w-4" />
@@ -371,7 +371,7 @@ function PriceRangeSlider({
       <div className="relative h-7">
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-none bg-gray-200" />
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-none bg-gray-900"
+          className="absolute top-1/2 -translate-y-1/2 h-1 rounded-none bg-[#123F3A]"
           style={{ left: `${leftPct}%`, width: `${Math.max(rightPct - leftPct, 0)}%` }}
         />
         <input
@@ -898,7 +898,7 @@ export default function ProductGrid({
         type="button"
         onClick={chip.onRemove}
         aria-label={`Remover filtro ${chip.label}`}
-        className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors"
+        className="inline-flex items-center gap-1.5 bg-[#17232B] hover:bg-[#17232B]/85 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors"
       >
         {chip.label}
         <span aria-hidden="true" className="text-gray-300">×</span>
@@ -926,7 +926,7 @@ export default function ProductGrid({
         <button
           type="button"
           onClick={openDrawer}
-          className="inline-flex items-center gap-2 bg-gray-900 text-white rounded-none px-4 py-2.5 text-sm font-medium hover:bg-gray-700 transition-colors shrink-0"
+          className="inline-flex min-h-[44px] items-center gap-2 bg-[#17232B] text-white rounded-none px-4 text-sm font-medium hover:bg-[#17232B]/85 transition-colors shrink-0"
         >
           <FilterIcon className="h-4 w-4" />
           Filtros{hasActiveFilters ? ` (${activeChips.length})` : ''}
@@ -1033,14 +1033,14 @@ export default function ProductGrid({
             <button
               type="button"
               onClick={clearDraftFilters}
-              className="flex-1 text-sm font-medium text-red-600 hover:text-red-700 transition-colors py-2.5"
+              className="flex-1 min-h-[44px] text-sm font-medium text-[#5C6770] underline decoration-[#5C6770]/40 underline-offset-4 hover:text-[#17232B] transition-colors"
             >
               Limpar filtros
             </button>
             <button
               type="button"
               onClick={applyDraftFilters}
-              className="flex-1 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold py-2.5 rounded-none transition-colors"
+              className="flex-1 min-h-[44px] bg-[#123F3A] hover:bg-[#0d2f2b] text-white text-sm font-semibold rounded-none transition-colors"
             >
               Aplicar filtros
             </button>

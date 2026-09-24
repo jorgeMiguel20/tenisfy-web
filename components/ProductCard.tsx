@@ -81,7 +81,7 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           object-cover cortar esse espaco vazio em cima/baixo em vez dos
           lados, e o tenis fica maior. */}
       <div
-        className="relative aspect-[16/10] bg-gray-50 overflow-hidden"
+        className="relative aspect-[16/10] bg-[#F9FBFC] overflow-hidden"
         onTouchStart={photos.length > 1 ? handleTouchStart : undefined}
         onTouchEnd={photos.length > 1 ? handleTouchEnd : undefined}
       >
