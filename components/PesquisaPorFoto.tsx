@@ -34,7 +34,10 @@ export default function PesquisaPorFoto() {
         <PesquisaPorFotoButton />
       </div>
 
-      <div className="relative rounded-none overflow-hidden aspect-[4/3] shadow-lg">
+      {/* Sem sombra (regra visual combinada com o Jorge: nada de sombras,
+          no máximo linhas de 1px) - a foto assenta direto no fundo, como
+          no comparador e no alerta de preço. */}
+      <div className="relative rounded-none overflow-hidden aspect-[4/3]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/marketing/photo-search-bg.jpg"

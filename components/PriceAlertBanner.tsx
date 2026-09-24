@@ -90,6 +90,7 @@ export default function PriceAlertBanner({
               brandName={brand}
               modelName={product.model_name}
               label="Criar alerta para este par"
+              initialTarget={target}
             />
             <Link
               href="/catalogo"

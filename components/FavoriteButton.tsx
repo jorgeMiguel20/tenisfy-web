@@ -23,7 +23,10 @@ export default function FavoriteButton({
       }}
       aria-pressed={active}
       aria-label={active ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-      className={`inline-flex items-center justify-center rounded-full bg-white/90 shadow-sm p-2 hover:bg-white transition-colors ${className}`}
+      // Sem sombra (regra visual: nada de sombras). Em vez dela, uma linha
+      // de 1px na cor única das linhas do site, para o círculo continuar
+      // visível sobre fotos de fundo branco.
+      className={`inline-flex items-center justify-center rounded-full border border-[#17232B]/10 bg-white/90 p-2 hover:bg-white transition-colors ${className}`}
     >
       <svg
         viewBox="0 0 24 24"

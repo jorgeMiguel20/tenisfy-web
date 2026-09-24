@@ -48,6 +48,7 @@ export default function PriceAlertButton({
   brandName = '',
   modelName = '',
   label = 'Criar alerta grátis',
+  initialTarget,
 }: {
   productId: string
   currentPrice: number | null
@@ -58,6 +59,12 @@ export default function PriceAlertButton({
   modelName?: string
   // Texto do botão grande (variant "large").
   label?: string
+  // Valor com que o "Valor máximo desejado" abre. Sem ele, abre em 10%
+  // abaixo do preço atual. O cartão da homepage (PriceAlertBanner.tsx)
+  // passa o mesmo preço alvo de exemplo que mostra (99,99 €), que aqui é
+  // arredondado a euros inteiros (100 €), para o cartão e o modal baterem
+  // certo (pedido do Jorge).
+  initialTarget?: number
 }) {
   const id = useId()
   const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
@@ -73,7 +80,11 @@ export default function PriceAlertButton({
   const sliderMin = currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.5)) : 1
   const sliderMax = currentPrice != null ? Math.max(sliderMin + 1, Math.round(currentPrice * 0.99)) : 100
   const [targetPrice, setTargetPrice] = useState(() =>
-    currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.9)) : 50
+    initialTarget != null && initialTarget > 0
+      ? Math.max(1, Math.round(initialTarget))
+      : currentPrice != null
+        ? Math.max(1, Math.round(currentPrice * 0.9))
+        : 50
   )
   // Campo de texto para o utilizador poder escrever o valor diretamente,
   // além de arrastar o slider (pedido do Jorge: "quero que exista também a
