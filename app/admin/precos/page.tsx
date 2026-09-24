@@ -43,7 +43,26 @@ async function getProposals() {
   const proposals: ProposalRow[] = []
   const attention: AttentionRow[] = []
 
-  for (const row of data as any[]) {
+  // Forma das linhas devolvidas pela consulta acima (só os campos usados).
+  type ProposalDbRow = {
+    id: string
+    product_offer_id: string
+    checked_price: number | null
+    checked_available: boolean | null
+    previous_price: number
+    previous_in_stock: boolean
+    notes: string | null
+    needs_attention: boolean
+    first_flagged_at: string
+    product_offers: {
+      size: string | null
+      affiliate_url: string | null
+      products: { model_name: string; brands: { name: string } | null } | null
+      stores: { name: string } | null
+    } | null
+  }
+
+  for (const row of data as unknown as ProposalDbRow[]) {
     const offer = row.product_offers
     const productName = `${offer?.products?.brands?.name ?? ''} ${offer?.products?.model_name ?? ''}`.trim()
     const storeName = offer?.stores?.name ?? 'Loja'
@@ -105,7 +124,17 @@ async function getNewSizes(): Promise<NewSizeRow[]> {
 
   if (error || !data) return []
 
-  return (data as any[]).map((row) => ({
+  type NewSizeDbRow = {
+    id: string
+    size: string
+    price: number | null
+    in_stock: boolean | null
+    url: string
+    products: { model_name: string; brands: { name: string } | null } | null
+    stores: { name: string } | null
+  }
+
+  return (data as unknown as NewSizeDbRow[]).map((row) => ({
     id: row.id,
     productName: `${row.products?.brands?.name ?? ''} ${row.products?.model_name ?? ''}`.trim(),
     storeName: row.stores?.name ?? 'Loja',

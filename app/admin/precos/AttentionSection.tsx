@@ -41,7 +41,7 @@ function AttentionCard({
   onDiscontinue: (row: AttentionRow) => void
 }) {
   return (
-    <div className="border border-orange-100 bg-orange-50/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+    <div className="border border-orange-100 bg-orange-50/40 rounded-none p-4 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <input
           type="checkbox"
@@ -73,7 +73,7 @@ function AttentionCard({
           type="button"
           disabled={isPending}
           onClick={() => onResolve(row.id)}
-          className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-full hover:bg-gray-50 disabled:opacity-40 transition-colors whitespace-nowrap"
+          className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-none hover:bg-gray-50 disabled:opacity-40 transition-colors whitespace-nowrap"
         >
           Marcar como resolvido
         </button>
@@ -212,7 +212,7 @@ export default function AttentionSection({ proposals }: { proposals: AttentionRo
             type="button"
             disabled={isPending || selected.size === 0}
             onClick={() => resolveSelected([...selected])}
-            className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-full hover:bg-gray-50 disabled:opacity-40 transition-colors"
+            className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-none hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
             Marcar selecionadas como resolvidas ({selected.size})
           </button>

@@ -31,7 +31,7 @@ export default function PriceCheckButton() {
         type="button"
         onClick={handleClick}
         disabled={status === 'loading'}
-        className="bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50"
+        className="bg-[#123F3A] text-white px-6 py-3 rounded-none text-sm font-semibold hover:bg-[#0d2f2b] transition-colors disabled:opacity-50"
       >
         {status === 'loading' ? 'A marcar...' : 'Marcar preços como verificados hoje'}
       </button>

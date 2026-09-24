@@ -112,7 +112,7 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
             type="button"
             disabled={isPending || selected.size === 0}
             onClick={() => approve([...selected])}
-            className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-full hover:bg-gray-50 disabled:opacity-40 transition-colors"
+            className="text-sm font-semibold bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-none hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
             Aprovar selecionadas ({selected.size})
           </button>
@@ -120,7 +120,7 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
             type="button"
             disabled={isPending}
             onClick={() => approve(proposals.map((p) => p.id))}
-            className="text-sm font-semibold bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-700 disabled:opacity-40 transition-colors"
+            className="text-sm font-semibold bg-[#123F3A] text-white px-4 py-2 rounded-none hover:bg-[#0d2f2b] disabled:opacity-40 transition-colors"
           >
             Aprovar tudo
           </button>
@@ -132,7 +132,7 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
       {/* Desktop/tablet: tabela com checkbox "selecionar tudo" no cabeçalho.
           Escondida em mobile (ver cards abaixo) - a tabela com 6 colunas não
           cabe numa faixa de 375-390px sem overflow horizontal. */}
-      <div className="hidden sm:block border border-gray-100 rounded-2xl overflow-hidden">
+      <div className="hidden sm:block border border-gray-100 rounded-none overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-left bg-gray-50">
@@ -200,7 +200,7 @@ export default function ProposalsSection({ proposals }: { proposals: ProposalRow
           Selecionar tudo
         </label>
         {proposals.map((p) => (
-          <div key={p.id} className="border border-gray-100 rounded-2xl p-3 flex gap-3">
+          <div key={p.id} className="border border-gray-100 rounded-none p-3 flex gap-3">
             <input
               type="checkbox"
               checked={selected.has(p.id)}
