@@ -15,7 +15,7 @@ import type { ProductWithPrice } from '@/lib/types'
 //   de "interface falsa" a competir entre si.
 // - À direita fica uma foto real do ténis usado como exemplo e, por baixo,
 //   uma linha simples com o modelo, o preço atual (real, da base de dados)
-//   e um preço alvo de EXEMPLO (10% abaixo) - assinalado como exemplo, nunca
+//   e um preço alvo de EXEMPLO (ver exampleTarget) - assinalado como exemplo, nunca
 //   apresentado como um alerta real de alguém.
 // - Texto corrigido para dizer só o que é verdade: os preços são
 //   verificados todos os dias (não "24/7") e o email chega quando uma
@@ -26,6 +26,19 @@ import type { ProductWithPrice } from '@/lib/types'
 // catálogo desse produto.
 const LINE = 'border-[#17232B]/10'
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
+
+// Preço alvo de EXEMPLO mostrado no cartão (pedido do Jorge: "abaixo de
+// 100 €"). Quem cria um alerta escolhe normalmente um valor redondo, por
+// isso, quando o preço atual está entre ~105 € e ~133 €, o exemplo passa a
+// ser 99,99 € (entre 5% e 25% abaixo - um desconto plausível, não
+// exagerado). Fora desse intervalo (se o produto do exemplo mudar), volta
+// à regra anterior: 10% abaixo do preço atual.
+const ROUND_TARGET = 99.99
+
+function exampleTarget(current: number): number {
+  if (current * 0.75 <= ROUND_TARGET && ROUND_TARGET <= current * 0.95) return ROUND_TARGET
+  return Math.max(1, Math.round(current * 0.9 * 100) / 100)
+}
 
 export type AlertLifestyleImage = {
   src: string
@@ -43,7 +56,7 @@ export default function PriceAlertBanner({
 
   const catalogImage = product.image_url ?? product.image_urls?.[0] ?? null
   const current = product.lowest_price
-  const target = Math.max(1, Math.round(current * 0.9 * 100) / 100)
+  const target = exampleTarget(current)
   const brand = product.brands?.name ?? ''
   const name = `${brand} ${product.model_name}`.trim()
 
@@ -115,7 +128,7 @@ export default function PriceAlertBanner({
             ) : null}
           </div>
           {/* Linha de exemplo: modelo real, preço atual real e um preço alvo
-              de exemplo (10% abaixo). */}
+              de exemplo (ver exampleTarget). */}
           <figcaption className={`grid grid-cols-2 border-x border-b sm:grid-cols-[1.4fr_1fr_1fr] ${LINE}`}>
             <div className={`col-span-2 border-b px-4 py-4 sm:col-span-1 sm:border-b-0 sm:border-r sm:px-6 sm:py-5 ${LINE}`}>
               <p className={LABEL}>Exemplo · {brand}</p>
