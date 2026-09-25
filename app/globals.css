@@ -84,6 +84,34 @@ body {
   animation: fade-in 0.2s ease-out;
 }
 
+/* Painel "Filtrar & Ordenar" (components/FilterDrawer.tsx): no telemóvel
+   sobe de baixo; a partir de 640px (sm) entra pela direita, como na Nike
+   e na BSTN. Sem animação para quem pediu menos movimento no sistema. */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.filter-panel {
+  animation: slide-up 0.25s ease-out;
+}
+
+@media (min-width: 640px) {
+  .filter-panel {
+    animation: slide-in-right 0.25s ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-panel {
+    animation: none;
+  }
+}
+
 /* Slider de intervalo de preço: dois <input type="range"> sobrepostos no
    mesmo espaço (ver components/ProductGrid.tsx). pointer-events fica a none
    no input inteiro e a auto só na pega, para o clique/toque num ponto
@@ -123,8 +151,7 @@ body {
   margin-top: -7px;
   border-radius: 9999px;
   background: #ffffff;
-  border: 2px solid #111827;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  border: 2px solid #17232b;
   cursor: pointer;
 }
 
@@ -134,18 +161,17 @@ body {
   height: 18px;
   border-radius: 9999px;
   background: #ffffff;
-  border: 2px solid #111827;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  border: 2px solid #17232b;
   cursor: pointer;
 }
 
 .price-range-input:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #ea580c;
+  outline: 2px solid #123f3a;
   outline-offset: 2px;
 }
 
 .price-range-input:focus-visible::-moz-range-thumb {
-  outline: 2px solid #ea580c;
+  outline: 2px solid #123f3a;
   outline-offset: 2px;
 }
 
