@@ -33,6 +33,27 @@ const GENDER_LABELS: Record<GenderGroupValue, string> = {
 
 const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Bege', 'Multicolor']
 
+// Amostra de cor ao lado do nome, no filtro "Cor" (como na Nike). Só as
+// cores de COLOR_ORDER; uma cor sem amostra aparece só com o nome.
+const COLOR_SWATCHES: Record<string, string> = {
+  Preto: '#17232B',
+  Branco: '#FFFFFF',
+  Cinzento: '#9AA3AB',
+  Azul: '#2F5DA8',
+  Vermelho: '#C8322F',
+  Verde: '#2F7A55',
+  Bege: '#D9C7A7',
+  Multicolor: 'conic-gradient(#C8322F, #E0A33A, #2F7A55, #2F5DA8, #7A4FA0, #C8322F)',
+}
+
+// Rótulo dos grupos de filtros - o mesmo estilo de rótulo do resto do site
+// (11px, maiúsculas, peso 500, espaçamento 0.08em, cinzento #5C6770).
+const FILTER_LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
+
+// Separação entre grupos dentro do painel: uma linha de 1px por baixo de
+// cada grupo (a última fica sem linha, encostada ao rodapé do painel).
+const DRAWER_GROUP = 'border-b border-[#17232B]/10 py-5 last:border-b-0'
+
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
@@ -89,7 +110,7 @@ function priceBoundsFromProducts(products: ProductWithPrice[]) {
 }
 
 function sidebarItemClass(active: boolean) {
-  return `flex items-center gap-2.5 px-3 py-2 rounded-none text-sm font-medium text-left transition-colors ${
+  return `flex min-h-[44px] items-center gap-2.5 px-3 rounded-none text-sm font-medium text-left transition-colors ${
     active ? 'bg-[#123F3A] text-white' : 'text-[#5C6770] hover:bg-[#F9FBFC] hover:text-[#17232B]'
   }`
 }
@@ -139,7 +160,7 @@ function DesktopGridViewToggle({
 }) {
   const options: DesktopGridCols[] = [3, 4, 5]
   return (
-    <div className="hidden xl:flex items-center gap-1 bg-gray-100 rounded-none p-1">
+    <div className="hidden xl:flex items-center gap-1 border border-[#17232B]/10 rounded-none p-1">
       {options.map((cols) => (
         <button
           key={cols}
@@ -164,7 +185,7 @@ function Checkbox({ active }: { active: boolean }) {
   return (
     <span
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-none border ${
-        active ? 'border-white' : 'border-gray-300'
+        active ? 'border-white' : 'border-[#17232B]/25'
       }`}
     >
       {active && (
@@ -183,7 +204,7 @@ function RadioDot({ active }: { active: boolean }) {
   return (
     <span
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-        active ? 'border-white' : 'border-gray-300'
+        active ? 'border-white' : 'border-[#17232B]/25'
       }`}
     >
       {active && <span className="h-2 w-2 rounded-full bg-white" />}
@@ -194,36 +215,47 @@ function RadioDot({ active }: { active: boolean }) {
 // Grupo de filtro de seleção múltipla (Marca, Género, Categoria, Tamanho, Cor).
 // Quando collapsible=true (sidebar), começa fechado e é preciso clicar no
 // título para ver as opções. Quando collapsible=false (drawer), está sempre aberto.
+//
+// variant:
+// - "list" (Marca, Género, Categoria): uma linha por opção, com quadrado.
+// - "sizes" (Tamanho): grelha de caixas, 4 por linha, como na Nike e na
+//   BSTN - pedido do Jorge; a lista de uma coluna obrigava a descer muito.
+// - "colors" (Cor): caixas de 2 por linha, com a amostra da cor.
 function SidebarFilterGroup({
   label,
   options,
   selected,
   onToggle,
   collapsible = false,
+  variant = 'list',
 }: {
   label: string
   options: PillOption[]
   selected: string[]
   onToggle: (value: string) => void
   collapsible?: boolean
+  variant?: 'list' | 'sizes' | 'colors'
 }) {
   const [open, setOpen] = useState(false)
 
   if (options.length === 0) return null
 
   const showOptions = !collapsible || open
+  // "2 selecionados" ao lado do título, para se ver o que está escolhido
+  // sem ter de percorrer as opções todas.
+  const selectedCount = options.filter((o) => selected.includes(o.value)).length
 
   return (
-    <div className={collapsible ? 'mb-4 border-b border-gray-100 pb-4' : 'mb-6'}>
+    <div className={collapsible ? 'mb-4 border-b border-[#17232B]/10 pb-4' : DRAWER_GROUP}>
       {collapsible ? (
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="w-full flex items-center justify-between mb-2"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{label}</p>
+          <p className={FILTER_LABEL}>{label}</p>
           <svg
-            className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`h-3.5 w-3.5 text-[#5C6770] transition-transform ${open ? 'rotate-180' : ''}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -233,13 +265,79 @@ function SidebarFilterGroup({
           </svg>
         </button>
       ) : (
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
-          {label}
-        </p>
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <p className={FILTER_LABEL}>{label}</p>
+          {selectedCount > 0 && (
+            <span className="text-[11px] font-medium tracking-[0.08em] text-[#123F3A]">
+              {selectedCount} selecionado{selectedCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       )}
 
-      {showOptions && (
-        <div className="flex flex-col gap-0.5">
+      {showOptions && variant === 'sizes' && (
+        <div className="grid grid-cols-4 gap-2">
+          {options.map((option) => {
+            const active = selected.includes(option.value)
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="checkbox"
+                aria-checked={active}
+                aria-label={`Tamanho ${option.display}`}
+                onClick={() => onToggle(option.value)}
+                className={`flex min-h-[44px] items-center justify-center rounded-none border px-1 text-sm tabular-nums transition-colors ${
+                  active
+                    ? 'border-[#123F3A] bg-[#123F3A] font-semibold text-white'
+                    : 'border-[#17232B]/15 text-[#17232B] hover:border-[#17232B]'
+                }`}
+              >
+                {option.display}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {showOptions && variant === 'colors' && (
+        <div className="grid grid-cols-2 gap-2">
+          {options.map((option) => {
+            const active = selected.includes(option.value)
+            const swatch = COLOR_SWATCHES[option.value]
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="checkbox"
+                aria-checked={active}
+                onClick={() => onToggle(option.value)}
+                className={`flex min-h-[44px] items-center gap-2.5 rounded-none border px-3 text-left text-sm transition-colors ${
+                  active
+                    ? 'border-[#123F3A] bg-[#123F3A] font-semibold text-white'
+                    : 'border-[#17232B]/15 text-[#17232B] hover:border-[#17232B]'
+                }`}
+              >
+                {swatch && (
+                  <span
+                    aria-hidden="true"
+                    className={`h-4 w-4 shrink-0 rounded-full border ${
+                      active ? 'border-white/60' : 'border-[#17232B]/15'
+                    }`}
+                    style={{ background: swatch }}
+                  />
+                )}
+                <span>{option.display}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {showOptions && variant === 'list' && (
+        // -mx-3: as linhas têm px-3 (para o fundo verde da opção ativa não
+        // encostar ao texto), e assim o quadrado fica alinhado com o título.
+        <div className="-mx-3 flex flex-col gap-0.5">
           {options.map((option) => {
             const active = selected.includes(option.value)
             return (
@@ -337,13 +435,13 @@ function PriceRangeSlider({
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="w-full border border-gray-200 rounded-none pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#123F3A] focus:border-[#123F3A]"
+            className="min-h-[44px] w-full rounded-none border border-[#17232B]/20 pl-3 pr-6 text-base tabular-nums text-[#17232B] focus:border-[#123F3A] focus:outline-none focus:ring-1 focus:ring-[#123F3A] sm:text-sm"
           />
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#5C6770]">
             €
           </span>
         </div>
-        <span className="text-gray-300 text-sm shrink-0">–</span>
+        <span className="text-[#5C6770] text-sm shrink-0">–</span>
         <div className="relative flex-1">
           <label htmlFor={`${idPrefix}-price-max`} className="sr-only">
             Preço máximo
@@ -360,16 +458,16 @@ function PriceRangeSlider({
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur()
             }}
-            className="w-full border border-gray-200 rounded-none pl-2 pr-5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#123F3A] focus:border-[#123F3A]"
+            className="min-h-[44px] w-full rounded-none border border-[#17232B]/20 pl-3 pr-6 text-base tabular-nums text-[#17232B] focus:border-[#123F3A] focus:outline-none focus:ring-1 focus:ring-[#123F3A] sm:text-sm"
           />
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#5C6770]">
             €
           </span>
         </div>
       </div>
 
       <div className="relative h-7">
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-none bg-gray-200" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-none bg-[#17232B]/10" />
         <div
           className="absolute top-1/2 -translate-y-1/2 h-1 rounded-none bg-[#123F3A]"
           style={{ left: `${leftPct}%`, width: `${Math.max(rightPct - leftPct, 0)}%` }}
@@ -432,16 +530,16 @@ function PriceFilterGroup({
   const showOptions = !collapsible || open
 
   return (
-    <div className={collapsible ? 'mb-4 border-b border-gray-100 pb-4' : 'mb-6'}>
+    <div className={collapsible ? 'mb-4 border-b border-[#17232B]/10 pb-4' : DRAWER_GROUP}>
       {collapsible ? (
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="w-full flex items-center justify-between mb-2"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{label}</p>
+          <p className={FILTER_LABEL}>{label}</p>
           <svg
-            className={`h-3.5 w-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`h-3.5 w-3.5 text-[#5C6770] transition-transform ${open ? 'rotate-180' : ''}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -451,7 +549,7 @@ function PriceFilterGroup({
           </svg>
         </button>
       ) : (
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">{label}</p>
+        <p className={`${FILTER_LABEL} mb-3`}>{label}</p>
       )}
 
       {showOptions && (
@@ -605,6 +703,40 @@ export default function ProductGrid({
     () => draftPriceRange ?? [drawerPriceBounds.min, drawerPriceBounds.max],
     [draftPriceRange, drawerPriceBounds]
   )
+
+  // Nº de produtos que o painel vai mostrar se se carregar em "Aplicar"
+  // (o botão passa a dizer "Ver 23 produtos", como na Nike) - calculado a
+  // partir dos filtros ainda por aplicar (rascunho), com o mesmo filtro de
+  // preço usado na grelha.
+  const draftResultCount = useMemo(() => {
+    if (!drawerOpen) return 0
+    let result = applyAttributeFilters(products, {
+      brands: draftBrands,
+      genders: draftGenders,
+      categories: draftCategories,
+      sizes: draftSizes,
+      colors: draftColors,
+      search,
+    })
+    const [draftMin, draftMax] = effectiveDraftPriceRange
+    if (draftMin > drawerPriceBounds.min || draftMax < drawerPriceBounds.max) {
+      result = result.filter(
+        (p) => p.lowest_price !== null && p.lowest_price >= draftMin && p.lowest_price <= draftMax
+      )
+    }
+    return result.length
+  }, [
+    drawerOpen,
+    products,
+    draftBrands,
+    draftGenders,
+    draftCategories,
+    draftSizes,
+    draftColors,
+    search,
+    effectiveDraftPriceRange,
+    drawerPriceBounds,
+  ])
 
   const isPriceFilterActive =
     effectiveSelectedPriceRange[0] > sidebarPriceBounds.min ||
@@ -818,11 +950,9 @@ export default function ProductGrid({
             na barra e passa a viver dentro do painel de Filtros. No
             desktop mantém-se só no SortDropdown da barra, sem duplicar. */}
         {mode === 'drawer' && (
-          <div className="mb-6 border-b border-gray-100 pb-4 sm:hidden">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">
-              Ordenar por
-            </p>
-            <div className="flex flex-col gap-0.5">
+          <div className={`${DRAWER_GROUP} sm:hidden`}>
+            <p className={`${FILTER_LABEL} mb-3`}>Ordenar por</p>
+            <div className="-mx-3 flex flex-col gap-0.5">
               {SORT_OPTIONS.map((option) => {
                 const active = draftSortOrder === option.value
                 return (
@@ -870,6 +1000,7 @@ export default function ProductGrid({
           selected={sizes}
           onToggle={(v) => setSizes((prev) => toggleValue(prev, v))}
           collapsible={isSidebar}
+          variant="sizes"
         />
         <SidebarFilterGroup
           label="Cor"
@@ -877,6 +1008,7 @@ export default function ProductGrid({
           selected={colors}
           onToggle={(v) => setColors((prev) => toggleValue(prev, v))}
           collapsible={isSidebar}
+          variant="colors"
         />
         <PriceFilterGroup
           label="Preço"
@@ -922,7 +1054,7 @@ export default function ProductGrid({
           top-16 (64px): o cabeçalho (Header.tsx, também sticky) tem quase
           80px de altura real, não 64px - com top-16 esta barra ficava
           tapada por baixo do cabeçalho ao fazer scroll. */}
-      <div className="sticky top-20 z-30 relative flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-sm py-3 px-6 border-b border-gray-100">
+      <div className="sticky top-20 z-30 relative flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-sm py-3 px-6 border-b border-[#17232B]/10">
         <button
           type="button"
           onClick={openDrawer}
@@ -938,7 +1070,7 @@ export default function ProductGrid({
           <button
             type="button"
             onClick={clearFilters}
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 underline underline-offset-2 transition-colors shrink-0"
+            className="text-sm font-medium text-[#5C6770] hover:text-[#17232B] underline decoration-[#5C6770]/40 underline-offset-4 transition-colors shrink-0"
           >
             Limpar tudo
           </button>
@@ -950,7 +1082,7 @@ export default function ProductGrid({
         </div>
 
         <div className="ml-auto hidden sm:flex items-center gap-3 shrink-0">
-          <p className="text-sm text-gray-500 hidden sm:block">
+          <p className="text-sm text-[#5C6770] hidden sm:block">
             {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
           </p>
           <SortDropdown
@@ -968,7 +1100,7 @@ export default function ProductGrid({
       <h2 className="sr-only">Produtos</h2>
 
       {filteredProducts.length === 0 ? (
-        <p className="text-gray-400 text-center">Nenhum produto encontrado.</p>
+        <p className="py-16 text-center text-[#5C6770]">Nenhum produto encontrado.</p>
       ) : (
         // Linhas finas a separar os cards (em vez do espaço/gap anterior):
         // o próprio grid fica com um fundo cinzento-claro e gap de 1px
@@ -1040,9 +1172,12 @@ export default function ProductGrid({
             <button
               type="button"
               onClick={applyDraftFilters}
-              className="flex-1 min-h-[44px] bg-[#123F3A] hover:bg-[#0d2f2b] text-white text-sm font-semibold rounded-none transition-colors"
+              disabled={draftResultCount === 0}
+              className="flex-1 min-h-[44px] bg-[#123F3A] hover:bg-[#0d2f2b] text-white text-sm font-semibold rounded-none transition-colors disabled:cursor-not-allowed disabled:bg-[#17232B]/20 disabled:text-[#17232B]/60"
             >
-              Aplicar filtros
+              {draftResultCount === 0
+                ? 'Sem resultados'
+                : `Ver ${draftResultCount} produto${draftResultCount !== 1 ? 's' : ''}`}
             </button>
           </div>
         }
