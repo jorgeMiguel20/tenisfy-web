@@ -34,8 +34,17 @@ export async function generateMetadata({
   const { produtos } = await searchParams
   const slugs = parseSlugs(produtos)
 
+  // /comparar muda com cada combinação de ?produtos= (milhares de endereços
+  // quase iguais) - fica fora do Google para não competir com as páginas
+  // de produto. Os links continuam a ser seguidos.
+  const robots = { index: false, follow: true }
+
   if (slugs.length === 0) {
-    return { title: 'Comparar ténis | Parjusto' }
+    return {
+      title: 'Comparar ténis | Parjusto',
+      description: 'Compara até 3 ténis lado a lado: preço, lojas, tamanhos e características.',
+      robots,
+    }
   }
 
   const { data: products } = await supabase
@@ -48,7 +57,11 @@ export async function generateMetadata({
     .filter(Boolean) as { slug: string; model_name: string }[]
 
   if (ordered.length === 0) {
-    return { title: 'Comparar ténis | Parjusto' }
+    return {
+      title: 'Comparar ténis | Parjusto',
+      description: 'Compara até 3 ténis lado a lado: preço, lojas, tamanhos e características.',
+      robots,
+    }
   }
 
   const names = ordered.map((p) => p.model_name).join(' vs ')
@@ -56,6 +69,7 @@ export async function generateMetadata({
   return {
     title: `A comparar: ${names} | Parjusto`,
     description: `Compara preços entre ${names} nas melhores lojas. Encontra o melhor preço no Parjusto.`,
+    robots,
   }
 }
 
@@ -421,7 +435,7 @@ export default async function CompararPage({
       // de preços já verificados - por isso o rótulo diz exactamente o que
       // este número é (descida real esta semana), nunca uma comparação
       // com um PVP que não existe nos dados.
-      label: 'Desceu esta semana',
+      label: 'Desceu (últimos 14 dias)',
       display: discountValues.map((v) => (v != null ? `-${v}%` : '—')),
       different: rowIsDifferent(discountValues),
       best: bestIndexMax(discountValues),
