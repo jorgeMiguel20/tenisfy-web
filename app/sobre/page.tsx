@@ -1,6 +1,8 @@
 // app/sobre/page.tsx
 export const metadata = {
   title: 'Sobre o Parjusto',
+  description: 'O Parjusto é um comparador de preços de ténis independente, feito em Portugal: preço, stock e tamanhos das lojas num só sítio.',
+  alternates: { canonical: '/sobre' },
 }
 
 export default function SobrePage() {
