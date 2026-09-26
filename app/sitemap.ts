@@ -3,31 +3,46 @@ import { supabase } from '@/lib/supabase'
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/siteUrl'
 
-// Paginas estaticas do site que valem a pena indexar (fora do catalogo de
-// produtos, que e gerado dinamicamente abaixo).
-const STATIC_PAGES = ['/catalogo', '/sobre', '/comparar', '/divulgacao-afiliados', '/termos', '/privacidade']
+// Páginas fixas que vale a pena indexar. Ficam de fora /comparar e
+// /favoritos (páginas com "noindex", ver os respetivos page.tsx).
+const STATIC_PAGES = ['/catalogo', '/promocoes', '/sobre', '/divulgacao-afiliados', '/termos', '/privacidade']
+
+// Uma hora de cache, como as páginas do site.
+export const revalidate = 3600
+
+type SitemapProductRow = {
+  slug: string
+  created_at: string | null
+  product_offers: { last_checked_at: string | null; discontinued_at: string | null }[] | null
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { data: products } = await supabase.from('products').select('slug, created_at')
+  const { data } = await supabase
+    .from('products')
+    .select('slug, created_at, product_offers (last_checked_at, discontinued_at)')
+    .eq('is_active', true)
 
-  const productUrls = (products ?? []).map((p) => ({
-    url: `${SITE_URL}/produto/${p.slug}`,
-    // Usa a data real de criacao do produto em vez de "agora" - mais honesto
-    // para o Google perceber quais paginas mudaram de facto.
-    lastModified: p.created_at ? new Date(p.created_at) : new Date(),
-  }))
+  const products = (data ?? []) as unknown as SitemapProductRow[]
 
-  const staticUrls = STATIC_PAGES.map((path) => ({
-    url: `${SITE_URL}${path}`,
-    lastModified: new Date(),
-  }))
+  // lastModified = a última vez que um preço deste ténis foi verificado
+  // (é o que muda na página). Antes era a data de criação do produto, que
+  // nunca mudava - o Google não tinha como saber que o preço mudou.
+  const productUrls = products.map((p) => {
+    const checkedDates = (p.product_offers ?? [])
+      .filter((o) => !o.discontinued_at && o.last_checked_at)
+      .map((o) => o.last_checked_at as string)
+      .sort()
+    const lastChecked = checkedDates[checkedDates.length - 1] ?? p.created_at
+    return {
+      url: `${SITE_URL}/produto/${p.slug}`,
+      ...(lastChecked ? { lastModified: new Date(lastChecked) } : {}),
+    }
+  })
 
-  return [
-    {
-      url: SITE_URL,
-      lastModified: new Date(),
-    },
-    ...staticUrls,
-    ...productUrls,
-  ]
+  // Sem lastModified nas páginas fixas: antes diziam sempre "atualizada
+  // agora" em cada pedido, o que não era verdade e o Google aprende a
+  // ignorar.
+  const staticUrls = STATIC_PAGES.map((path) => ({ url: `${SITE_URL}${path}` }))
+
+  return [{ url: SITE_URL }, ...staticUrls, ...productUrls]
 }

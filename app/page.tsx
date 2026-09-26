@@ -8,6 +8,39 @@ import ComoFunciona from '@/components/ComoFunciona'
 import MaiorPoupancaAgora from '@/components/MaiorPoupancaAgora'
 import PriceAlertBanner from '@/components/PriceAlertBanner'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import { SITE_URL } from '@/lib/siteUrl'
+import type { Metadata } from 'next'
+
+// Título e descrição vêm do layout; aqui só o endereço oficial.
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
+
+// Dados estruturados da homepage para o Google: quem é o site
+// (Organization) e a pesquisa interna (WebSite + SearchAction - permite ao
+// Google mostrar uma caixa de pesquisa do Parjusto nos resultados). A
+// pesquisa usa /catalogo?q=, que o catálogo já lê.
+const HOME_JSON_LD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Parjusto',
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Parjusto',
+    url: SITE_URL,
+    inLanguage: 'pt-PT',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/catalogo?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  },
+]
 
 function pickRandom<T>(items: T[], count: number): T[] {
   const shuffled = [...items].sort(() => Math.random() - 0.5)
@@ -120,6 +153,10 @@ export default async function Home() {
 
   return (
     <main className="max-w-7xl mx-auto px-6 pb-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_JSON_LD) }}
+      />
       <HomeHero />
 
       {/* Foto lifestyle fixa (skate) escolhida pelo Claude a pedido do Jorge

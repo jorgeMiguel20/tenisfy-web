@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="pt"
+      lang="pt-PT"
       className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
     >
       {/* Sem "sticky footer" (min-h-full + flex-1): esse padrão obriga a
