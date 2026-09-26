@@ -23,29 +23,59 @@ export function getShippingCost(offer: OfferForSavings): number | null {
   return fee ?? null
 }
 
-export type SavingsResult = { store: string; amount: number } | null
+// "Poupa X €" - sempre face ao preço da LOJA OFICIAL da marca (ex.: adidas
+// Oficial para um adidas), nunca face à loja mais cara da lista.
+//
+// Antes comparava a mais barata com a mais cara, e a mais cara era muitas
+// vezes uma loja de revenda (ex.: CollectKicks a 160 € no Campus 00s), o
+// que inflacionava a poupança (64 € em vez dos 24 € reais face aos 120 €
+// da adidas). O preço da loja oficial é a referência que o cliente
+// reconhece (o "preço normal" do ténis) - por isso é a única comparação
+// honesta. Sem loja oficial com stock para esse ténis = sem "Poupa"
+// (nunca se inventa um preço de referência).
+//
+// Compara só o preço do ténis (sem portes), como qualquer "preço oficial vs
+// preço em promoção". Nunca mostra poupanças abaixo de 1 €.
+export type SavingsResult = {
+  store: string
+  amount: number
+  officialStore: string
+  officialPrice: number
+} | null
 
-// Poupança real: compara o custo total (preço + portes) entre a oferta mais
-// barata e a mais cara, só entre ofertas com portes calculáveis (ver
-// getShippingCost). Nunca mostra poupanças abaixo de 1€.
-export function computeSavings(offers: OfferForSavings[]): SavingsResult {
-  const offersWithTotalCost = offers
-    .map((offer) => {
-      const shippingCost = getShippingCost(offer)
-      return shippingCost == null ? null : { offer, total: offer.price + shippingCost }
-    })
-    .filter((o): o is { offer: OfferForSavings; total: number } => o !== null)
-    .sort((a, b) => a.total - b.total)
+// Loja oficial da marca: o nome da loja é "<marca> Oficial" (ex.: "adidas
+// Oficial", "Nike Oficial", "New Balance Oficial"). Jordan vende-se na
+// loja oficial da Nike.
+export function isOfficialStore(storeName: string, brandName: string | null | undefined): boolean {
+  if (!brandName) return false
+  const brand = brandName.trim().toLowerCase()
+  const brandStore = brand === 'jordan' ? 'nike' : brand
+  return storeName.trim().toLowerCase() === `${brandStore} oficial`
+}
 
-  if (offersWithTotalCost.length <= 1) return null
+export function computeSavings(
+  offers: OfferForSavings[],
+  brandName?: string | null
+): SavingsResult {
+  const official = offers
+    .filter((o) => isOfficialStore(o.store, brandName))
+    .sort((a, b) => a.price - b.price)[0]
+  if (!official) return null
 
-  const cheapest = offersWithTotalCost[0]
-  const mostExpensive = offersWithTotalCost[offersWithTotalCost.length - 1]
-  const rawSavings = Math.round((mostExpensive.total - cheapest.total) * 100) / 100
+  const cheapest = offers
+    .filter((o) => !isOfficialStore(o.store, brandName))
+    .sort((a, b) => a.price - b.price)[0]
+  if (!cheapest) return null
 
+  const rawSavings = Math.round((official.price - cheapest.price) * 100) / 100
   if (rawSavings < 1) return null
 
-  return { store: cheapest.offer.store, amount: rawSavings }
+  return {
+    store: cheapest.store,
+    amount: rawSavings,
+    officialStore: official.store,
+    officialPrice: official.price,
+  }
 }
 
 type RawOfferForSavings = {
@@ -57,7 +87,10 @@ type RawOfferForSavings = {
 // Agrupa ofertas em stock por loja (preço mais baixo por loja) e calcula a
 // poupança - usado nos cards de grelha, que recebem as ofertas ainda "em
 // bruto" da query do Supabase em vez de já agrupadas por loja.
-export function computeSavingsFromRawOffers(offers: RawOfferForSavings[]): SavingsResult {
+export function computeSavingsFromRawOffers(
+  offers: RawOfferForSavings[],
+  brandName?: string | null
+): SavingsResult {
   const grouped = new Map<string, OfferForSavings>()
 
   for (const offer of offers) {
@@ -74,5 +107,5 @@ export function computeSavingsFromRawOffers(offers: RawOfferForSavings[]): Savin
     }
   }
 
-  return computeSavings(Array.from(grouped.values()))
+  return computeSavings(Array.from(grouped.values()), brandName)
 }

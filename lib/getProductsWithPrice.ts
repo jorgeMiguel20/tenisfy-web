@@ -70,7 +70,7 @@ export async function getProductsWithPrice(): Promise<{
       : null
     const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
     const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
-    const savings = computeSavingsFromRawOffers(p.product_offers as any[])
+    const savings = computeSavingsFromRawOffers(p.product_offers as any[], p.brands?.name)
     const priceDrop = computePriceDrop(historyByProduct.get(p.id) ?? [])
     return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings, priceDrop }
   })
