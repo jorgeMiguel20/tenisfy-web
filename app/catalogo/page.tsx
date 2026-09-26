@@ -8,12 +8,17 @@ import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 
 export const metadata: Metadata = {
   title: 'Catálogo | Parjusto',
-  description: 'Compara preços, stock e tamanhos de ténis nas principais lojas portuguesas.',
+  description: 'Compara preços, stock e tamanhos de ténis Nike, adidas, New Balance, Asics e Vans nas principais lojas portuguesas.',
+  // ?genero=, ?q= e ?comparar= mostram a mesma página filtrada no browser -
+  // o endereço oficial é sempre /catalogo.
+  alternates: { canonical: '/catalogo' },
 }
 
-// Mesma lógica de ISR da homepage (ver app/page.tsx) - sem isto a página
-// ficava presa ao snapshot do build e não refletia descidas de preço novas.
-export const dynamic = 'force-dynamic'
+// Cache de 1 hora, como a homepage e as páginas de produto (ISR). Antes
+// estava "force-dynamic": a página era gerada de raiz em cada visita
+// (0,7-1,1 s de espera no servidor, medido). Os filtros (?genero=, ?q=) são
+// lidos no browser pelo ProductGrid, por isso a cache serve para todos.
+export const revalidate = 3600
 
 export default async function CatalogoPage() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
