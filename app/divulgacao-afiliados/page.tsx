@@ -1,6 +1,8 @@
 // app/divulgacao-afiliados/page.tsx
 export const metadata = {
   title: 'Divulgação de Afiliados | Parjusto',
+  description: 'Como o Parjusto se financia: podemos receber uma comissão das lojas, sem qualquer custo extra para ti.',
+  alternates: { canonical: '/divulgacao-afiliados' },
 }
 
 export default function DivulgacaoAfiliadosPage() {
