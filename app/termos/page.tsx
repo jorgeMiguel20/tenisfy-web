@@ -1,6 +1,8 @@
 // app/termos/page.tsx
 export const metadata = {
   title: 'Termos de Utilização | Parjusto',
+  description: 'Termos de utilização do Parjusto, o comparador de preços de ténis em Portugal.',
+  alternates: { canonical: '/termos' },
 }
 
 export default function TermosPage() {
