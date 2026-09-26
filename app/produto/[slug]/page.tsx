@@ -106,6 +106,9 @@ export async function generateMetadata({
 
     description,
 
+    // Endereço oficial desta página para o Google (sem parâmetros).
+    alternates: { canonical: `/produto/${slug}` },
+
     openGraph: {
 
       title,
@@ -278,7 +281,7 @@ export default async function ProdutoPage({
       : null
     const distinctStores = new Set(inStockOffers.map((o: any) => o.store_id))
     const sizes = Array.from(new Set(inStockOffers.map((o: any) => o.size))) as string[]
-    const savings = computeSavingsFromRawOffers(p.product_offers as any[])
+    const savings = computeSavingsFromRawOffers(p.product_offers as any[], p.brands?.name)
     return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings }
   })
 
@@ -408,20 +411,11 @@ export default async function ProdutoPage({
     }))
     .sort((a, b) => a.price - b.price)
 
-  const savingsResult = computeSavings(groupedOffers)
+  const savingsResult = computeSavings(groupedOffers, product.brands?.name)
 
-  // A mais antiga entre as ofertas visíveis (pior caso) - mais honesto do que
-  // "hoje", que não refletia quando os preços foram mesmo verificados.
-  const oldestCheckedAt = rawOffers.length > 0
-    ? rawOffers.reduce((oldest: string, o: any) => (o.last_checked_at < oldest ? o.last_checked_at : oldest), rawOffers[0].last_checked_at)
-    : null
-
-  const updatedLabel = oldestCheckedAt
-    ? new Date(oldestCheckedAt).toLocaleDateString('pt-PT', {
-        month: 'long',
-        year: 'numeric',
-      })
-    : null
+  // Oferta mais barata (a lista já vem ordenada por preço) - usada na barra
+  // fixa do telemóvel.
+  const bestOffer = groupedOffers[0] ?? null
 
   const specs = [
     { label: 'Material', value: product.material },
@@ -463,6 +457,8 @@ export default async function ProdutoPage({
           '@type': 'Product',
           name: `${product.brands?.name ?? ''} ${product.model_name}`.trim(),
           image: jsonLdImages,
+          ...(product.description ? { description: product.description } : {}),
+          ...(product.article_code ? { sku: product.article_code } : {}),
           ...(product.brands?.name ? { brand: { '@type': 'Brand', name: product.brands.name } } : {}),
           offers: {
             '@type': 'AggregateOffer',
@@ -483,9 +479,28 @@ export default async function ProdutoPage({
         }
       : null
 
+  // Percurso de navegação para o Google (aparece nos resultados em vez do
+  // endereço completo).
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Parjusto', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/catalogo` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `${product.brands?.name ?? ''} ${product.model_name}`.trim(),
+        item: productUrl,
+      },
+    ],
+  }
+
   return (
 
-    <main className="max-w-5xl mx-auto px-6 py-10 relative overflow-hidden">
+    // pb-28 no telemóvel: espaço para a barra fixa "Melhor preço" no fundo
+    // do ecrã não tapar o fim da página.
+    <main className="max-w-5xl mx-auto px-6 pt-10 pb-28 md:pb-10 relative overflow-hidden">
 
       {jsonLd && (
         <script
@@ -494,6 +509,11 @@ export default async function ProdutoPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
 
       {/* Saiu a mancha laranja desfocada que ficava por trás do topo da
           página (efeito típico de "site gerado por IA" e cor fora da paleta
@@ -577,15 +597,15 @@ export default async function ProdutoPage({
 
               {savingsResult && (
 
-                <div className="mt-4 inline-flex items-center rounded-full bg-[#E8F2EF] px-3 py-1.5 text-sm font-medium text-[#123F3A]">Poupa {formatPrice(savingsResult.amount)} escolhendo {savingsResult.store}</div>
+                <div className="mt-4 inline-flex items-center rounded-full bg-[#E8F2EF] px-3 py-1.5 text-sm font-medium text-[#123F3A]">Poupa {formatPrice(savingsResult.amount)} face à {savingsResult.officialStore}</div>
 
               )}
 
 
 
-              {updatedLabel && (
-                <p className="mt-4 mb-2 text-[13px] text-[#5C6770]">Preços atualizados em {updatedLabel}</p>
-              )}
+              {/* Saiu "Preços atualizados em <mês>": contradizia o "Verificado
+                  há X" de cada loja, que é mais concreto. */}
+              <div className="mt-4" />
 
 
 
@@ -632,6 +652,36 @@ export default async function ProdutoPage({
                 <ProductCard product={p} />
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Barra fixa no telemóvel (pedido do Jorge, análise de conversão):
+          no telemóvel o primeiro ecrã só mostrava a foto e o nome - o preço
+          e o botão da loja ficavam lá em baixo. Esta barra mostra sempre o
+          melhor preço e leva direto à loja. No computador não aparece (a
+          lista de lojas já está ao lado da foto). */}
+      {bestOffer && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-[#17232B]/10 bg-white px-4 pt-3 md:hidden"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+        >
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">Melhor preço</p>
+              <p className="truncate text-sm text-[#17232B]">
+                <span className="text-lg font-bold tabular-nums">{formatPrice(bestOffer.price)}</span>
+                <span className="text-[#5C6770]"> na {bestOffer.store}</span>
+              </p>
+            </div>
+            <a
+              href={buildOfferUrl(bestOffer)}
+              target="_blank"
+              rel="nofollow sponsored noopener"
+              className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+            >
+              Ver oferta
+            </a>
           </div>
         </div>
       )}
