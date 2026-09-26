@@ -1,6 +1,8 @@
 // app/privacidade/page.tsx
 export const metadata = {
   title: 'Política de Privacidade | Parjusto',
+  description: 'Como o Parjusto trata os teus dados: alertas de preço, cookies e favoritos guardados no teu dispositivo.',
+  alternates: { canonical: '/privacidade' },
 }
 
 export default function PrivacidadePage() {
