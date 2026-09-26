@@ -24,6 +24,9 @@ export default function Footer() {
             <Link href="/catalogo?genero=crianca" className="text-sm text-gray-300 hover:text-white transition-colors">
               Crianças
             </Link>
+            <Link href="/promocoes" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Promoções
+            </Link>
           </nav>
 
           <nav className="flex flex-col gap-2.5">

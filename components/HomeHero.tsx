@@ -46,13 +46,44 @@ import HomeHeroButtons from './HomeHeroButtons'
 export default function HomeHero() {
   return (
     <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[80vh] max-h-[820px] sm:min-h-0 sm:max-h-none sm:aspect-[1920/1086] flex items-center">
+      {/* Formatos modernos primeiro (AVIF, depois WebP) e o JPG original
+          como último recurso - o browser escolhe o primeiro que suporta e
+          o tamanho certo para o ecrã. A foto é o maior elemento da página
+          (medido: era o que mais demorava a aparecer), por isso passa de
+          ~250 KB para ~40-110 KB, e fetchPriority="high" diz ao browser
+          para a descarregar antes das outras imagens. */}
       <picture>
+        <source
+          media="(min-width: 640px)"
+          type="image/avif"
+          srcSet="/marketing/hero-desktop-1280.avif 1280w, /marketing/hero-desktop-1920.avif 1920w"
+          sizes="100vw"
+        />
+        <source
+          media="(min-width: 640px)"
+          type="image/webp"
+          srcSet="/marketing/hero-desktop-1280.webp 1280w, /marketing/hero-desktop-1920.webp 1920w"
+          sizes="100vw"
+        />
         <source media="(min-width: 640px)" srcSet="/marketing/hero-bg-desktop.jpg" />
+        {/* No telemóvel a foto enche 80% da altura do ecrã (object-cover),
+            por isso a largura mostrada acompanha a altura - daí "84vh". */}
+        <source
+          type="image/avif"
+          srcSet="/marketing/hero-mobile-800.avif 800w, /marketing/hero-mobile-1400.avif 1400w"
+          sizes="84vh"
+        />
+        <source
+          type="image/webp"
+          srcSet="/marketing/hero-mobile-800.webp 800w, /marketing/hero-mobile-1400.webp 1400w"
+          sizes="84vh"
+        />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/marketing/hero-bg.jpg"
           alt=""
           aria-hidden="true"
+          fetchPriority="high"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
       </picture>

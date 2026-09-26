@@ -49,7 +49,7 @@ export default function FavoritesGrid() {
             : null
           const distinctStores = new Set(inStockOffers.map((o) => o.store_id))
           const sizes = Array.from(new Set(inStockOffers.map((o) => o.size)))
-          const savings = computeSavingsFromRawOffers(activeOffers)
+          const savings = computeSavingsFromRawOffers(activeOffers, p.brands?.name)
           return { ...p, lowest_price, store_count: distinctStores.size, sizes, savings }
         })
 

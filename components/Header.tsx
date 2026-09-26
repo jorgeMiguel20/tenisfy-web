@@ -41,12 +41,14 @@ function NavUnderline({ active }: { active: boolean }) {
 // e não só ao passar o rato.
 // - "/catalogo?genero=homem" (e mulher/crianca) -> esse género;
 // - "/catalogo" sem género -> "marcas" (é para aí que "Marcas" leva);
+// - "/promocoes" -> "promocoes";
 // - qualquer outra página -> nenhuma secção marcada.
-type ActiveSection = GenderGroupValue | 'marcas' | null
+type ActiveSection = GenderGroupValue | 'marcas' | 'promocoes' | null
 
 function useActiveSection(): ActiveSection {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  if (pathname === '/promocoes') return 'promocoes'
   if (pathname !== '/catalogo') return null
   const genero = searchParams.get('genero')
   const match = NAV_LINKS.find((link) => link.value === genero)
@@ -86,9 +88,16 @@ function DesktopNav({ active }: { active: ActiveSection }) {
           <NavUnderline active={active === link.value} />
         </Link>
       ))}
-      <Link href="/#promocoes" className={linkClass(false)}>
+      {/* Página própria (antes era um salto para a secção "Maior poupança
+          agora" da homepage - quando essa secção estava vazia, o link
+          levava só ao topo da homepage e parecia não fazer nada). */}
+      <Link
+        href="/promocoes"
+        aria-current={active === 'promocoes' ? 'page' : undefined}
+        className={linkClass(active === 'promocoes')}
+      >
         Promoções
-        <NavUnderline active={false} />
+        <NavUnderline active={active === 'promocoes'} />
       </Link>
     </nav>
   )
@@ -134,7 +143,12 @@ function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: 
       <Link href="/catalogo" prefetch={false} onClick={onNavigate} className={linkClass(false)}>
         Marcas
       </Link>
-      <Link href="/#promocoes" onClick={onNavigate} className={linkClass(false)}>
+      <Link
+        href="/promocoes"
+        onClick={onNavigate}
+        aria-current={active === 'promocoes' ? 'page' : undefined}
+        className={linkClass(active === 'promocoes')}
+      >
         Promoções
       </Link>
     </nav>
