@@ -2,6 +2,7 @@
 'use server'
 
 import { createClient } from '@supabase/supabase-js'
+import { revalidatePath } from 'next/cache'
 
 type MarkPricesResult =
   | { success: true; timestamp: string; count: number }
@@ -46,6 +47,10 @@ export async function markPricesVerified(): Promise<MarkPricesResult> {
       return { success: false, error: `Preços atualizados, mas falhou o registo no histórico: ${historyError.message}` }
     }
   }
+
+  // O histórico novo muda as descidas de preço (promoções) e o gráfico -
+  // atualiza já as páginas públicas em cache.
+  revalidatePath('/', 'layout')
 
   return { success: true, timestamp: now, count: data?.length ?? 0 }
 }

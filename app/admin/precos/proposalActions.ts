@@ -94,6 +94,10 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
   }
 
   revalidatePath('/admin/precos')
+  // Atualiza já as páginas públicas em cache (homepage, catálogo,
+  // promoções, produtos) - sem isto, um preço aprovado podia demorar até
+  // 1 hora a aparecer (as páginas guardam-se em cache durante 1 hora).
+  revalidatePath('/', 'layout')
   return { success: true, count: approvedCount }
 }
 
@@ -187,6 +191,9 @@ export async function discontinueOffer(proposalId: string, productOfferId: strin
   }
 
   revalidatePath('/admin/precos')
-  revalidatePath('/produto/[slug]', 'page')
+  // Atualiza já as páginas públicas em cache (homepage, catálogo,
+  // promoções, produtos) - sem isto, um preço aprovado podia demorar até
+  // 1 hora a aparecer (as páginas guardam-se em cache durante 1 hora).
+  revalidatePath('/', 'layout')
   return { success: true, count: 1 }
 }
