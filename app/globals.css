@@ -8,12 +8,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-public-sans);
   --font-mono: ui-monospace, SFMono-Regular, monospace;
-  /* Só para logo/headlines grandes — ver app/layout.tsx. Usar via
+  /* Logo/headlines grandes usam a mesma família, só que mais pesada (ver
+     font-weight nos componentes) — ver app/layout.tsx. Usar via
      className="font-display" (gera-se automaticamente pelo Tailwind a
      partir desta variável --font-*). */
-  --font-display: var(--font-space-grotesk), var(--font-inter), sans-serif;
+  --font-display: var(--font-public-sans), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

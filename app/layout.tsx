@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Public_Sans } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,18 +8,16 @@ import { Analytics } from "@vercel/analytics/react";
 import { SITE_URL } from "@/lib/siteUrl";
 import CookieBanner from "@/components/CookieBanner";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Uma só família em todo o site (texto e títulos) — o clone gratuito mais
+// próximo da Helvetica, a letra que a Nike e a Off-White usam a sério (a
+// Inter + Space Grotesk anteriores liam-se como "site feito com IA": são as
+// letras por defeito de ferramentas de gerar sites e de startups de
+// tecnologia). Fonte variável (100-900): os títulos usam um peso mais
+// pesado (ver --font-display em app/globals.css), sem precisar de carregar
+// um segundo ficheiro de letra.
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
-});
-
-// Fonte só para títulos grandes (logo, headlines de secção) — dá
-// personalidade à marca sem sacrificar a legibilidade do Inter no resto
-// do texto/UI. Ver --font-display em app/globals.css.
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["700"],
 });
 
 export const metadata: Metadata = {
@@ -36,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-PT"
-      className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
+      className={`${publicSans.variable} antialiased`}
     >
       {/* Sem "sticky footer" (min-h-full + flex-1): esse padrão obriga a
           página a ter sempre pelo menos a altura do ecrã, empurrando o
