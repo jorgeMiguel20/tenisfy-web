@@ -15,13 +15,13 @@ export default function OpengraphImage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#111827',
+          background: '#ffffff',
         }}
       >
-        <div style={{ fontSize: 100, fontWeight: 700, color: 'white' }}>
+        <div style={{ fontSize: 100, fontWeight: 700, color: '#17232B' }}>
           Parjusto
         </div>
-        <div style={{ fontSize: 34, color: '#EA580C', marginTop: 20 }}>
+        <div style={{ fontSize: 34, color: '#123F3A', marginTop: 20 }}>
           Compara preços de ténis em Portugal
         </div>
       </div>
