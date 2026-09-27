@@ -28,10 +28,11 @@ export default function PesquisaPorFotoButton() {
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        // Mesmo botão das outras secções da homepage (comparador e alerta
-        // de preço): verde #123F3A, cantos retos, 44px de altura e ícone de
-        // traço fino à esquerda.
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+        // Cor neutra escura (não verde) - o verde da marca fica reservado
+        // ao "Ver este par", o botão mais próximo da compra em si; as
+        // outras secções da homepage usam este tom neutro para não repetir
+        // a cor de destaque em CTAs sem a mesma intenção (pedido do Jorge).
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#17232B] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#17232B]/85"
       >
         <svg
           aria-hidden="true"

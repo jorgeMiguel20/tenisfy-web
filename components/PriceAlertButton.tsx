@@ -172,11 +172,12 @@ export default function PriceAlertButton({
           um botao cheio com texto, em vez do circulo pequeno so com o sino
           usado nos cards do catalogo - a logica do alerta em si (modal,
           submissao) e sempre a mesma, so muda o aspeto do botao. */}
-      {/* Botão grande: retângulo verde da marca, como os outros botões
-          principais da homepage ("Ver este par", "Ir para o comparador"),
-          sem anel a pulsar nem seta a simular um toque - esses efeitos
-          davam ao botão o ar de modelo genérico que se quis tirar do site
-          (pedido do Jorge: "não pode parecer que foi criado com IA"). */}
+      {/* Botão grande: cor neutra escura, não o verde da marca - sem anel a
+          pulsar nem seta a simular um toque - esses efeitos davam ao botão
+          o ar de modelo genérico que se quis tirar do site (pedido do
+          Jorge: "não pode parecer que foi criado com IA"). O verde fica
+          reservado ao "Ver este par", o botão mais próximo da compra em si
+          (pedido do Jorge para reduzir a repetição do verde na homepage). */}
       <button
         type="button"
         onClick={(e) => {
@@ -188,7 +189,7 @@ export default function PriceAlertButton({
         className={
           variant === 'large'
             ? `relative inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-none px-5 text-sm font-semibold transition-colors ${
-                open ? 'bg-[#0d2f2b] text-white' : 'bg-[#123F3A] text-white hover:bg-[#0d2f2b]'
+                open ? 'bg-[#17232B]/85 text-white' : 'bg-[#17232B] text-white hover:bg-[#17232B]/85'
               }`
             : `inline-flex items-center justify-center rounded-full border border-[#17232B]/10 p-2 transition-colors ${
                 open ? 'bg-gray-900' : 'bg-white/90 hover:bg-white'

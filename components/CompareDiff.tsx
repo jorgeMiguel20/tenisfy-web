@@ -141,14 +141,19 @@ export function CompareTable({
         </p>
       )}
 
-      {/* Ver detalhe - sempre visível, mesmo com "só diferenças" ligado. */}
+      {/* Ver detalhe - sempre visível, mesmo com "só diferenças" ligado.
+          Cor neutra escura, não verde: o verde nesta página está reservado
+          a marcar o melhor valor em cada característica (acima), e este
+          botão aparece em todas as colunas por igual, nunca só na
+          "vencedora" - usar verde aqui contradizia essa própria regra
+          (pedido do Jorge). */}
       <div aria-hidden="true" className={`hidden md:block md:border-t ${COMPARE_LINE}`} />
       {slugs.map((slug, i) => (
         <div key={slug} className={`${valueCellClass(i)} border-t py-4 md:py-6`}>
           <Link
             href={`/produto/${slug}`}
             prefetch={false}
-            className="flex min-h-[44px] w-full items-center justify-center whitespace-nowrap rounded-none bg-[#123F3A] px-1 text-[13px] font-semibold text-white transition-colors hover:bg-[#0d2f2b] md:px-2 md:text-sm"
+            className="flex min-h-[44px] w-full items-center justify-center whitespace-nowrap rounded-none bg-[#17232B] px-1 text-[13px] font-semibold text-white transition-colors hover:bg-[#17232B]/85 md:px-2 md:text-sm"
           >
             Ver detalhe
           </Link>

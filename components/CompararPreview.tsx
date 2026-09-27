@@ -165,7 +165,7 @@ export default function CompararPreview({ products }: { products: ProductWithPri
           </p>
           <CompararPreviewCta
             slugs={[a.slug, b.slug]}
-            className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
+            className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-none bg-[#17232B] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#17232B]/85"
           />
         </div>
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-none bg-[#F9FBFC] sm:col-span-7">
