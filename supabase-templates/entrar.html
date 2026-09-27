@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt">
+  <!--
+    Email de entrada do Parjusto (login sem palavra-passe).
+    NÃO é usado pelo código do site - é o texto a colar no Supabase:
+    Authentication -> Emails -> Templates, nos modelos "Magic link" e
+    "Confirm signup" (o mesmo texto nos dois: o primeiro é usado para quem
+    já tem conta, o segundo para quem entra pela primeira vez).
+    Assunto sugerido: "Entrar no Parjusto"
+
+    {{ .TokenHash }} e {{ .Token }} são preenchidos pelo Supabase.
+    O botão leva a /entrar/confirmar (ver components/ConfirmarEntrada.tsx);
+    o código serve para quem abre o email noutro dispositivo ou numa app
+    de email que abre links no seu próprio browser.
+  -->
+  <body style="margin:0;padding:0;background:#F9FBFC;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F9FBFC;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:0;max-width:480px;border:1px solid rgba(23,35,43,0.1);">
+            <tr>
+              <td style="background:#123F3A;height:4px;line-height:4px;font-size:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#123F3A;">Parjusto</p>
+                <h1 style="margin:0 0 16px;font-size:20px;color:#17232B;">Entrar no Parjusto</h1>
+
+                <p style="margin:0 0 24px;font-size:13px;line-height:20px;color:#5C6770;">
+                  Carrega no botão para entrares e teres os teus favoritos e alertas de preço em todos os teus dispositivos.
+                </p>
+
+                <a href="{{ .SiteURL }}/entrar/confirmar?token_hash={{ .TokenHash }}&type=email" style="display:inline-block;background:#17232B;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:0;">
+                  Entrar no Parjusto
+                </a>
+
+                <p style="margin:28px 0 6px;font-size:13px;color:#5C6770;">Ou escreve este código na página onde pediste para entrar:</p>
+                <p style="margin:0;font-size:24px;font-weight:700;letter-spacing:0.2em;color:#17232B;">{{ .Token }}</p>
+
+                <p style="margin:32px 0 0;font-size:12px;line-height:18px;color:#5C6770;">
+                  O link e o código funcionam uma só vez e expiram dentro de uma hora. Não pediste para entrar? Ignora este email - sem ele, ninguém entra na tua conta.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
