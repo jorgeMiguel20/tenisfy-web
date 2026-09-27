@@ -53,8 +53,12 @@ export type StoreOfferForDisplay = {
   sizes: StoreOfferSize[]
 }
 
-type ShippingDisplay = { type: 'badge'; text: string } | { type: 'text'; text: string }
+type ShippingDisplay = { type: 'text'; text: string }
 
+// "Portes grátis" era um selo verde (mesma cor do "Melhor preço"), o que
+// espalhava a cor de destaque por informação que não precisa de se destacar
+// tanto - pedido do Jorge para reservar o verde ao que é mesmo importante.
+// Passa a texto simples, como as outras informações de envio.
 function getShippingDisplay(offer: StoreOfferForDisplay): ShippingDisplay | null {
   const { shipping_free_threshold: threshold, shipping_base_fee: fee, shipping_info, store, price } = offer
 
@@ -63,7 +67,7 @@ function getShippingDisplay(offer: StoreOfferForDisplay): ShippingDisplay | null
   }
 
   if (price >= threshold) {
-    return { type: 'badge', text: 'Portes Grátis' }
+    return { type: 'text', text: 'Portes grátis' }
   }
 
   // Nike: abaixo do limiar o envio depende do estatuto de membro, que não
@@ -149,18 +153,13 @@ function StoreOfferCard({
               Melhor preço
             </span>
           )}
-          {shipping?.type === 'badge' && (
-            <span className="inline-flex items-center rounded-full bg-[#E8F2EF] px-2 py-0.5 text-[11px] font-medium text-[#123F3A]">
-              {shipping.text}
-            </span>
-          )}
         </div>
 
-        {(verifiedLabel || shipping?.type === 'text') && (
+        {(verifiedLabel || shipping) && (
           <p className="text-xs text-gray-400 mt-1">
             {verifiedLabel}
-            {verifiedLabel && shipping?.type === 'text' && ' · '}
-            {shipping?.type === 'text' && shipping.text}
+            {verifiedLabel && shipping && ' · '}
+            {shipping?.text}
           </p>
         )}
 
