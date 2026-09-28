@@ -1,5 +1,16 @@
 // lib/emailTemplates/priceAlertEmail.ts
 import { formatPrice } from '../formatPrice'
+import { SITE_URL } from '../siteUrl'
+
+// As fotos do catálogo estão guardadas como caminhos do site (ex.:
+// "/products/normalized/adidas-gazelle.webp"). Num email isso não chega -
+// o programa de email não sabe de que site é - por isso junta-se o
+// endereço completo do Parjusto. Links que já são completos ficam iguais.
+function absoluteImageUrl(url: string | null): string | null {
+  if (!url) return null
+  if (url.startsWith('/')) return `${SITE_URL}${url}`
+  return url
+}
 
 // Template simples em HTML puro (sem React Email) - o projeto ainda não
 // usa essa biblioteca e isto é só um e-mail, não vale a pena a dependência
@@ -31,7 +42,7 @@ export function priceAlertEmailHtml(params: {
                 <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#123F3A;">Parjusto</p>
                 <h1 style="margin:0 0 20px;font-size:20px;color:#17232B;">O preço baixou!</h1>
 
-                ${imageUrl ? `<img src="${imageUrl}" alt="${modelName}" width="120" style="display:block;border-radius:0;margin-bottom:20px;background:#F9FBFC;" />` : ''}
+                ${imageUrl ? `<img src="${absoluteImageUrl(imageUrl)}" alt="${modelName}" width="120" style="display:block;border-radius:0;margin-bottom:20px;background:#F9FBFC;" />` : ''}
 
                 <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.03em;color:#5C6770;">${brandName}</p>
                 <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:#17232B;">${modelName}</p>
