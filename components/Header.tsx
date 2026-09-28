@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import CompareNavLink from './CompareNavLink'
 import FavoritesNavLink from './FavoritesNavLink'
+import AccountNavLink, { MobileAccountLink } from './AccountNavLink'
 import HeaderSearchButton from './HeaderSearchButton'
 import HeaderSearchBar from './HeaderSearchBar'
 import { useSearchModalOpen } from '@/lib/searchModal'
@@ -151,6 +152,13 @@ function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: 
       >
         Promoções
       </Link>
+      {/* Conta (opcional, só para sincronizar favoritos e alertas entre
+          dispositivos) - no telemóvel vive aqui em vez de ser mais um ícone
+          na barra de cima, que já tem lupa, comparar e favoritos. */}
+      <MobileAccountLink
+        onNavigate={onNavigate}
+        className={`mt-1 border-t border-[#17232B]/10 pt-3.5 ${linkClass(false)}`}
+      />
     </nav>
   )
 }
@@ -207,6 +215,7 @@ export default function Header() {
             <div className="hidden sm:flex items-center gap-2 sm:gap-6 shrink-0">
               <CompareNavLink />
               <FavoritesNavLink />
+              <AccountNavLink />
             </div>
           </>
         ) : (
@@ -228,6 +237,7 @@ export default function Header() {
               <HeaderSearchButton />
               <CompareNavLink />
               <FavoritesNavLink />
+              <AccountNavLink />
             </div>
           </>
         )}

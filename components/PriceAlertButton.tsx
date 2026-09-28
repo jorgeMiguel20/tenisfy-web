@@ -4,16 +4,26 @@
 import { useEffect, useId, useState, useSyncExternalStore, type FormEvent, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { createPriceAlert } from '@/app/produto/[slug]/priceAlertActions'
+import { deleteMyAlert } from '@/app/conta/actions'
 import { formatPrice } from '@/lib/formatPrice'
+import { ensureFreshSession, useAuth } from '@/lib/authBrowser'
+import { refreshMyAlerts, useMyAlerts } from '@/lib/myAlerts'
 
-function BellIcon({ className = 'h-4 w-4' }: { className?: string }) {
+function BellIcon({ className = 'h-4 w-4', filled = false }: { className?: string; filled?: boolean }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
       <path d="M10.3 21a2 2 0 0 0 3.4 0" />
     </svg>
   )
+}
+
+function formatExpiry(iso: string | null): string | null {
+  if (!iso) return null
+  return new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'long' }).format(new Date(iso))
 }
 
 // Só um modal de "Avisa-me quando descer" pode estar aberto de cada vez em
@@ -26,6 +36,10 @@ const listeners = new Set<() => void>()
 function setActiveAlert(id: string | null) {
   activeAlertId = id
   listeners.forEach((listener) => listener())
+}
+
+function subscribeNothing() {
+  return () => {}
 }
 
 function subscribeActiveAlert(listener: () => void) {
@@ -70,7 +84,9 @@ export default function PriceAlertButton({
   const activeId = useSyncExternalStore(subscribeActiveAlert, () => activeAlertId, () => null)
   const open = activeId === id
 
-  const [mounted, setMounted] = useState(false)
+  // true só no browser (o modal é um portal para <body>, que não existe no
+  // servidor) - sem useEffect + setState, que a regra do ESLint assinala.
+  const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false)
   const [email, setEmail] = useState('')
   // Slider do "Valor máximo desejado": intervalo entre metade e ~99% do
   // preço atual, para o utilizador sempre poder escolher um valor abaixo do
@@ -95,9 +111,12 @@ export default function PriceAlertButton({
   // campo perde o foco ou o utilizador prime Enter.
   const [targetPriceInput, setTargetPriceInput] = useState(() => String(targetPrice))
 
-  useEffect(() => {
-    setTargetPriceInput(String(targetPrice))
-  }, [targetPrice])
+  // Muda o valor e o texto do campo ao mesmo tempo (em vez de um useEffect
+  // a copiar um para o outro depois de cada mudança).
+  function updateTarget(value: number) {
+    setTargetPrice(value)
+    setTargetPriceInput(String(value))
+  }
 
   // Ao contrário do slider (que fica preso entre sliderMin e sliderMax, para
   // arrastar sempre dar um valor abaixo do preço atual), o campo de texto
@@ -106,7 +125,7 @@ export default function PriceAlertButton({
   function commitManualPrice() {
     const parsed = Number(targetPriceInput.replace(',', '.'))
     if (Number.isFinite(parsed) && parsed > 0) {
-      setTargetPrice(Math.round(parsed))
+      updateTarget(Math.round(parsed))
     } else {
       setTargetPriceInput(String(targetPrice))
     }
@@ -120,8 +139,18 @@ export default function PriceAlertButton({
   const [durationMonths, setDurationMonths] = useState<1 | 2>(1)
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => setMounted(true), [])
+  // Com sessão iniciada: o email é o da conta (não se pede), e o sino
+  // mostra se já existe um alerta ativo para este par - a lacuna que o
+  // Jorge encontrou ("como é que eu sei que já criei alerta?"). Sem sessão
+  // não há forma segura de saber que alertas são desta pessoa, por isso o
+  // sino fica sempre igual.
+  const auth = useAuth()
+  const signedIn = auth.status === 'signed-in'
+  const myAlerts = useMyAlerts()
+  const existingAlert = myAlerts.status === 'ready' ? myAlerts.byProductId.get(productId) : undefined
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!open) return
@@ -147,18 +176,43 @@ export default function PriceAlertButton({
     e.stopPropagation()
     setStatus('loading')
 
+    if (signedIn) await ensureFreshSession()
     const result = await createPriceAlert(productId, email, targetPrice, durationMonths)
 
     if (result.success) {
       setStatus('done')
-      setMessage(
-        result.alreadyConfirmed
-          ? 'Alerta atualizado - já estava confirmado.'
-          : 'Enviámos um e-mail de confirmação.'
-      )
+      if (result.viaAccount) {
+        setMessage(
+          `Alerta ativo abaixo de ${formatPrice(targetPrice)}. Vamos avisar-te em ${signedIn ? auth.email : 'o teu e-mail'} quando o preço descer.`
+        )
+        refreshMyAlerts()
+      } else {
+        setMessage(
+          result.alreadyConfirmed
+            ? 'Alerta atualizado - já estava confirmado.'
+            : 'Enviámos um e-mail de confirmação.'
+        )
+      }
     } else {
       setStatus('error')
       setMessage(result.error)
+    }
+  }
+
+  async function handleDelete(e: MouseEvent) {
+    stopNav(e)
+    if (!existingAlert) return
+    setDeleting(true)
+    await ensureFreshSession()
+    const ok = await deleteMyAlert(existingAlert.id).catch(() => false)
+    setDeleting(false)
+    if (ok) {
+      refreshMyAlerts()
+      setStatus('done')
+      setMessage('Alerta apagado.')
+    } else {
+      setStatus('error')
+      setMessage('Não foi possível apagar o alerta. Tenta de novo.')
     }
   }
 
@@ -182,10 +236,23 @@ export default function PriceAlertButton({
         type="button"
         onClick={(e) => {
           stopNav(e)
+          if (!open) {
+            // Ao abrir: começa sempre no formulário (não na mensagem do
+            // último envio) e, se já houver alerta para este par, com o
+            // valor desse alerta.
+            setStatus('idle')
+            setMessage(null)
+            if (existingAlert) updateTarget(Math.max(1, Math.round(existingAlert.targetPrice)))
+          }
           setActiveAlert(open ? null : id)
         }}
         aria-pressed={open}
-        aria-label="Avisa-me quando o preço descer"
+        aria-label={
+          existingAlert
+            ? `Tens um alerta ativo abaixo de ${formatPrice(existingAlert.targetPrice)} - alterar`
+            : 'Avisa-me quando o preço descer'
+        }
+        title={existingAlert ? `Alerta ativo abaixo de ${formatPrice(existingAlert.targetPrice)}` : undefined}
         className={
           variant === 'large'
             ? `relative inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-none px-5 text-sm font-semibold transition-colors ${
@@ -196,10 +263,17 @@ export default function PriceAlertButton({
               }`
         }
       >
+        {/* Sino preenchido = já tens alerta ativo para este par (mesma
+            lógica do coração dos favoritos: preenchido a #123F3A quando
+            está "ligado"). */}
         <BellIcon
-          className={`h-4 w-4 ${variant === 'large' || open ? 'text-white' : 'text-gray-400'}`}
+          filled={Boolean(existingAlert)}
+          className={`h-4 w-4 ${
+            variant === 'large' || open ? 'text-white' : existingAlert ? 'text-[#123F3A]' : 'text-gray-400'
+          }`}
         />
-        {variant === 'large' && label}
+        {variant === 'large' &&
+          (existingAlert ? `Alerta ativo · abaixo de ${formatPrice(existingAlert.targetPrice)}` : label)}
       </button>
 
       {/* Estilo do slider de "Valor máximo desejado" - input nativo type=range
@@ -287,6 +361,14 @@ export default function PriceAlertButton({
               </>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col">
+                {existingAlert && (
+                  <p className="border-b border-gray-100 py-3 text-xs leading-relaxed text-[#5C6770]">
+                    Já tens um alerta para este par: abaixo de{' '}
+                    <span className="font-semibold text-[#17232B]">{formatPrice(existingAlert.targetPrice)}</span>
+                    {formatExpiry(existingAlert.expiresAt) ? `, até ${formatExpiry(existingAlert.expiresAt)}` : ''}. Podes
+                    alterá-lo aqui.
+                  </p>
+                )}
                 {/* Valor máximo desejado - preço centrado, com slider por
                     baixo. O valor também pode ser escrito diretamente no
                     campo (pedido do Jorge) - o slider e o campo de texto
@@ -326,7 +408,7 @@ export default function PriceAlertButton({
                     max={sliderMax}
                     step={1}
                     value={targetPrice}
-                    onChange={(e) => setTargetPrice(Number(e.target.value))}
+                    onChange={(e) => updateTarget(Number(e.target.value))}
                     className="price-alert-slider mt-3"
                     style={{ ['--slider-percent' as string]: `${sliderPercent}%` }}
                     aria-label="Valor máximo desejado"
@@ -370,15 +452,37 @@ export default function PriceAlertButton({
 
                 <div className="pt-4">
                   <p className="text-xs font-semibold text-gray-900">Endereço de e-mail</p>
-                  <input
-                    type="email"
-                    required
-                    autoFocus
-                    placeholder="o-teu-email@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-2 w-full rounded-none border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#17232B]"
-                  />
+                  {signedIn ? (
+                    // Com sessão: o alerta vai para o email da conta, sem
+                    // pedir nada nem mandar email de confirmação.
+                    <p className="mt-2 text-sm text-[#17232B]">
+                      Vamos avisar-te em <span className="font-medium">{auth.email}</span>.
+                    </p>
+                  ) : (
+                    <>
+                      <input
+                        type="email"
+                        required
+                        autoFocus
+                        placeholder="o-teu-email@exemplo.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="mt-2 w-full rounded-none border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#17232B]"
+                      />
+                      <p className="mt-2 text-xs text-[#5C6770]">
+                        Tens conta?{' '}
+                        <Link
+                          href={`/entrar?next=${encodeURIComponent(pathname || '/')}`}
+                          prefetch={false}
+                          onClick={() => setActiveAlert(null)}
+                          className="font-medium text-[#17232B] underline underline-offset-4"
+                        >
+                          Entra
+                        </Link>{' '}
+                        para veres os teus alertas em qualquer dispositivo.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 {status === 'error' && <p className="mt-2 text-xs text-red-600">{message}</p>}
@@ -386,11 +490,21 @@ export default function PriceAlertButton({
                 <div className="mt-4 flex items-center justify-center gap-3">
                   <button
                     type="submit"
-                    disabled={status === 'loading'}
+                    disabled={status === 'loading' || deleting}
                     className="inline-flex min-h-[44px] items-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b] disabled:opacity-50"
                   >
-                    {status === 'loading' ? 'A criar...' : 'Criar alerta'}
+                    {status === 'loading' ? 'A guardar...' : existingAlert ? 'Atualizar alerta' : 'Criar alerta'}
                   </button>
+                  {existingAlert && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={deleting || status === 'loading'}
+                      className="text-sm text-[#5C6770] underline underline-offset-4 hover:text-[#17232B] disabled:opacity-50"
+                    >
+                      {deleting ? 'A apagar...' : 'Apagar alerta'}
+                    </button>
+                  )}
                   <button type="button" onClick={close} className="text-sm text-[#5C6770] hover:text-[#17232B]">
                     Cancelar
                   </button>

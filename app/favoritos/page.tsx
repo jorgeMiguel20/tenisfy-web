@@ -4,9 +4,9 @@ import FavoritesGrid from '@/components/FavoritesGrid'
 
 export const metadata: Metadata = {
   title: 'Os meus favoritos | Parjusto',
-  description: 'Os produtos que guardaste como favoritos neste dispositivo.',
-  // Página pessoal (guardada no dispositivo de cada pessoa) - não interessa
-  // ao Google.
+  description: 'Os produtos que guardaste como favoritos.',
+  // Página pessoal (favoritos de cada pessoa, no dispositivo ou na conta) -
+  // não interessa ao Google.
   robots: { index: false, follow: true },
 }
 

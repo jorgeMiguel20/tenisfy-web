@@ -7,8 +7,29 @@ import { supabase } from '@/lib/supabase'
 import { productSelect } from '@/lib/productColumns'
 import ProductCard from './ProductCard'
 import { useFavorites } from '@/lib/favorites'
+import { useAuth } from '@/lib/authBrowser'
 import { computeSavingsFromRawOffers } from '@/lib/savings'
 import type { Brand, Product, ProductWithPrice } from '@/lib/types'
+
+// Aviso para quem não tem sessão iniciada: sem conta, os favoritos ficam
+// só neste browser. Com sessão não aparece nada (já estão na conta).
+function DeviceOnlyNote() {
+  const auth = useAuth()
+  if (auth.status !== 'signed-out') return null
+  return (
+    <p className="mb-6 text-sm text-[#5C6770]">
+      Estes favoritos estão guardados só neste dispositivo.{' '}
+      <Link
+        href="/entrar?next=%2Ffavoritos"
+        prefetch={false}
+        className="font-medium text-[#17232B] underline underline-offset-4"
+      >
+        Entra
+      </Link>{' '}
+      para os teres também no telemóvel ou no computador.
+    </p>
+  )
+}
 
 type RawOffer = {
   price: number
@@ -67,6 +88,7 @@ export default function FavoritesGrid() {
   if (favorites.length === 0) {
     return (
       <div className="flex flex-col items-center py-6 text-center">
+        <DeviceOnlyNote />
         <p className="text-sm text-gray-500 mb-6">
           Ainda sem favoritos. Clica no coração num produto para o guardares aqui.
         </p>
@@ -89,6 +111,7 @@ export default function FavoritesGrid() {
 
   return (
     <div>
+      <DeviceOnlyNote />
       <p className="text-gray-500 text-sm mb-4">
         {products.length} produto{products.length !== 1 ? 's' : ''}
       </p>
