@@ -176,8 +176,15 @@ export default function PriceAlertButton({
     e.stopPropagation()
     setStatus('loading')
 
-    if (signedIn) await ensureFreshSession()
-    const result = await createPriceAlert(productId, email, targetPrice, durationMonths)
+    // Se o pedido falhar de todo (sem rede, erro no servidor), mostra uma
+    // mensagem em vez de ficar parado em "A guardar...".
+    let result: Awaited<ReturnType<typeof createPriceAlert>>
+    try {
+      if (signedIn) await ensureFreshSession()
+      result = await createPriceAlert(productId, email, targetPrice, durationMonths)
+    } catch {
+      result = { success: false, error: 'Não foi possível criar o alerta. Tenta de novo.' }
+    }
 
     if (result.success) {
       setStatus('done')
@@ -325,7 +332,12 @@ export default function PriceAlertButton({
         >
           {/* Janela com cantos retos e sem sombra (o fundo escurecido já a
               separa da página) - mesmas regras visuais do resto do site. */}
-          <div onClick={stopNav} className="w-full max-w-sm rounded-none bg-white p-5">
+          {/* Só stopPropagation (sem preventDefault): impede o clique de
+              chegar ao fundo (que fecha a janela) e ao link do cartão do
+              ténis, mas deixa o botão "Criar alerta" enviar o formulário.
+              Com preventDefault aqui, o envio era cancelado e o botão não
+              fazia nada. */}
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-none bg-white p-5">
             {/* Cabeçalho com o produto (foto/marca/nome/preço atual) - pedido
                 do Jorge para o modal deixar claro para que ténis é o alerta,
                 em vez de aparecer "às cegas". */}
