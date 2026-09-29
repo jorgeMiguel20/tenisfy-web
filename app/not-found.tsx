@@ -4,6 +4,9 @@ import Link from 'next/link'
 export default function NotFound() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-20 text-center">
+      {/* Título do separador do browser nas páginas que não existem (antes
+          ficava o título geral do site). */}
+      <title>Página não encontrada | Parjusto</title>
       <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">
         Erro 404
       </p>

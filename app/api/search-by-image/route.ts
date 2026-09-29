@@ -17,6 +17,13 @@ const WINDOW_SECONDS = 600;
 // recusa pedidos absurdamente grandes.
 const MAX_BODY_CHARS = 100_000;
 
+// Semelhança mínima para mostrar um resultado (0 a 1). Sem isto, qualquer
+// foto (até de um gato) devolvia sempre "o ténis mais parecido", mesmo com
+// 1% de semelhança. Abaixo deste valor o site diz "Não encontrámos nenhum
+// modelo parecido". Se fotos reais de ténis do catálogo começarem a não
+// dar resultado, baixar este número (ex.: 0.4).
+const MIN_SIMILARITY = 0.5;
+
 export async function POST(request: NextRequest) {
   try {
     // 0. Limite de pedidos. Se a verificação falhar por um problema técnico,
@@ -86,8 +93,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Devolve os produtos encontrados ao frontend
-    return NextResponse.json({ results: products || [] });
+    // 4. Devolve ao frontend só os produtos realmente parecidos
+    const results = ((products || []) as Array<{ similarity?: number }>).filter(
+      (product) => typeof product.similarity === 'number' && product.similarity >= MIN_SIMILARITY
+    );
+    return NextResponse.json({ results });
 
   } catch (error) {
     console.error('Erro interno na rota de pesquisa por imagem:', error);

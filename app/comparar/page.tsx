@@ -18,12 +18,15 @@ import { computePriceDrop } from '@/lib/priceDrop'
 import { dedupeColor } from '@/lib/formatColor'
 import { COMPARE_GRID, COMPARE_LABEL, COMPARE_LINE, compareGridStyle, valueCellClass } from '@/lib/compareGrid'
 
+// Máximo 3 ténis, sem repetidos (antes "?produtos=a,a,a" mostrava o mesmo
+// ténis três vezes lado a lado).
 function parseSlugs(produtos?: string): string[] {
-  return (produtos ?? '')
+  const slugs = (produtos ?? '')
+    .slice(0, 1000)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-    .slice(0, 3)
+  return Array.from(new Set(slugs)).slice(0, 3)
 }
 
 export async function generateMetadata({
