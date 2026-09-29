@@ -96,7 +96,11 @@ export async function generateMetadata({
 
   const title = `${product.brands?.name} ${product.model_name}${lowestPrice ? ` desde ${formatPrice(lowestPrice)}` : ''} | Parjusto`
 
-  const description = `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${formatPrice(lowestPrice)}.` : ''} Encontra a melhor oferta no Parjusto.`
+  // Sem lojas com stock, "em 0 lojas" soava mal no Google - nesse caso a
+  // descrição diz que o ténis está sem stock neste momento.
+  const description = storeCount > 0
+    ? `Compara o preço do ${product.brands?.name} ${product.model_name} em ${storeCount} loja${storeCount !== 1 ? 's' : ''} portuguesa${storeCount !== 1 ? 's' : ''}. ${lowestPrice ? `Desde ${formatPrice(lowestPrice)}.` : ''} Encontra a melhor oferta no Parjusto.`
+    : `${product.brands?.name} ${product.model_name}: neste momento sem stock nas lojas portuguesas que acompanhamos. Vê outros ténis parecidos e compara preços no Parjusto.`
 
 
 
