@@ -7,7 +7,7 @@ import CatalogoBackBar from '@/components/CatalogoBackBar'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 
 export const metadata: Metadata = {
-  title: 'Catálogo | Parjusto',
+  title: 'Catálogo de ténis: compara preços nas lojas portuguesas | Parjusto',
   description: 'Compara preços, stock e tamanhos de ténis Nike, adidas, New Balance, Asics e Vans nas principais lojas portuguesas.',
   // ?genero=, ?q= e ?comparar= mostram a mesma página filtrada no browser -
   // o endereço oficial é sempre /catalogo.
