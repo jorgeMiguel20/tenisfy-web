@@ -65,6 +65,16 @@ export default function PrivacidadePage() {
             identifica visitantes individualmente.
           </p>
           <p className="mt-3">
+            <span className="font-medium text-gray-900">Segurança do site.</span>{' '}
+            Para impedir abusos (por exemplo, pedidos em excesso para encher a
+            caixa de email de alguém), limitamos o número de pedidos por pessoa.
+            Para isso, guardamos temporariamente uma impressão digital cifrada do
+            teu endereço IP e, nos pedidos de alerta, do email indicado, a partir
+            da qual não é possível recuperar o IP nem o email. Estes registos são
+            apagados automaticamente ao fim de cerca de 24 horas. Tratamos estes dados
+            por interesse legítimo na segurança do site.
+          </p>
+          <p className="mt-3">
             Nunca partilhamos o teu email com terceiros para fins comerciais nem o
             usamos para qualquer outro tipo de comunicação.
           </p>
