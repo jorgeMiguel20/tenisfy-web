@@ -4,6 +4,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { checkAndSendPriceAlerts } from '@/lib/priceAlerts'
+import { isAdminRequest, NOT_AUTHORIZED_ERROR } from '@/lib/adminAuth'
 
 type ActionResult = { success: true; count: number } | { success: false; error: string }
 
@@ -22,6 +23,9 @@ function getServiceClient() {
 // approved. needs_attention=true nunca passa por aqui - a UI não oferece
 // este botão para essas linhas.
 export async function approveProposals(proposalIds: string[]): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   if (proposalIds.length === 0) return { success: true, count: 0 }
 
   const supabase = getServiceClient()
@@ -104,6 +108,9 @@ export async function approveProposals(proposalIds: string[]): Promise<ActionRes
 // Rejeitar: usa-se quando desconfias ativamente de que a leitura estava
 // errada. Não toca em product_offers.
 export async function rejectProposal(proposalId: string): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   const supabase = getServiceClient()
   if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
 
@@ -123,6 +130,9 @@ export async function rejectProposal(proposalId: string): Promise<ActionResult> 
 // atenção" sem confirmar nem infirmar a leitura, e sem tocar em
 // product_offers - usa-se depois de teres confirmado tu à mão na loja.
 export async function dismissProposal(proposalId: string): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   const supabase = getServiceClient()
   if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
 
@@ -142,6 +152,9 @@ export async function dismissProposal(proposalId: string): Promise<ActionResult>
 // "Precisa da tua atenção") - mesma lógica de dismissProposal, sem tocar em
 // product_offers.
 export async function dismissProposals(proposalIds: string[]): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   if (proposalIds.length === 0) return { success: true, count: 0 }
 
   const supabase = getServiceClient()
@@ -168,6 +181,9 @@ export async function dismissProposals(proposalIds: string[]): Promise<ActionRes
 // para reativar por engano, basta limpar discontinued_at diretamente na
 // base de dados (sem botão próprio nesta ronda).
 export async function discontinueOffer(proposalId: string, productOfferId: string): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   const supabase = getServiceClient()
   if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
 

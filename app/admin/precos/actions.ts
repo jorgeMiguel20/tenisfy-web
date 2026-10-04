@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { isAdminRequest, NOT_AUTHORIZED_ERROR } from '@/lib/adminAuth'
 
 type MarkPricesResult =
   | { success: true; timestamp: string; count: number }
@@ -12,6 +13,9 @@ type MarkPricesResult =
 // (HTTP Basic Auth) - esta ação só corre depois disso, por isso não repete
 // a verificação de password aqui.
 export async function markPricesVerified(): Promise<MarkPricesResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 

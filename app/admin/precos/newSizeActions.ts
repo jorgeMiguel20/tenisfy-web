@@ -3,6 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { isAdminRequest, NOT_AUTHORIZED_ERROR } from '@/lib/adminAuth'
 
 type ActionResult = { success: true; count: number } | { success: false; error: string }
 
@@ -26,6 +27,9 @@ function getServiceClient() {
 // já no dia seguinte (fica "precisa da tua atenção" se a leitura for
 // suspeita).
 export async function approveNewSizes(proposalIds: string[]): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   if (proposalIds.length === 0) return { success: true, count: 0 }
 
   const supabase = getServiceClient()
@@ -124,6 +128,9 @@ export async function approveNewSizes(proposalIds: string[]): Promise<ActionResu
 // marcado como rejected e o endpoint /api/admin/size-discoveries deixa de
 // voltar a propor esta combinação produto+loja+tamanho.
 export async function rejectNewSize(proposalId: string): Promise<ActionResult> {
+  // Segunda verificação da palavra-passe (ver lib/adminAuth.ts).
+  if (!(await isAdminRequest())) return { success: false, error: NOT_AUTHORIZED_ERROR }
+
   const supabase = getServiceClient()
   if (!supabase) return { success: false, error: 'Configuração do Supabase em falta no servidor.' }
 
