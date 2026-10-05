@@ -11,6 +11,7 @@ import type { ProductWithPrice } from '@/lib/types'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 import { useCompare } from '@/lib/compare'
 import { searchProducts } from '@/lib/searchProducts'
+import { compareSizes } from '@/lib/sizeSort'
 
 // A pesquisa por foto deixou de estar aqui - passou para o modal unificado
 // aberto pela lupa do cabeçalho (ver components/SearchModal.tsx), por isso
@@ -767,7 +768,7 @@ export default function ProductGrid({
 
   const sizeOptions = useMemo(() => {
     const unique = Array.from(new Set(products.flatMap((p) => p.sizes)))
-    return unique.sort((a, b) => parseFloat(a) - parseFloat(b)).map((s) => ({ value: s, display: s }))
+    return unique.sort(compareSizes).map((s) => ({ value: s, display: s }))
   }, [products])
 
   const colorOptions = useMemo(() => {

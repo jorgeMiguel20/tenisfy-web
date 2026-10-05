@@ -29,6 +29,7 @@ import StoreOffersList, { type StoreOfferForDisplay } from '@/components/StoreOf
 import PriceAlertButton from '@/components/PriceAlertButton'
 
 import type { ProductWithPrice } from '@/lib/types'
+import { compareSizes } from '@/lib/sizeSort'
 
 
 
@@ -411,7 +412,7 @@ export default async function ProdutoPage({
       lastCheckedAt: g.oldestCheckedAt,
       sizes: Array.from(g.sizes.entries())
         .map(([size, inStock]) => ({ size, inStock }))
-        .sort((a, b) => parseFloat(a.size) - parseFloat(b.size)),
+        .sort((a, b) => compareSizes(a.size, b.size)),
     }))
     .sort((a, b) => a.price - b.price)
 
