@@ -41,20 +41,22 @@ function NavUnderline({ active }: { active: boolean }) {
 // na Nike): a linha por baixo fica sempre visível no link dessa secção,
 // e não só ao passar o rato.
 // - "/catalogo?genero=homem" (e mulher/crianca) -> esse género;
-// - "/catalogo" sem género -> "marcas" (é para aí que "Marcas" leva);
+// - "/marcas" e "/marcas/<marca>" -> "marcas" (é para aí que "Marcas" leva);
+// - "/catalogo" sem género -> "catalogo" ("Ver catálogo" no telemóvel);
 // - "/promocoes" -> "promocoes";
 // - qualquer outra página -> nenhuma secção marcada.
-type ActiveSection = GenderGroupValue | 'marcas' | 'promocoes' | null
+type ActiveSection = GenderGroupValue | 'marcas' | 'catalogo' | 'promocoes' | null
 
 function useActiveSection(): ActiveSection {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   if (pathname === '/promocoes') return 'promocoes'
+  if (pathname === '/marcas' || pathname.startsWith('/marcas/')) return 'marcas'
   if (pathname !== '/catalogo') return null
   const genero = searchParams.get('genero')
   const match = NAV_LINKS.find((link) => link.value === genero)
   if (match) return match.value
-  return genero ? null : 'marcas'
+  return genero ? null : 'catalogo'
 }
 
 function DesktopNav({ active }: { active: ActiveSection }) {
@@ -69,8 +71,7 @@ function DesktopNav({ active }: { active: ActiveSection }) {
     // vezes, gastando dados à toa sem ganho real de velocidade.
     <nav className="hidden sm:flex items-center gap-6">
       <Link
-        href="/catalogo"
-        prefetch={false}
+        href="/marcas"
         aria-current={active === 'marcas' ? 'page' : undefined}
         className={linkClass(active === 'marcas')}
       >
@@ -124,8 +125,8 @@ function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: 
         href="/catalogo"
         prefetch={false}
         onClick={onNavigate}
-        aria-current={active === 'marcas' ? 'page' : undefined}
-        className={linkClass(active === 'marcas')}
+        aria-current={active === 'catalogo' ? 'page' : undefined}
+        className={linkClass(active === 'catalogo')}
       >
         Ver catálogo
       </Link>
@@ -141,7 +142,12 @@ function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: 
           {link.label}
         </Link>
       ))}
-      <Link href="/catalogo" prefetch={false} onClick={onNavigate} className={linkClass(false)}>
+      <Link
+        href="/marcas"
+        onClick={onNavigate}
+        aria-current={active === 'marcas' ? 'page' : undefined}
+        className={linkClass(active === 'marcas')}
+      >
         Marcas
       </Link>
       <Link

@@ -270,13 +270,13 @@ export default function PriceAlertButton({
               }`
         }
       >
-        {/* Sino preenchido = já tens alerta ativo para este par (mesma
-            lógica do coração dos favoritos: preenchido a #123F3A quando
-            está "ligado"). */}
+        {/* Sino preenchido a amarelo = já tens alerta ativo para este par
+            (pedido do Jorge: amarelo em vez de verde, para se distinguir
+            bem do resto do site). */}
         <BellIcon
           filled={Boolean(existingAlert)}
           className={`h-4 w-4 ${
-            variant === 'large' || open ? 'text-white' : existingAlert ? 'text-[#123F3A]' : 'text-gray-400'
+            existingAlert ? 'text-[#E8A900]' : variant === 'large' || open ? 'text-white' : 'text-gray-400'
           }`}
         />
         {variant === 'large' &&

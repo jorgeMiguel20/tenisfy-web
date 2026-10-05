@@ -5,7 +5,7 @@ import { SITE_URL } from '@/lib/siteUrl'
 
 // Páginas fixas que vale a pena indexar. Ficam de fora /comparar e
 // /favoritos (páginas com "noindex", ver os respetivos page.tsx).
-const STATIC_PAGES = ['/catalogo', '/promocoes', '/sobre', '/divulgacao-afiliados', '/termos', '/privacidade']
+const STATIC_PAGES = ['/catalogo', '/marcas', '/promocoes', '/sobre', '/divulgacao-afiliados', '/termos', '/privacidade']
 
 // Uma hora de cache, como as páginas do site.
 export const revalidate = 3600
@@ -44,5 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ignorar.
   const staticUrls = STATIC_PAGES.map((path) => ({ url: `${SITE_URL}${path}` }))
 
-  return [{ url: SITE_URL }, ...staticUrls, ...productUrls]
+  // Páginas de marca (/marcas/nike, ...) - só as marcas com pelo menos um
+  // ténis ativo (as outras ficam com "noindex", ver app/marcas/[slug]).
+  const { data: brandRows } = await supabase.from('brands').select('slug, products (is_active)')
+  const brandUrls = ((brandRows ?? []) as unknown as { slug: string; products: { is_active: boolean | null }[] | null }[])
+    .filter((brand) => (brand.products ?? []).some((product) => product.is_active))
+    .map((brand) => ({ url: `${SITE_URL}/marcas/${brand.slug}` }))
+
+  return [{ url: SITE_URL }, ...staticUrls, ...brandUrls, ...productUrls]
 }

@@ -490,7 +490,11 @@ export default async function ProdutoPage({
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Parjusto', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/catalogo` },
+      // A marca leva à página dela (/marcas/nike) - ajuda o Google a ligar
+      // os ténis à marca.
+      product.brands?.slug
+        ? { '@type': 'ListItem', position: 2, name: product.brands.name, item: `${SITE_URL}/marcas/${product.brands.slug}` }
+        : { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/catalogo` },
       {
         '@type': 'ListItem',
         position: 3,
@@ -531,7 +535,13 @@ export default async function ProdutoPage({
 
         <span className="mx-1.5">/</span>
 
-        <span>{product.brands?.name}</span>
+        {product.brands?.slug ? (
+          <Link href={`/marcas/${product.brands.slug}`} className="transition-colors hover:text-[#17232B]">
+            {product.brands.name}
+          </Link>
+        ) : (
+          <span>{product.brands?.name}</span>
+        )}
 
         <span className="mx-1.5">/</span>
 
