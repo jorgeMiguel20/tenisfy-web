@@ -65,8 +65,8 @@ export default async function PromocoesPage() {
           Promoções de ténis
         </h1>
         <p className="mt-3 text-base leading-relaxed text-[#5C6770]">
-          Ténis abaixo do preço oficial da marca ou que desceram de preço nos últimos 14 dias, sempre com o
-          preço de referência ao lado, nas lojas portuguesas que acompanhamos.
+          Ténis mais baratos do que na loja oficial da marca ou que desceram de preço nos últimos 14 dias,
+          sempre com o preço de referência ao lado.
         </p>
       </header>
 
@@ -91,12 +91,10 @@ export default async function PromocoesPage() {
       )}
 
       {belowOfficial.length > 0 && (
-        <section className="mt-12 border-t border-[#17232B]/10 pt-10">
-          <h2 className={H2}>Abaixo do preço oficial</h2>
-          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#5C6770]">
-            O preço mais baixo nas lojas que acompanhamos, comparado com o preço do mesmo modelo na loja
-            oficial da marca.
-          </p>
+        // Sem título nem frase própria (pedido de marketing): a frase do
+        // topo da página já explica esta lista, e cada cartão diz em que
+        // loja está e qual o preço na loja oficial.
+        <section className="mt-10">
           <div className={GRID}>
             {belowOfficial.map((p) => {
               const s = p.savings!
