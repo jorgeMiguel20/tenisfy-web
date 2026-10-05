@@ -1,7 +1,6 @@
 // app/admin/precos/page.tsx
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
-import PriceCheckButton from './PriceCheckButton'
 import ProposalsSection, { type ProposalRow } from './ProposalsSection'
 import AttentionSection, { type AttentionRow } from './AttentionSection'
 import NewSizesSection, { type NewSizeRow } from './NewSizesSection'
@@ -154,10 +153,9 @@ export default async function AdminPrecosPage() {
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Verificar preços</h1>
         <p className="text-gray-500 mb-8">
-          Clica depois de confirmares os preços em todas as lojas. Isto atualiza a data
-          mostrada em cada página de produto.
+          A data &quot;Verificado há…&quot; de cada oferta só muda quando a loja é mesmo
+          verificada (verificação automática ou aprovação de uma proposta abaixo).
         </p>
-        <PriceCheckButton />
       </div>
 
       <ProposalsSection proposals={proposals} />
