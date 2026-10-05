@@ -1,17 +1,16 @@
 // components/CatalogoBackBar.tsx
 import Link from 'next/link'
 
-// So 'Página Inicial' (o 'Voltar' baseado no historico do browser foi
-// removido a pedido do Jorge - no catalogo so faz sentido voltar ao inicio).
+// Percurso no topo do catálogo, igual ao das outras páginas
+// ("Parjusto / Promoções", "Parjusto / Marcas / Nike"...).
 export default function CatalogoBackBar() {
   return (
-    <div className="mb-6">
-      <Link
-        href="/"
-        className="text-[13px] text-[#5C6770] transition-colors hover:text-[#17232B]"
-      >
-        Página Inicial
+    <nav className="mb-6 text-[13px] text-[#5C6770]">
+      <Link href="/" className="transition-colors hover:text-[#17232B]">
+        Parjusto
       </Link>
-    </div>
+      <span className="mx-1.5">/</span>
+      <span className="text-[#17232B]">Catálogo</span>
+    </nav>
   )
 }

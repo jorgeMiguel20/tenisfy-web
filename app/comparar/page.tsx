@@ -488,7 +488,7 @@ export default async function CompararPage({
 
       <nav className="text-[13px] text-[#5C6770]">
         <Link href="/" className="transition-colors hover:text-[#17232B]">
-          Início
+          Parjusto
         </Link>
         <span className="mx-1.5">/</span>
         <span className="text-[#17232B]">Comparar</span>

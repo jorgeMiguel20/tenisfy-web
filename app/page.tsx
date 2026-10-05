@@ -119,13 +119,32 @@ export default async function Home() {
   const vansShowcaseProduct =
     productsWithPrice.find((p) => p.slug === 'vans-old-skool-unisex') ?? null
 
+  // Quando não há descidas de preço nos últimos 14 dias, a secção de
+  // poupança mostra os ténis mais baratos do que na loja oficial da marca
+  // (há sempre alguns) - para a homepage ter sempre ténis com preço à vista.
+  // Pares de adulto primeiro; o ténis da secção "A diferença que ninguém te
+  // mostra" fica de fora para não aparecer duas vezes.
+  const belowOfficialDeals =
+    topDeals.length > 0
+      ? []
+      : productsWithPrice
+          .filter((p) => p.savings && p.lowest_price != null && p.id !== vansShowcaseProduct?.id)
+          .sort((a, b) => {
+            const adultFirst = Number(b.gender !== 'crianca') - Number(a.gender !== 'crianca')
+            if (adultFirst !== 0) return adultFirst
+            return b.savings!.amount / b.savings!.officialPrice - a.savings!.amount / a.savings!.officialPrice
+          })
+          .slice(0, 4)
+
   // Produto para a seccao de alertas de preco: evita repetir o que ja
   // aparece no "Como funciona" ou no "Maior poupanca agora", para a
   // homepage nao mostrar sempre o mesmo tenis em varios sitios (reparado
   // pelo Jorge). So cai para topDeals[0]/vansShowcaseProduct se mesmo assim
   // nao sobrar nenhum candidato diferente.
   const usedProductIds = new Set(
-    [vansShowcaseProduct?.id, ...topDeals.map((p) => p.id)].filter((id): id is string => Boolean(id))
+    [vansShowcaseProduct?.id, ...topDeals.map((p) => p.id), ...belowOfficialDeals.map((p) => p.id)].filter(
+      (id): id is string => Boolean(id)
+    )
   )
   // Exemplo da secção de alertas de preço: fixo no Nike Air Force 1 '07
   // (pedido do Jorge), com a foto real desse modelo enviada por ele - para
@@ -173,7 +192,7 @@ export default async function Home() {
         heroImageSrcMobile="/marketing/diferenca-precos-vans-mobile.jpg"
       />
 
-      <MaiorPoupancaAgora products={topDeals} />
+      <MaiorPoupancaAgora products={topDeals} belowOfficial={belowOfficialDeals} />
 
       <HomeMarquee brands={marqueeBrands} />
 
