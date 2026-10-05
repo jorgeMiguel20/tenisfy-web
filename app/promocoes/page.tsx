@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
 const H2 = 'font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B] sm:text-[28px]'
-const GRID = 'mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4'
+const GRID = 'mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'
 
 export default async function PromocoesPage() {
   const { products, error } = await getProductsWithPrice()
@@ -65,8 +65,8 @@ export default async function PromocoesPage() {
           Promoções de ténis
         </h1>
         <p className="mt-3 text-base leading-relaxed text-[#5C6770]">
-          Ténis abaixo do preço oficial da marca e descidas de preço dos últimos 14 dias, nas lojas
-          parceiras. Mostramos sempre com o quê estamos a comparar.
+          Ténis abaixo do preço oficial da marca ou que desceram de preço nos últimos 14 dias, sempre com o
+          preço de referência ao lado, nas lojas portuguesas que acompanhamos.
         </p>
       </header>
 
@@ -94,8 +94,8 @@ export default async function PromocoesPage() {
         <section className="mt-12 border-t border-[#17232B]/10 pt-10">
           <h2 className={H2}>Abaixo do preço oficial</h2>
           <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#5C6770]">
-            O preço mais baixo nas lojas parceiras, comparado com o preço na loja oficial da marca para o
-            mesmo modelo.
+            O preço mais baixo nas lojas que acompanhamos, comparado com o preço do mesmo modelo na loja
+            oficial da marca.
           </p>
           <div className={GRID}>
             {belowOfficial.map((p) => {

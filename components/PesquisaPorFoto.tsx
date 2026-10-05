@@ -40,8 +40,8 @@ export default function PesquisaPorFoto() {
               mais parecidos e mostra o preço; aceita fotos da câmara, da
               galeria e screenshots. */}
           <p className="mt-3 max-w-[24rem] text-base leading-relaxed text-[#5C6770]">
-            Procuramos no nosso catálogo os ténis mais parecidos e mostramos-te o preço. Funciona com fotos da
-            câmara, da galeria ou screenshots.
+            Procuramos no catálogo os ténis mais parecidos com a tua foto e mostramos-te o preço. Serve uma foto
+            da câmara, da galeria ou uma captura de&nbsp;ecrã.
           </p>
           <div className="mt-6">
             <PesquisaPorFotoButton />

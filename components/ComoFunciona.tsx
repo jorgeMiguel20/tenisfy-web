@@ -32,7 +32,7 @@ const STEPS = [
   },
   {
     title: 'Compara preços entre lojas',
-    text: 'Preço, stock e tamanhos de cada loja parceira na mesma página.',
+    text: 'Preço, stock e tamanhos de cada loja na mesma página.',
     image: 'como-funciona-comparar',
   },
   {

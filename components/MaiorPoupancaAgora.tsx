@@ -35,7 +35,7 @@ export default function MaiorPoupancaAgora({ products }: { products: ProductWith
         </Link>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {products.map((product) => {
           const drop = product.priceDrop!
           const currentPrice = product.lowest_price!

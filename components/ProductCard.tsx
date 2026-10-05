@@ -36,6 +36,13 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
   const MIN_DISCOUNT_PERCENT_TO_SHOW = 5
   const showDropBadge = dropPercent != null && dropPercent >= MIN_DISCOUNT_PERCENT_TO_SHOW
 
+  // Preço de referência riscado ao lado do preço, para se perceber de onde
+  // vem o "-X%": o preço de há 14 dias (descida) ou o da loja oficial da
+  // marca (poupança) - o mesmo valor usado para calcular a percentagem.
+  const referencePrice =
+    showDropBadge && discount && lowestPrice ? Math.round((lowestPrice + discount.amount) * 100) / 100 : null
+  const referenceLabel = product.priceDrop ? 'Preço há até 14 dias' : 'Preço na loja oficial da marca'
+
   // Fotos do mini-carrossel do card (estilo Lacoste/Armani): a foto de capa
   // primeiro, depois as restantes fotos do produto, sem repetir. Só aparecem
   // pontinhos quando há mais de uma - no mobile dá para arrastar (swipe)
@@ -91,13 +98,10 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             ícones). */}
         <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
           {showDropBadge ? (
-            // Cor pedida pelo Jorge: o mesmo verde vivo usado no rótulo
-            // "Como funciona" (components/ComoFunciona.tsx, emerald-300),
-            // em vez do verde escuro anterior (#1F5F58). Como é um verde
-            // claro, o texto branco de antes ficava sem contraste - por
-            // isso o texto passa a emerald-950 (verde muito escuro da
-            // mesma família), mantendo exatamente o tom de verde pedido.
-            <span className="rounded-none bg-[#123F3A] px-2 py-1 text-[11px] font-semibold tabular-nums text-white">
+            // Verde vivo (#15803D) só para descontos, para se destacar do
+            // verde escuro da marca (pedido de marketing). Com texto branco
+            // tem contraste 5:1 (acima do mínimo de 4,5:1).
+            <span className="rounded-none bg-[#15803D] px-2 py-1 text-[11px] font-bold tabular-nums text-white">
               -{dropPercent}%
             </span>
           ) : (
@@ -184,6 +188,12 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               <span className="text-xl font-bold tabular-nums text-[#17232B]">
                 {formatPrice(lowestPrice)}
               </span>
+              {referencePrice != null && (
+                <span className="text-sm tabular-nums text-[#5C6770] line-through" title={referenceLabel}>
+                  <span className="sr-only">{referenceLabel}: </span>
+                  {formatPrice(referencePrice)}
+                </span>
+              )}
               {storeCount > 0 && (
                 <span className="text-xs text-[#5C6770]">
                   · {storeCount} {storeCount === 1 ? 'loja' : 'lojas'}

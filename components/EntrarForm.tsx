@@ -171,7 +171,7 @@ export default function EntrarForm() {
     <div>
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">Entrar</h1>
       <p className="mt-3 text-sm leading-relaxed text-[#5C6770]">
-        Entra com o teu email para teres os teus favoritos e alertas de preço no computador e no telemóvel. Não
+        Entra com o teu email para teres os teus favoritos e alertas de&nbsp;preço no computador e no telemóvel. Não
         precisas de palavra-passe - enviamos-te um link para entrares. Sem conta, o site funciona na mesma.
       </p>
 
@@ -196,7 +196,7 @@ export default function EntrarForm() {
       </form>
 
       <p className="mt-6 text-xs leading-relaxed text-[#5C6770]">
-        Ao entrar, guardamos o teu email, os teus favoritos e os teus alertas de preço - mais nada. Vê a{' '}
+        Ao entrar, guardamos o teu email, os teus favoritos e os teus alertas de&nbsp;preço - mais nada. Vê a{' '}
         <Link href="/privacidade" className="font-medium text-[#17232B] underline underline-offset-4">
           Política de Privacidade
         </Link>

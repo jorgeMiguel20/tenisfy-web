@@ -148,8 +148,12 @@ export default async function Home() {
   // Faixa de marcas reais para o HomeMarquee - so marcas que existem mesmo
   // no catalogo carregado agora (nunca uma lista generica inventada).
   const marqueeBrands = Array.from(
-    new Set(productsWithPrice.map((p) => p.brands?.name).filter((name): name is string => Boolean(name)))
-  ).sort((a, b) => a.localeCompare(b))
+    new Map(
+      productsWithPrice
+        .filter((p) => p.brands?.name && p.brands?.slug)
+        .map((p) => [p.brands.slug, { name: p.brands.name, slug: p.brands.slug }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <main className="max-w-7xl mx-auto px-6 pb-10">

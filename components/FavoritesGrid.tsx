@@ -87,23 +87,20 @@ export default function FavoritesGrid() {
 
   if (favorites.length === 0) {
     return (
-      <div className="flex flex-col items-center py-6 text-center">
+      // Sem a caixa grande à volta do "Ver catálogo" (parecia um produto
+      // vazio - pedido de marketing): texto alinhado com o título e um
+      // botão simples, igual aos outros do site.
+      <div className="max-w-xl py-2">
         <DeviceOnlyNote />
-        <p className="text-sm text-gray-500 mb-6">
-          Ainda sem favoritos. Clica no coração num produto para o guardares aqui.
+        <p className="text-base text-[#17232B]">Ainda não tens favoritos.</p>
+        <p className="mt-1 text-sm text-[#5C6770]">
+          Carrega no coração de um ténis para o guardares aqui e voltares a ele mais tarde.
         </p>
         <Link
           href="/catalogo"
-          className="flex w-full max-w-sm flex-col items-center justify-center gap-3 rounded-none border border-[#17232B]/10 bg-[#F9FBFC] p-14 text-center text-[#5C6770] hover:border-[#17232B]/30 hover:text-[#17232B] transition-colors"
+          className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-none bg-[#17232B] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#17232B]/85"
         >
-          <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 21s-6.716-4.35-9.428-8.06C.85 10.1 1.2 6.6 4.1 5.02 6.4 3.77 9 4.5 12 7.5c3-3 5.6-3.73 7.9-2.48 2.9 1.58 3.25 5.08 1.53 7.92C18.716 16.65 12 21 12 21z"
-            />
-          </svg>
-          <span className="text-base font-semibold">Ver catálogo</span>
+          Ver catálogo
         </Link>
       </div>
     )
@@ -115,7 +112,7 @@ export default function FavoritesGrid() {
       <p className="text-gray-500 text-sm mb-4">
         {products.length} produto{products.length !== 1 ? 's' : ''}
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

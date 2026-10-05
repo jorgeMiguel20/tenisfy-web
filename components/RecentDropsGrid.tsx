@@ -8,7 +8,7 @@ export default function RecentDropsGrid({ products }: { products: ProductWithPri
   const { compareSlugs, toggleCompare } = useCompare()
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
       {products.map((product) => (
         <ProductCard
           key={product.id}

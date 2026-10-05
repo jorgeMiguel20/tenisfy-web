@@ -217,7 +217,7 @@ export default function DiferencaPrecos({
               do texto secundário da secção (rótulo "Onde comprar", números
               das lojas) não foi tocado. */}
           <p className="mt-3 max-w-md text-sm sm:text-base text-[#5C6770]">
-            Alinhamos o preço do mesmo modelo nas lojas parceiras. A tua poupança é a
+            Alinhamos o preço do mesmo modelo em várias lojas. A tua poupança é a
             distância entre a primeira e a última linha.
           </p>
           <p className="mt-4 flex flex-wrap items-center gap-3 text-3xl sm:text-4xl font-extrabold text-[#17232B]">

@@ -190,3 +190,22 @@ body {
     height: 28px;
   }
 }
+
+/* Quebras de linha mais cuidadas em todo o site (pedido de marketing): os
+   parágrafos evitam deixar uma palavra sozinha na última linha e os títulos
+   distribuem o texto por linhas de tamanho parecido. Em @layer base para
+   as classes do Tailwind (text-balance, text-pretty...) continuarem a
+   mandar quando forem usadas num elemento. */
+@layer base {
+  p,
+  li,
+  dd,
+  figcaption {
+    text-wrap: pretty;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}

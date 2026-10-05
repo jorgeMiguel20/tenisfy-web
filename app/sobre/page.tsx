@@ -21,9 +21,9 @@ export default function SobrePage() {
 
         <p>
           Somos um projeto independente, construído em Portugal, focado em
-          transparência: mostramos o preço real de cada loja parceira, e a
-          escolha final é sempre tua. Não vendemos produtos diretamente —
-          apenas ajudamos-te a encontrar a melhor oferta antes de comprares.
+          transparência: mostramos o preço de cada loja e a escolha final é
+          sempre tua. Não vendemos produtos diretamente — só te ajudamos a
+          encontrar a melhor oferta antes de comprares.
         </p>
 
         <p>

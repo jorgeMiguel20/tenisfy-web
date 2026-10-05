@@ -44,7 +44,7 @@ export default function PromoCard({
           />
         )}
         {percentOff >= 1 && (
-          <span className="absolute left-3 top-3 inline-flex items-center rounded-none bg-[#123F3A] px-2 py-1 text-[11px] font-semibold tabular-nums text-white">
+          <span className="absolute left-3 top-3 inline-flex items-center rounded-none bg-[#15803D] px-2 py-1 text-[11px] font-bold tabular-nums text-white">
             -{percentOff}%
           </span>
         )}
