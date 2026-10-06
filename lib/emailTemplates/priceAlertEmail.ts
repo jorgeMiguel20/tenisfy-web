@@ -16,16 +16,30 @@ function absoluteImageUrl(url: string | null): string | null {
 // usa essa biblioteca e isto é só um e-mail, não vale a pena a dependência
 // extra. Estilos inline porque é o que os clientes de e-mail suportam de
 // forma fiável.
+//
+// kind:
+// - 'price': o preço chegou ao valor pedido (com ou sem tamanho).
+// - 'restock': o tamanho escolhido voltou a ter stock (pedido com
+//   "Avisar quando voltar a haver stock"), mesmo acima do valor pedido.
 export function priceAlertEmailHtml(params: {
+  kind?: 'price' | 'restock'
   brandName: string
   modelName: string
   imageUrl: string | null
+  size?: string | null
   price: number
   targetPrice: number
   productUrl: string
   unsubscribeUrl: string
 }): string {
-  const { brandName, modelName, imageUrl, price, targetPrice, productUrl, unsubscribeUrl } = params
+  const { kind = 'price', brandName, modelName, imageUrl, size, price, targetPrice, productUrl, unsubscribeUrl } = params
+
+  const sizeText = size ? ` no tamanho ${size}` : ''
+  const title = kind === 'restock' ? `O teu tamanho voltou!` : 'O preço baixou!'
+  const intro =
+    kind === 'restock'
+      ? `Pediste para ser avisado quando o tamanho ${size} voltasse a ter stock. Já há, a partir de:`
+      : `Pediste para ser avisado quando descesse abaixo de ${formatPrice(targetPrice)}${sizeText}. Agora está:`
 
   return `<!doctype html>
 <html lang="pt">
@@ -40,15 +54,15 @@ export function priceAlertEmailHtml(params: {
             <tr>
               <td style="padding:32px;">
                 <p style="margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#123F3A;">Parjusto</p>
-                <h1 style="margin:0 0 20px;font-size:20px;color:#17232B;">O preço baixou!</h1>
+                <h1 style="margin:0 0 20px;font-size:20px;color:#17232B;">${title}</h1>
 
                 ${imageUrl ? `<img src="${absoluteImageUrl(imageUrl)}" alt="${modelName}" width="120" style="display:block;border-radius:0;margin-bottom:20px;background:#F9FBFC;" />` : ''}
 
                 <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.03em;color:#5C6770;">${brandName}</p>
-                <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:#17232B;">${modelName}</p>
+                <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:#17232B;">${modelName}${size ? ` · tamanho ${size}` : ''}</p>
 
                 <p style="margin:0 0 4px;font-size:13px;color:#5C6770;">
-                  Pediste para ser avisado quando descesse abaixo de ${formatPrice(targetPrice)}. Agora está:
+                  ${intro}
                 </p>
                 <p style="margin:0 0 24px;font-size:32px;font-weight:800;color:#123F3A;">${formatPrice(price)}</p>
 
@@ -57,7 +71,7 @@ export function priceAlertEmailHtml(params: {
                 </a>
 
                 <p style="margin:32px 0 0;font-size:12px;line-height:18px;color:#5C6770;">
-                  Este alerta já foi usado e foi desativado automaticamente. Se quiseres continuar a acompanhar este produto, cria um novo alerta na página dele.
+                  Os preços e o stock podem mudar a qualquer momento - confirma sempre na loja antes de comprar. Este alerta já foi usado e foi desativado automaticamente. Se quiseres continuar a acompanhar este ténis, cria um novo alerta na página dele.
                 </p>
                 <p style="margin:10px 0 0;font-size:12px;color:#5C6770;">
                   Não pediste este alerta? <a href="${unsubscribeUrl}" style="color:#5C6770;">Cancela aqui</a>.

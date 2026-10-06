@@ -15,3 +15,14 @@ export function sizeValue(size: string): number {
 export function compareSizes(a: string, b: string): number {
   return sizeValue(a) - sizeValue(b)
 }
+
+// Dois tamanhos contam como "o mesmo" para os alertas quando a diferença é
+// menor do que 0,2. Exemplo: "42.5" (Nike, Zalando) e "42 2/3" (adidas)
+// diferem 0,17 e contam como o mesmo tamanho. "42" e "42 1/3" diferem 0,33
+// e já não contam.
+export function sizesMatch(a: string, b: string): boolean {
+  const va = sizeValue(a)
+  const vb = sizeValue(b)
+  if (!Number.isFinite(va) || !Number.isFinite(vb)) return a.trim() === b.trim()
+  return Math.abs(va - vb) < 0.2
+}

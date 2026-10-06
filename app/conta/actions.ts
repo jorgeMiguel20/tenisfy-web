@@ -12,6 +12,9 @@ export type MyAlert = {
   imageUrl: string | null
   targetPrice: number
   expiresAt: string | null
+  // null = qualquer tamanho
+  size: string | null
+  notifyRestock: boolean
 }
 
 type AlertRow = {
@@ -19,6 +22,8 @@ type AlertRow = {
   product_id: string
   target_price: number
   expires_at: string | null
+  size: string | null
+  notify_restock: boolean | null
   products: { slug: string; model_name: string; image_url: string | null; brands: { name: string } | null } | null
 }
 
@@ -48,7 +53,7 @@ export async function getMyAlerts(): Promise<MyAlert[] | null> {
 
   const { data, error } = await supabase
     .from('price_alerts')
-    .select('id, product_id, target_price, expires_at, products (slug, model_name, image_url, brands (name))')
+    .select('id, product_id, target_price, expires_at, size, notify_restock, products (slug, model_name, image_url, brands (name))')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .is('last_notified_at', null)
@@ -69,6 +74,8 @@ export async function getMyAlerts(): Promise<MyAlert[] | null> {
       imageUrl: row.products?.image_url ?? null,
       targetPrice: row.target_price,
       expiresAt: row.expires_at,
+      size: row.size ?? null,
+      notifyRestock: Boolean(row.notify_restock),
     }))
 }
 

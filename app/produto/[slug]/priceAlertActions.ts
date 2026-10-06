@@ -8,6 +8,7 @@ import { SITE_URL } from '@/lib/siteUrl'
 import { priceAlertConfirmationEmailHtml } from '@/lib/emailTemplates/priceAlertConfirmationEmail'
 import { getVerifiedUser } from '@/lib/authServer'
 import { checkRateLimit, clientFingerprint, fingerprint } from '@/lib/rateLimit'
+import { compareSizes, sizesMatch } from '@/lib/sizeSort'
 
 type CreatePriceAlertResult =
   // viaAccount: criado com sessão iniciada - ligado à conta e já ativo, sem
@@ -51,7 +52,14 @@ type ProductForEmail = {
   brands: { name: string } | null
 }
 
-async function sendConfirmationEmail(email: string, token: string, product: ProductForEmail, targetPrice: number) {
+async function sendConfirmationEmail(
+  email: string,
+  token: string,
+  product: ProductForEmail,
+  targetPrice: number,
+  size: string | null,
+  notifyRestock: boolean
+) {
   if (!resend) return // sem Resend configurado - o alerta fica guardado, só por confirmar
 
   await resend.emails.send({
@@ -64,6 +72,8 @@ async function sendConfirmationEmail(email: string, token: string, product: Prod
       imageUrl: product.image_url,
       targetPrice,
       confirmUrl: `${SITE_URL}/alertas/confirmar?token=${token}`,
+      size,
+      notifyRestock,
     }),
   })
 }
@@ -96,6 +106,47 @@ async function checkConfirmationEmailLimits(
   return null
 }
 
+export type AlertSizeOption = {
+  size: string
+  // Preço mais baixo com stock nesse tamanho (ou no equivalente noutra
+  // loja, ex. 42.5 = 42 2/3). null = esgotado em todas as lojas.
+  price: number | null
+}
+
+type OfferSizeRow = { size: string | null; price: number; in_stock: boolean }
+
+async function getProductOffersForSizes(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  productId: string
+): Promise<OfferSizeRow[]> {
+  const { data } = await supabase
+    .from('product_offers')
+    .select('size, price, in_stock, stores!inner (is_active)')
+    .eq('product_id', productId)
+    .is('discontinued_at', null)
+    .eq('stores.is_active', true)
+  return ((data ?? []) as OfferSizeRow[]).filter((o) => typeof o.size === 'string' && o.size.trim() !== '')
+}
+
+function buildSizeOptions(offers: OfferSizeRow[]): AlertSizeOption[] {
+  const labels = Array.from(new Set(offers.map((o) => (o.size as string).trim()))).sort(compareSizes)
+  return labels.map((label) => {
+    const inStock = offers.filter((o) => o.in_stock && sizesMatch(o.size as string, label))
+    return { size: label, price: inStock.length > 0 ? Math.min(...inStock.map((o) => Number(o.price))) : null }
+  })
+}
+
+// Tamanhos que aparecem no modal do alerta (lista "Tamanho"), com o preço
+// mais baixo de cada um ou "esgotado". Lido no momento em que o modal abre,
+// para estar sempre certo.
+export async function getAlertSizeOptions(productId: string): Promise<AlertSizeOption[]> {
+  if (typeof productId !== 'string' || !UUID_REGEX.test(productId)) return []
+  const supabase = getServiceClient()
+  if (!supabase) return []
+  return buildSizeOptions(await getProductOffersForSizes(supabase, productId))
+}
+
 // Cria (ou atualiza, se já existir para o mesmo e-mail+produto) um alerta
 // de preço.
 // - Sem sessão iniciada: como sempre - alertas novos exigem confirmação
@@ -110,7 +161,12 @@ export async function createPriceAlert(
   productId: string,
   email: string,
   targetPrice: number,
-  durationMonths: 1 | 2
+  durationMonths: 1 | 2,
+  // Tamanho escolhido (null = qualquer tamanho) e "avisar quando voltar a
+  // haver stock" (só faz sentido com tamanho, e só se esse tamanho estiver
+  // esgotado agora - confirmado aqui no servidor).
+  size: string | null = null,
+  notifyRestock: boolean = false
 ): Promise<CreatePriceAlertResult> {
   // Uma Server Action pode receber qualquer coisa vinda de fora, mesmo que
   // o formulário do site só envie texto e números.
@@ -128,6 +184,12 @@ export async function createPriceAlert(
   }
   if (durationMonths !== 1 && durationMonths !== 2) {
     return { success: false, error: 'Duração de expiração inválida.' }
+  }
+  if (size !== null && (typeof size !== 'string' || size.trim() === '' || size.length > 12)) {
+    return { success: false, error: 'Tamanho inválido.' }
+  }
+  if (typeof notifyRestock !== 'boolean') {
+    return { success: false, error: 'Pedido inválido.' }
   }
 
   const user = await getVerifiedUser()
@@ -165,6 +227,18 @@ export async function createPriceAlert(
     .single()
 
   if (!product) return { success: false, error: 'Produto não encontrado.' }
+
+  // O tamanho tem de ser um dos que as lojas deste ténis vendem.
+  let alertSize: string | null = null
+  let alertNotifyRestock = false
+  if (size !== null) {
+    const options = buildSizeOptions(await getProductOffersForSizes(supabase, productId))
+    const option = options.find((o) => o.size === size.trim())
+    if (!option) return { success: false, error: 'Esse tamanho não existe para este ténis.' }
+    alertSize = option.size
+    // "Avisar quando voltar" só se o tamanho estiver mesmo esgotado agora.
+    alertNotifyRestock = notifyRestock && option.price === null
+  }
 
   const { data: existing } = await supabase
     .from('price_alerts')
@@ -207,6 +281,8 @@ export async function createPriceAlert(
       .from('price_alerts')
       .update({
         target_price: targetPrice,
+        size: alertSize,
+        notify_restock: alertNotifyRestock,
         is_active: true,
         last_notified_at: null,
         expires_at: expiresAt.toISOString(),
@@ -224,8 +300,14 @@ export async function createPriceAlert(
       return { success: true, alreadyConfirmed: true, viaAccount: false }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await sendConfirmationEmail(trimmedEmail, existing.confirmation_token, product as any as ProductForEmail, targetPrice)
+    await sendConfirmationEmail(
+      trimmedEmail,
+      existing.confirmation_token,
+      product as unknown as ProductForEmail,
+      targetPrice,
+      alertSize,
+      alertNotifyRestock
+    )
     return { success: true, alreadyConfirmed: false, viaAccount: false }
   }
 
@@ -235,6 +317,8 @@ export async function createPriceAlert(
       product_id: productId,
       email: trimmedEmail,
       target_price: targetPrice,
+      size: alertSize,
+      notify_restock: alertNotifyRestock,
       expires_at: expiresAt.toISOString(),
       ...accountFields,
     })
@@ -247,7 +331,13 @@ export async function createPriceAlert(
 
   if (accountEmail) return { success: true, alreadyConfirmed: true, viaAccount: true }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await sendConfirmationEmail(trimmedEmail, inserted.confirmation_token, product as any as ProductForEmail, targetPrice)
+  await sendConfirmationEmail(
+    trimmedEmail,
+    inserted.confirmation_token,
+    product as unknown as ProductForEmail,
+    targetPrice,
+    alertSize,
+    alertNotifyRestock
+  )
   return { success: true, alreadyConfirmed: false, viaAccount: false }
 }

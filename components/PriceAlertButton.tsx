@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { createPriceAlert } from '@/app/produto/[slug]/priceAlertActions'
+import { createPriceAlert, getAlertSizeOptions, type AlertSizeOption } from '@/app/produto/[slug]/priceAlertActions'
 import { deleteMyAlert } from '@/app/conta/actions'
 import { formatPrice } from '@/lib/formatPrice'
 import { ensureFreshSession, useAuth } from '@/lib/authBrowser'
@@ -93,8 +93,23 @@ export default function PriceAlertButton({
   // preço de hoje (não faria sentido um alerta igual ou acima do preço
   // atual). Sem preço atual (raro - produto sem oferta), usa um intervalo
   // genérico.
-  const sliderMin = currentPrice != null ? Math.max(1, Math.round(currentPrice * 0.5)) : 1
-  const sliderMax = currentPrice != null ? Math.max(sliderMin + 1, Math.round(currentPrice * 0.99)) : 100
+  // Tamanho do alerta: '' = qualquer tamanho. A lista de tamanhos (com o
+  // preço de cada um ou "esgotado") é pedida ao servidor quando o modal
+  // abre, para estar sempre certa.
+  const [size, setSize] = useState('')
+  const [sizeOptions, setSizeOptions] = useState<AlertSizeOption[] | null>(null)
+  const [sizesLoading, setSizesLoading] = useState(false)
+  // "Avisar quando voltar a haver stock" - só aparece quando o tamanho
+  // escolhido está esgotado em todas as lojas, e vem ligado por defeito
+  // (é quase sempre o que quem escolhe um tamanho esgotado quer).
+  const [notifyRestock, setNotifyRestock] = useState(true)
+  const selectedOption = size ? sizeOptions?.find((o) => o.size === size) ?? null : null
+  const sizeSoldOut = Boolean(selectedOption && selectedOption.price === null)
+  // Preço de referência do slider: o do tamanho escolhido, se tiver stock;
+  // senão o preço mais baixo do ténis.
+  const referencePrice = selectedOption?.price ?? currentPrice
+  const sliderMin = referencePrice != null ? Math.max(1, Math.round(referencePrice * 0.5)) : 1
+  const sliderMax = referencePrice != null ? Math.max(sliderMin + 1, Math.round(referencePrice * 0.99)) : 100
   const [targetPrice, setTargetPrice] = useState(() =>
     initialTarget != null && initialTarget > 0
       ? Math.max(1, Math.round(initialTarget))
@@ -171,6 +186,23 @@ export default function PriceAlertButton({
     setActiveAlert(null)
   }
 
+  async function loadSizes() {
+    setSizesLoading(true)
+    const options = await getAlertSizeOptions(productId).catch(() => null)
+    setSizeOptions(options ?? [])
+    setSizesLoading(false)
+  }
+
+  function changeSize(value: string) {
+    setSize(value)
+    setNotifyRestock(true)
+    // Ao trocar de tamanho, o valor desejado volta a 10% abaixo do preço
+    // desse tamanho (ou do preço mais baixo do ténis, se estiver esgotado).
+    const option = value ? sizeOptions?.find((o) => o.size === value) ?? null : null
+    const ref = option?.price ?? currentPrice
+    if (ref != null) updateTarget(Math.max(1, Math.round(ref * 0.9)))
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     e.stopPropagation()
@@ -181,7 +213,14 @@ export default function PriceAlertButton({
     let result: Awaited<ReturnType<typeof createPriceAlert>>
     try {
       if (signedIn) await ensureFreshSession()
-      result = await createPriceAlert(productId, email, targetPrice, durationMonths)
+      result = await createPriceAlert(
+        productId,
+        email,
+        targetPrice,
+        durationMonths,
+        size || null,
+        Boolean(size) && sizeSoldOut && notifyRestock
+      )
     } catch {
       result = { success: false, error: 'Não foi possível criar o alerta. Tenta de novo.' }
     }
@@ -190,7 +229,9 @@ export default function PriceAlertButton({
       setStatus('done')
       if (result.viaAccount) {
         setMessage(
-          `Alerta ativo abaixo de ${formatPrice(targetPrice)}. Vamos avisar-te em ${signedIn ? auth.email : 'o teu e-mail'} quando o preço descer.`
+          `Alerta ativo${size ? ` para o tamanho ${size}` : ''}, abaixo de ${formatPrice(targetPrice)}. Vamos avisar-te em ${signedIn ? auth.email : 'o teu e-mail'}${
+            size && sizeSoldOut && notifyRestock ? ' quando o preço descer ou quando o tamanho voltar a ter stock.' : ' quando o preço descer.'
+          }`
         )
         refreshMyAlerts()
       } else {
@@ -249,17 +290,24 @@ export default function PriceAlertButton({
             // valor desse alerta.
             setStatus('idle')
             setMessage(null)
+            setSize(existingAlert?.size ?? '')
+            setNotifyRestock(existingAlert ? existingAlert.notifyRestock || !existingAlert.size : true)
             if (existingAlert) updateTarget(Math.max(1, Math.round(existingAlert.targetPrice)))
+            void loadSizes()
           }
           setActiveAlert(open ? null : id)
         }}
         aria-pressed={open}
         aria-label={
           existingAlert
-            ? `Tens um alerta ativo abaixo de ${formatPrice(existingAlert.targetPrice)} - alterar`
+            ? `Tens um alerta ativo${existingAlert.size ? ` (tamanho ${existingAlert.size})` : ''} abaixo de ${formatPrice(existingAlert.targetPrice)} - alterar`
             : 'Avisa-me quando o preço descer'
         }
-        title={existingAlert ? `Alerta ativo abaixo de ${formatPrice(existingAlert.targetPrice)}` : undefined}
+        title={
+          existingAlert
+            ? `Alerta ativo${existingAlert.size ? ` · tamanho ${existingAlert.size}` : ''} · abaixo de ${formatPrice(existingAlert.targetPrice)}`
+            : undefined
+        }
         className={
           variant === 'large'
             ? `relative inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-none px-5 text-sm font-semibold transition-colors ${
@@ -375,12 +423,49 @@ export default function PriceAlertButton({
               <form onSubmit={handleSubmit} className="flex flex-col">
                 {existingAlert && (
                   <p className="border-b border-gray-100 py-3 text-xs leading-relaxed text-[#5C6770]">
-                    Já tens um alerta para este par: abaixo de{' '}
+                    Já tens um alerta para este par{existingAlert.size ? `, tamanho ${existingAlert.size}` : ''}: abaixo de{' '}
                     <span className="font-semibold text-[#17232B]">{formatPrice(existingAlert.targetPrice)}</span>
                     {formatExpiry(existingAlert.expiresAt) ? `, até ${formatExpiry(existingAlert.expiresAt)}` : ''}. Podes
                     alterá-lo aqui.
                   </p>
                 )}
+                {/* Tamanho - "Qualquer tamanho" por defeito (como antes) ou um
+                    tamanho concreto. Cada opção mostra o preço mais baixo
+                    com stock nesse tamanho, ou "esgotado" (pedido do Jorge:
+                    "tem que ser prático e fácil para o utilizador"). */}
+                <div className="border-b border-gray-100 py-4">
+                  <label htmlFor={`${id}-size`} className="text-xs font-semibold text-gray-900">
+                    Tamanho
+                  </label>
+                  <select
+                    id={`${id}-size`}
+                    value={size}
+                    onChange={(e) => changeSize(e.target.value)}
+                    disabled={sizesLoading}
+                    className="mt-2 w-full rounded-none border border-gray-300 bg-white px-3 py-2.5 text-sm text-[#17232B] outline-none focus:border-[#17232B] disabled:text-gray-400"
+                  >
+                    <option value="">{sizesLoading ? 'A carregar tamanhos...' : 'Qualquer tamanho'}</option>
+                    {(sizeOptions ?? []).map((option) => (
+                      <option key={option.size} value={option.size}>
+                        {option.size} — {option.price != null ? `desde ${formatPrice(option.price)}` : 'esgotado'}
+                      </option>
+                    ))}
+                  </select>
+                  {size && sizeSoldOut && (
+                    <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-[#17232B]">
+                      <input
+                        type="checkbox"
+                        checked={notifyRestock}
+                        onChange={(e) => setNotifyRestock(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#17232B]"
+                      />
+                      <span>
+                        O {size} está esgotado em todas as lojas. Avisa-me também quando voltar a ter stock, a qualquer preço.
+                      </span>
+                    </label>
+                  )}
+                </div>
+
                 {/* Valor máximo desejado - preço centrado, com slider por
                     baixo. O valor também pode ser escrito diretamente no
                     campo (pedido do Jorge) - o slider e o campo de texto

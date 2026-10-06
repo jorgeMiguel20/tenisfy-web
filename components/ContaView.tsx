@@ -70,7 +70,9 @@ function AlertsList() {
                   {alert.modelName}
                 </Link>
                 <p className="text-xs text-[#5C6770]">
-                  Abaixo de {formatPrice(alert.targetPrice)}
+                  {alert.size ? `Tamanho ${alert.size} · ` : 'Qualquer tamanho · '}
+                  abaixo de {formatPrice(alert.targetPrice)}
+                  {alert.size && alert.notifyRestock ? ' · ou quando voltar ao stock' : ''}
                   {until ? ` · até ${until}` : ''}
                 </p>
               </div>

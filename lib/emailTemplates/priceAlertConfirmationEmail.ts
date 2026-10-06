@@ -21,8 +21,14 @@ export function priceAlertConfirmationEmailHtml(params: {
   imageUrl: string | null
   targetPrice: number
   confirmUrl: string
+  // Tamanho escolhido no alerta (null = qualquer tamanho) e se também avisa
+  // quando esse tamanho voltar a ter stock.
+  size?: string | null
+  notifyRestock?: boolean
 }): string {
-  const { brandName, modelName, imageUrl, targetPrice, confirmUrl } = params
+  const { brandName, modelName, imageUrl, targetPrice, confirmUrl, size = null, notifyRestock = false } = params
+  const sizeText = size ? ` no tamanho <strong style="color:#17232B;">${size}</strong>` : ''
+  const restockText = size && notifyRestock ? ` Também te avisamos assim que o tamanho ${size} voltar a ter stock.` : ''
 
   return `<!doctype html>
 <html lang="pt">
@@ -42,11 +48,11 @@ export function priceAlertConfirmationEmailHtml(params: {
                 ${imageUrl ? `<img src="${absoluteImageUrl(imageUrl)}" alt="${modelName}" width="120" style="display:block;border-radius:0;margin-bottom:20px;background:#F9FBFC;" />` : ''}
 
                 <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.03em;color:#5C6770;">${brandName}</p>
-                <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:#17232B;">${modelName}</p>
+                <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:#17232B;">${modelName}${size ? ` · tamanho ${size}` : ''}</p>
 
                 <p style="margin:0 0 24px;font-size:13px;color:#5C6770;">
                   Vamos avisar-te por e-mail assim que o preço descer abaixo de
-                  <strong style="color:#17232B;">${formatPrice(targetPrice)}</strong>. Confirma este e-mail para ativares o alerta:
+                  <strong style="color:#17232B;">${formatPrice(targetPrice)}</strong>${sizeText}.${restockText} Confirma este e-mail para ativares o alerta:
                 </p>
 
                 <a href="${confirmUrl}" style="display:inline-block;background:#123F3A;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:0;">
