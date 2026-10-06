@@ -430,9 +430,10 @@ export default function PriceAlertButton({
                   </p>
                 )}
                 {/* Tamanho - "Qualquer tamanho" por defeito (como antes) ou um
-                    tamanho concreto. Cada opção mostra o preço mais baixo
-                    com stock nesse tamanho, ou "esgotado" (pedido do Jorge:
-                    "tem que ser prático e fácil para o utilizador"). */}
+                    tamanho concreto. Cada opção mostra só o número do
+                    calçado (pedido do Jorge: sem "desde X €" na lista). Se o
+                    tamanho escolhido estiver esgotado, aparece por baixo a
+                    opção de avisar quando voltar a ter stock. */}
                 <div className="border-b border-gray-100 py-4">
                   <label htmlFor={`${id}-size`} className="text-xs font-semibold text-gray-900">
                     Tamanho
@@ -447,7 +448,7 @@ export default function PriceAlertButton({
                     <option value="">{sizesLoading ? 'A carregar tamanhos...' : 'Qualquer tamanho'}</option>
                     {(sizeOptions ?? []).map((option) => (
                       <option key={option.size} value={option.size}>
-                        {option.size} — {option.price != null ? `desde ${formatPrice(option.price)}` : 'esgotado'}
+                        {option.size}
                       </option>
                     ))}
                   </select>
