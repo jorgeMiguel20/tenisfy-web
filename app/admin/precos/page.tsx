@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 import ProposalsSection, { type ProposalRow } from './ProposalsSection'
 import AttentionSection, { type AttentionRow } from './AttentionSection'
 import NewSizesSection, { type NewSizeRow } from './NewSizesSection'
+import HeldAlertsSection from './HeldAlertsSection'
+import { getHeldAlerts, type HeldAlert } from '@/lib/priceAlerts'
 
 // Ferramenta operacional (revista todos os dias) - tem de mostrar sempre as
 // propostas mais recentes, nunca uma versão em cache de quando o site foi
@@ -148,6 +150,15 @@ export default async function AdminPrecosPage() {
   const { proposals, attention } = await getProposals()
   const newSizes = await getNewSizes()
 
+  // Alertas de preço retidos pelos travões de segurança (ver
+  // lib/priceAlerts.ts). Uma falha aqui nunca deve impedir a página de abrir.
+  let heldAlerts: HeldAlert[] = []
+  try {
+    heldAlerts = await getHeldAlerts()
+  } catch (err) {
+    console.error('Falha ao carregar alertas retidos:', err)
+  }
+
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
       <div className="text-center">
@@ -158,6 +169,7 @@ export default async function AdminPrecosPage() {
         </p>
       </div>
 
+      <HeldAlertsSection alerts={heldAlerts} />
       <ProposalsSection proposals={proposals} />
       <NewSizesSection sizes={newSizes} />
       <AttentionSection proposals={attention} />
