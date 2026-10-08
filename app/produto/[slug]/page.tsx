@@ -423,6 +423,9 @@ export default async function ProdutoPage({
   // fixa do telemóvel.
   const bestOffer = groupedOffers[0] ?? null
 
+  // Guias que falam deste ténis (ver lib/guides.ts).
+  const guides = getGuidesForProduct(product.slug)
+
   const specs = [
     { label: 'Material', value: product.material },
     { label: 'Sola', value: product.sole_type },
@@ -666,19 +669,23 @@ export default async function ProdutoPage({
 
       {/* Guias que falam deste ténis (ver lib/guides.ts) - ajudam quem está
           indeciso e ligam as páginas entre si, o que também ajuda no Google. */}
-      {getGuidesForProduct(product.slug).map((guide) => (
-        <Link
-          key={guide.slug}
-          href={`/guias/${guide.slug}`}
-          className="mt-10 flex items-center justify-between gap-4 rounded-none border border-[#17232B]/10 p-5 transition-colors hover:border-[#17232B]/30"
-        >
-          <span>
-            <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">Guia</span>
-            <span className="mt-1 block font-semibold text-[#17232B]">{guide.title}</span>
-          </span>
-          <span aria-hidden="true" className="text-[#17232B]">→</span>
-        </Link>
-      ))}
+      {guides.length > 0 && (
+        <div className="mt-10 flex flex-col gap-3">
+          {guides.map((guide) => (
+            <Link
+              key={guide.slug}
+              href={`/guias/${guide.slug}`}
+              className="flex items-center justify-between gap-4 rounded-none border border-[#17232B]/10 p-5 transition-colors hover:border-[#17232B]/30"
+            >
+              <span>
+                <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">Guia</span>
+                <span className="mt-1 block font-semibold text-[#17232B]">{guide.title}</span>
+              </span>
+              <span aria-hidden="true" className="text-[#17232B]">→</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {showSimilar && (
         <div className="mt-10">
