@@ -30,6 +30,9 @@ export default function Footer() {
             <Link href="/promocoes" className="text-sm text-gray-300 hover:text-white transition-colors">
               Promoções
             </Link>
+            <Link href="/guias" className="text-sm text-gray-300 hover:text-white transition-colors">
+              Guias
+            </Link>
           </nav>
 
           <nav className="flex flex-col gap-2.5">
