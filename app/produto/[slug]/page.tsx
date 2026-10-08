@@ -30,6 +30,7 @@ import PriceAlertButton from '@/components/PriceAlertButton'
 
 import type { ProductWithPrice } from '@/lib/types'
 import { compareSizes } from '@/lib/sizeSort'
+import { getGuidesForProduct } from '@/lib/guides'
 
 
 
@@ -662,6 +663,22 @@ export default async function ProdutoPage({
           </div>
         </div>
       )}
+
+      {/* Guias que falam deste ténis (ver lib/guides.ts) - ajudam quem está
+          indeciso e ligam as páginas entre si, o que também ajuda no Google. */}
+      {getGuidesForProduct(product.slug).map((guide) => (
+        <Link
+          key={guide.slug}
+          href={`/guias/${guide.slug}`}
+          className="mt-10 flex items-center justify-between gap-4 rounded-none border border-[#17232B]/10 p-5 transition-colors hover:border-[#17232B]/30"
+        >
+          <span>
+            <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">Guia</span>
+            <span className="mt-1 block font-semibold text-[#17232B]">{guide.title}</span>
+          </span>
+          <span aria-hidden="true" className="text-[#17232B]">→</span>
+        </Link>
+      ))}
 
       {showSimilar && (
         <div className="mt-10">
