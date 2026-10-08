@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import type { ProductWithPrice } from '@/lib/types'
+import { storeLogoSrc } from '@/lib/storeLogo'
 
 // Seccao "A diferenca que ninguem te mostra" - historial resumido: nasceu
 // como um REDESIGN pedido pelo Jorge a partir de um mockup exato, e mostrava
@@ -32,31 +33,8 @@ import type { ProductWithPrice } from '@/lib/types'
 // dos nossos dados (nem shipping_info, so shipping_base_fee/
 // shipping_free_threshold), confirmado outra vez com o Jorge nesta ronda.
 //
-// Logo real da loja e logica de portes - mesma abordagem ja usada e
-// validada em components/StoreOffersList.tsx, duplicada aqui de proposito
-// (mesmo criterio de sempre nesta seccao: independente, para nao arriscar
-// mexer num componente ja validado).
-const BRAND_ICON_SLUGS: Record<string, string> = {
-  'nike.com': 'nike',
-  'adidas.pt': 'adidas',
-  'newbalance.pt': 'newbalance',
-  'zalando.pt': 'zalando',
-}
-
-const STORE_LOGO_URLS: Record<string, string> = {
-  'collectkicks.pt': 'https://collectkicks.pt/cdn/shop/files/logo_s_fundo_180x.png?v=1682350995',
-  'footdistrict.com': 'https://footdistrict.com/cdn/shop/files/Logo_7d9512d9-6a65-44bd-b120-1a0ff1b8cbad.png',
-  'vans.com': 'https://assets.vans.eu/image/upload/v1755503693/default.svg',
-  'asics.com': 'https://www.asics.com/us/mobify/bundle/9379/static/img/global/favicon_512x512.png',
-}
-
-function storeLogoSrc(domain: string) {
-  const slug = BRAND_ICON_SLUGS[domain]
-  if (slug) return `https://cdn.simpleicons.org/${slug}`
-  const direct = STORE_LOGO_URLS[domain]
-  if (direct) return direct
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
-}
+// Logótipo da loja: servido sempre pelo próprio Parjusto (ver
+// lib/storeLogo.ts), nunca diretamente pela Google ou pelo site da loja.
 
 function domainFromBaseUrl(baseUrl: string | null | undefined): string {
   if (!baseUrl) return ''

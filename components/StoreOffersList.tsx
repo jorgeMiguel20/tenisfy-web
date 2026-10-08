@@ -4,37 +4,14 @@
 import { useState } from 'react'
 import { formatPrice } from '@/lib/formatPrice'
 import { buildOfferUrl } from '@/lib/offerUrl'
+import { storeLogoSrc, storeLogoFallbackSrc } from '@/lib/storeLogo'
 
 // Redesenho da lista de lojas na página de produto: cards em vez da tabela
 // antiga, um por loja. Ver pedido do Jorge ("Redesenhar a lista de lojas na
 // página de produto") - mockup de referência aprovado por ele.
 
-// Logo real da loja - mesma logica e mesmas fontes ja usadas e verificadas
-// em components/ComoFunciona.tsx (Simple Icons para marcas globais, logo
-// oficial hospedado no proprio site para lojas mais pequenas, favicon como
-// ultimo recurso). Duplicado aqui de proposito em vez de partilhado, para
-// nao arriscar mexer no ComoFunciona.tsx que ja esta validado em producao.
-const BRAND_ICON_SLUGS: Record<string, string> = {
-  'nike.com': 'nike',
-  'adidas.pt': 'adidas',
-  'newbalance.pt': 'newbalance',
-  'zalando.pt': 'zalando',
-}
-
-const STORE_LOGO_URLS: Record<string, string> = {
-  'collectkicks.pt': 'https://collectkicks.pt/cdn/shop/files/logo_s_fundo_180x.png?v=1682350995',
-  'footdistrict.com': 'https://footdistrict.com/cdn/shop/files/Logo_7d9512d9-6a65-44bd-b120-1a0ff1b8cbad.png',
-  'vans.com': 'https://assets.vans.eu/image/upload/v1755503693/default.svg',
-  'asics.com': 'https://www.asics.com/us/mobify/bundle/9379/static/img/global/favicon_512x512.png',
-}
-
-function storeLogoSrc(domain: string) {
-  const slug = BRAND_ICON_SLUGS[domain]
-  if (slug) return `https://cdn.simpleicons.org/${slug}`
-  const direct = STORE_LOGO_URLS[domain]
-  if (direct) return direct
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
-}
+// Logótipo da loja: servido sempre pelo próprio Parjusto (ver
+// lib/storeLogo.ts), nunca diretamente pela Google ou pelo site da loja.
 
 export type StoreOfferSize = { size: string; inStock: boolean }
 
@@ -117,11 +94,13 @@ function StoreOfferCard({
   isBest,
   selectedSize,
   onSelectSize,
+  productSlug,
 }: {
   offer: StoreOfferForDisplay
   isBest: boolean
   selectedSize: string | null
   onSelectSize: (size: string) => void
+  productSlug?: string
 }) {
   const shipping = getShippingDisplay(offer)
   const verifiedLabel = formatVerifiedLabel(offer.lastCheckedAt)
@@ -140,7 +119,7 @@ function StoreOfferCard({
                 className="h-full w-full object-contain"
                 onError={(e) => {
                   e.currentTarget.onerror = null
-                  e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${offer.domain}&sz=128`
+                  e.currentTarget.src = storeLogoFallbackSrc(offer.domain)
                 }}
               />
             ) : (
@@ -193,6 +172,9 @@ function StoreOfferCard({
           href={buildOfferUrl(offer)}
           target="_blank"
           rel="nofollow sponsored noopener"
+          data-offer-click="lista-lojas"
+          data-offer-product={productSlug}
+          data-offer-store={offer.store}
           className="inline-flex min-h-[44px] items-center justify-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
         >
           Ver oferta
@@ -202,7 +184,14 @@ function StoreOfferCard({
   )
 }
 
-export default function StoreOffersList({ offers }: { offers: StoreOfferForDisplay[] }) {
+export default function StoreOffersList({
+  offers,
+  productSlug,
+}: {
+  offers: StoreOfferForDisplay[]
+  // Só para contar os cliques em "Ver oferta" (ver OfferClickTracker).
+  productSlug?: string
+}) {
   const [expanded, setExpanded] = useState(false)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
 
@@ -220,6 +209,7 @@ export default function StoreOffersList({ offers }: { offers: StoreOfferForDispl
           isBest={index === 0 && offers.length > 1}
           selectedSize={selectedSize}
           onSelectSize={(size) => setSelectedSize((prev) => (prev === size ? null : size))}
+          productSlug={productSlug}
         />
       ))}
 
