@@ -14,7 +14,7 @@ import { checkRateLimit, fingerprint } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
-const PLACEMENTS = ['lista-lojas', 'barra-telemovel']
+const PLACEMENTS = ['lista-lojas', 'barra-telemovel', 'guia']
 const SLUG_PATTERN = /^[a-z0-9-]{1,200}$/
 const BOT_PATTERN = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|python|curl|wget/i
 
