@@ -5,6 +5,7 @@ import ProposalsSection, { type ProposalRow } from './ProposalsSection'
 import AttentionSection, { type AttentionRow } from './AttentionSection'
 import NewSizesSection, { type NewSizeRow } from './NewSizesSection'
 import HeldAlertsSection from './HeldAlertsSection'
+import ClicksSection, { type ClicksSummary } from './ClicksSection'
 import { getHeldAlerts, type HeldAlert } from '@/lib/priceAlerts'
 
 // Ferramenta operacional (revista todos os dias) - tem de mostrar sempre as
@@ -146,6 +147,50 @@ async function getNewSizes(): Promise<NewSizeRow[]> {
   }))
 }
 
+// Resumo dos cliques em "Ver oferta" (tabela offer_clicks - ver
+// app/api/out-click/route.ts). null = não foi possível ler.
+async function getClicksSummary(): Promise<ClicksSummary | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) return null
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey)
+  const now = Date.now()
+  const since30 = new Date(now - 30 * 86_400_000).toISOString()
+  const since7 = new Date(now - 7 * 86_400_000).toISOString()
+
+  const { data, error } = await supabase
+    .from('offer_clicks')
+    .select('product_slug, store_name, clicked_at')
+    .gte('clicked_at', since30)
+    .order('clicked_at', { ascending: false })
+    .limit(10000)
+
+  if (error || !data) return null
+
+  const rows = data as { product_slug: string; store_name: string; clicked_at: string }[]
+  const byStore = new Map<string, number>()
+  const byProduct = new Map<string, number>()
+  let last7 = 0
+  for (const row of rows) {
+    if (row.clicked_at >= since7) last7++
+    byStore.set(row.store_name, (byStore.get(row.store_name) ?? 0) + 1)
+    byProduct.set(row.product_slug, (byProduct.get(row.product_slug) ?? 0) + 1)
+  }
+
+  return {
+    last7,
+    last30: rows.length,
+    byStore: Array.from(byStore.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count),
+    byProduct: Array.from(byProduct.entries())
+      .map(([slug, count]) => ({ slug, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10),
+  }
+}
+
 export default async function AdminPrecosPage() {
   const { proposals, attention } = await getProposals()
   const newSizes = await getNewSizes()
@@ -158,6 +203,8 @@ export default async function AdminPrecosPage() {
   } catch (err) {
     console.error('Falha ao carregar alertas retidos:', err)
   }
+
+  const clicks = await getClicksSummary()
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-16">
@@ -173,6 +220,7 @@ export default async function AdminPrecosPage() {
       <ProposalsSection proposals={proposals} />
       <NewSizesSection sizes={newSizes} />
       <AttentionSection proposals={attention} />
+      <ClicksSection summary={clicks} />
     </main>
   )
 }
