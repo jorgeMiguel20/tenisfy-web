@@ -568,10 +568,15 @@ export default async function ProdutoPage({
 
         <div>
 
-          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">{product.brands?.name}</p>
+          {/* A marca aparece visível aqui em cima e também dentro do título
+              principal (h1), escondida no ecrã - assim o título que o Google
+              lê é "adidas Samba OG" e não só "Samba OG", sem mudar o aspeto
+              da página. aria-hidden evita que leitores de ecrã a leiam duas
+              vezes. */}
+          <p aria-hidden="true" className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]">{product.brands?.name}</p>
 
           <div className="flex items-center gap-2 mt-1">
-            <h1 className="font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] md:text-[40px]">{product.model_name}</h1>
+            <h1 className="font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-balance text-[#17232B] md:text-[40px]">{product.brands?.name && <span className="sr-only">{product.brands.name} </span>}{product.model_name}</h1>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <FavoriteButton slug={product.slug} />
@@ -624,7 +629,7 @@ export default async function ProdutoPage({
 
 
 
-              <StoreOffersList offers={groupedOffers} />
+              <StoreOffersList offers={groupedOffers} productSlug={product.slug} />
 
             </>
 
@@ -693,6 +698,9 @@ export default async function ProdutoPage({
               href={buildOfferUrl(bestOffer)}
               target="_blank"
               rel="nofollow sponsored noopener"
+              data-offer-click="barra-telemovel"
+              data-offer-product={product.slug}
+              data-offer-store={bestOffer.store}
               className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-none bg-[#123F3A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0d2f2b]"
             >
               Ver oferta
