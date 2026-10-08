@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/react";
 import { SITE_URL } from "@/lib/siteUrl";
 import CookieBanner from "@/components/CookieBanner";
+import OfferClickTracker from "@/components/OfferClickTracker";
 
 // Uma só família em todo o site (texto e títulos) — o clone gratuito mais
 // próximo da Helvetica, a letra que a Nike e a Off-White usam a sério (a
@@ -47,6 +48,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <Analytics />
+        <OfferClickTracker />
         <CookieBanner />
       </body>
     </html>
