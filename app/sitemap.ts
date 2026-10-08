@@ -2,10 +2,11 @@
 import { supabase } from '@/lib/supabase'
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/siteUrl'
+import { GUIDES } from '@/lib/guides'
 
 // Páginas fixas que vale a pena indexar. Ficam de fora /comparar e
 // /favoritos (páginas com "noindex", ver os respetivos page.tsx).
-const STATIC_PAGES = ['/catalogo', '/marcas', '/promocoes', '/sobre', '/divulgacao-afiliados', '/termos', '/privacidade']
+const STATIC_PAGES = ['/catalogo', '/marcas', '/guias', '/promocoes', '/sobre', '/divulgacao-afiliados', '/termos', '/privacidade']
 
 // Uma hora de cache, como as páginas do site.
 export const revalidate = 3600
@@ -51,5 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((brand) => (brand.products ?? []).some((product) => product.is_active))
     .map((brand) => ({ url: `${SITE_URL}/marcas/${brand.slug}` }))
 
-  return [{ url: SITE_URL }, ...staticUrls, ...brandUrls, ...productUrls]
+  // Guias (/guias/...) - ver lib/guides.ts.
+  const guideUrls = GUIDES.map((guide) => ({ url: `${SITE_URL}/guias/${guide.slug}`, lastModified: new Date(guide.publishedAt) }))
+
+  return [{ url: SITE_URL }, ...staticUrls, ...guideUrls, ...brandUrls, ...productUrls]
 }
