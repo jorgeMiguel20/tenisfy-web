@@ -28,6 +28,33 @@ export const GUIDES: Guide[] = [
     productSlugs: ['adidas-samba', 'adidas-gazelle'],
     publishedAt: '2026-10-08',
   },
+  {
+    slug: 'tabela-de-tamanhos-nike-adidas-new-balance',
+    title: 'Tabela de tamanhos: Nike vs adidas vs New Balance',
+    description:
+      'O mesmo pé, três números diferentes. As equivalências entre os tamanhos EU, US e UK da Nike, da adidas e da New Balance, tiradas das tabelas oficiais de cada marca.',
+    // Ténis de adulto destas três marcas (o Samba OG Kids fica de fora: a
+    // tabela é de adulto).
+    productSlugs: [
+      'nike-air-force-1',
+      'nike-dunk-low',
+      'adidas-samba',
+      'adidas-gazelle',
+      'adidas-campus-00s-core-black',
+      'adidas-forum-low-cl-black',
+      'adidas-ultraboost-5-preto',
+      'new-balance-530',
+    ],
+    publishedAt: '2026-10-09',
+  },
+  {
+    slug: 'onde-comprar-new-balance-530-mais-barato',
+    title: 'Onde comprar o New Balance 530 mais barato',
+    description:
+      'O preço de hoje do New Balance 530 em cada loja, com portes e tamanhos disponíveis, e o preço mais baixo dos últimos 60 dias.',
+    productSlugs: ['new-balance-530'],
+    publishedAt: '2026-10-09',
+  },
 ]
 
 export function getGuide(slug: string): Guide | null {
