@@ -55,6 +55,22 @@ export const GUIDES: Guide[] = [
     productSlugs: ['new-balance-530'],
     publishedAt: '2026-10-09',
   },
+  {
+    slug: 'air-force-1-vs-dunk-low',
+    title: 'Air Force 1 vs Dunk Low: qual escolher?',
+    description:
+      'As diferenças entre os dois clássicos da Nike (sola, amortecimento, cores e tamanhos) e o preço de hoje de cada um nas lojas portuguesas.',
+    productSlugs: ['nike-air-force-1', 'nike-dunk-low'],
+    publishedAt: '2026-10-10',
+  },
+  {
+    slug: 'onde-comprar-adidas-samba-og-mais-barato',
+    title: 'Onde comprar o adidas Samba OG mais barato',
+    description:
+      'O preço de hoje do adidas Samba OG em cada loja, com portes e tamanhos disponíveis, e o preço mais baixo dos últimos 60 dias.',
+    productSlugs: ['adidas-samba'],
+    publishedAt: '2026-10-10',
+  },
 ]
 
 export function getGuide(slug: string): Guide | null {
