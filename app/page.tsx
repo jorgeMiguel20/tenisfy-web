@@ -27,6 +27,9 @@ const HOME_JSON_LD = [
     name: 'Parjusto',
     url: SITE_URL,
     logo: `${SITE_URL}/icon`,
+    // Perfis oficiais do Parjusto nas redes sociais - ajudam o Google a
+    // perceber que "Parjusto" é uma marca (e que estes perfis são dela).
+    sameAs: ['https://www.instagram.com/parjusto.oficial/', 'https://www.tiktok.com/@parjusto.oficial'],
   },
   {
     '@context': 'https://schema.org',
