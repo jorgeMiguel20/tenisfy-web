@@ -12,7 +12,7 @@ export default function PrivacidadePage() {
   return (
     <main className="max-w-2xl mx-auto px-6 py-10">
       <h1 className="text-2xl font-bold text-gray-900">Política de Privacidade</h1>
-      <p className="text-sm text-gray-400 mt-1">Última atualização: Setembro 2026</p>
+      <p className="text-sm text-gray-400 mt-1">Última atualização: Outubro 2026</p>
 
       <div className="mt-8 space-y-6 text-gray-700 leading-relaxed">
         <section>
@@ -63,6 +63,13 @@ export default function PrivacidadePage() {
             Usamos o Vercel Analytics para perceber, de forma agregada e anónima,
             quantas pessoas visitam o site. Esta ferramenta não usa cookies nem
             identifica visitantes individualmente.
+          </p>
+          <p className="mt-3">
+            <span className="font-medium text-gray-900">Cliques nas lojas.</span>{' '}
+            Contamos quantas vezes se carrega em &quot;Ver oferta&quot; para ir para
+            uma loja. Guardamos só o ténis, a loja e a hora do clique, nunca quem
+            carregou. Usamos estes totais para perceber que lojas e ténis interessam
+            mais e para os apresentar a lojas parceiras.
           </p>
           <p className="mt-3">
             <span className="font-medium text-gray-900">Segurança do site.</span>{' '}
