@@ -31,6 +31,8 @@ import PriceAlertButton from '@/components/PriceAlertButton'
 import type { ProductWithPrice } from '@/lib/types'
 import { compareSizes } from '@/lib/sizeSort'
 import { getGuidesForProduct } from '@/lib/guides'
+import { readSportProfile } from '@/lib/sportProfile'
+import { SportChips, SportProfileSection } from '@/components/SportProfile'
 
 
 
@@ -426,6 +428,11 @@ export default async function ProdutoPage({
   // Guias que falam deste ténis (ver lib/guides.ts).
   const guides = getGuidesForProduct(product.slug)
 
+  // Ficha desportiva (só ténis de corrida, trail e ginásio - ver
+  // lib/sportProfile.ts).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sportProfile = readSportProfile((product as any).sport_profile)
+
   const specs = [
     { label: 'Material', value: product.material },
     { label: 'Sola', value: product.sole_type },
@@ -433,8 +440,9 @@ export default async function ProdutoPage({
     { label: 'Ajuste', value: product.fit },
     { label: 'Cor', value: product.color },
     { label: 'Código do artigo', value: product.article_code },
-    { label: 'Peso', value: product.weight },
-    { label: 'Declive', value: product.drop_height },
+    // Com ficha desportiva, o peso e o drop já aparecem em "Para que serve".
+    { label: 'Peso', value: sportProfile?.weight_g != null ? null : product.weight },
+    { label: 'Declive', value: sportProfile?.drop_mm != null ? null : product.drop_height },
     { label: 'Sustentabilidade', value: product.sustainability },
   ].filter((spec) => spec.value)
 
@@ -596,6 +604,8 @@ export default async function ProdutoPage({
             </div>
           </div>
 
+          {sportProfile && <SportChips profile={sportProfile} />}
+
           {showColorSwatches && (
             <div className="flex items-center gap-2 mt-4">
               <ColorSwatch
@@ -648,6 +658,8 @@ export default async function ProdutoPage({
           <PriceHistoryChart data={priceHistory} />
         </div>
       )}
+
+      {sportProfile && <SportProfileSection profile={sportProfile} brandName={product.brands?.name} />}
 
       {specs.length > 0 && (
         <div className="mt-10">
