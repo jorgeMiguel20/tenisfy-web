@@ -17,6 +17,7 @@ import { formatPrice } from '@/lib/formatPrice'
 import { computePriceDrop } from '@/lib/priceDrop'
 import { dedupeColor } from '@/lib/formatColor'
 import { COMPARE_GRID, COMPARE_LABEL, COMPARE_LINE, compareGridStyle, valueCellClass } from '@/lib/compareGrid'
+import { CUSHIONING_LABELS, PRONATION_LABELS, SURFACE_LABELS, USE_LABELS, joinLabels, readSportProfile } from '@/lib/sportProfile'
 
 // Máximo 3 ténis, sem repetidos (antes "?produtos=a,a,a" mostrava o mesmo
 // ténis três vezes lado a lado).
@@ -95,6 +96,7 @@ type CompareProductRow = {
   color: string | null
   sole_type: string | null
   closure_type: string | null
+  sport_profile?: unknown
   brands: { name: string } | null
   product_offers: CompareOfferRow[] | null
 }
@@ -381,7 +383,69 @@ export default async function CompararPage({
   const shippingValues = compareData.map((d) => d.shippingFreeThreshold)
   const discountValues = compareData.map((d) => d.discountPercent)
 
+  // Ficha desportiva (só existe nos ténis de corrida, trail e ginásio - ver
+  // lib/sportProfile.ts). Nos outros fica "—" e, se nenhum dos ténis
+  // comparados tiver ficha, estas linhas nem aparecem.
+  const sportProfiles = ordered.map((p) => readSportProfile(p.sport_profile))
+  const useValues = sportProfiles.map((sp) => joinLabels(sp?.uses, USE_LABELS))
+  const surfaceValues = sportProfiles.map((sp) => joinLabels(sp?.surfaces, SURFACE_LABELS))
+  const cushioningValues = sportProfiles.map((sp) => (sp?.cushioning ? CUSHIONING_LABELS[sp.cushioning] : null))
+  const pronationValues = sportProfiles.map((sp) => (sp?.pronation ? PRONATION_LABELS[sp.pronation] : null))
+  const dropValues = sportProfiles.map((sp) => sp?.drop_mm ?? null)
+  const weightValues = sportProfiles.map((sp) => sp?.weight_g ?? null)
+  const stackValues = sportProfiles.map((sp) => sp?.stack_mm ?? null)
+  const lightest = weightValues.filter((v) => v != null).length > 1 ? bestIndexMin(weightValues) : null
+
   const allRows: CompareRowData[] = [
+    {
+      key: 'use',
+      label: 'Uso',
+      display: useValues.map((v) => v ?? '—'),
+      different: rowIsDifferent(useValues),
+      best: null,
+    },
+    {
+      key: 'surface',
+      label: 'Piso',
+      display: surfaceValues.map((v) => v ?? '—'),
+      different: rowIsDifferent(surfaceValues),
+      best: null,
+    },
+    {
+      key: 'cushioning',
+      label: 'Amortecimento',
+      display: cushioningValues.map((v) => v ?? '—'),
+      different: rowIsDifferent(cushioningValues),
+      best: null,
+    },
+    {
+      key: 'pronation',
+      label: 'Pisada',
+      display: pronationValues.map((v) => v ?? '—'),
+      different: rowIsDifferent(pronationValues),
+      best: null,
+    },
+    {
+      key: 'drop',
+      label: 'Drop',
+      display: dropValues.map((v) => (v != null ? `${v} mm` : '—')),
+      different: rowIsDifferent(dropValues),
+      best: null,
+    },
+    {
+      key: 'weight',
+      label: 'Peso',
+      display: weightValues.map((v, i) => (v != null ? `${v} g${i === lightest ? ' · mais leve' : ''}` : '—')),
+      different: rowIsDifferent(weightValues),
+      best: lightest,
+    },
+    {
+      key: 'stack',
+      label: 'Altura da sola',
+      display: stackValues.map((v) => (v != null ? `${v} mm` : '—')),
+      different: rowIsDifferent(stackValues),
+      best: null,
+    },
     {
       key: 'sole',
       label: 'Sola',
