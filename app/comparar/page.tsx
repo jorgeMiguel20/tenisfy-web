@@ -96,6 +96,7 @@ type CompareProductRow = {
   color: string | null
   sole_type: string | null
   closure_type: string | null
+  base_colors?: string[] | null
   sport_profile?: unknown
   brands: { name: string } | null
   product_offers: CompareOfferRow[] | null
@@ -371,9 +372,15 @@ export default async function CompararPage({
   // verde-petróleo na tabela/cartões.
   const soleValues = ordered.map((p) => p.sole_type ?? null)
   const closureValues = ordered.map((p) => p.closure_type ?? null)
-  // Cor sem partes repetidas ("Core Black / Core Black / Core Black" ->
-  // "Core Black") - mesma regra da homepage, ver lib/formatColor.ts.
-  const colorValues = ordered.map((p) => dedupeColor(p.color))
+  // Cor em português e igual para todos os ténis: usa a cor base (a mesma
+  // dos filtros do catálogo), ex.: "Preto / Cinzento". Antes mostrava o nome
+  // de cada loja/marca ("Core Black" vs "Preto") e a mesma cor parecia
+  // diferente. O nome oficial da marca continua nos "Detalhes do produto"
+  // da página do ténis. Sem cor base, fica o nome guardado sem partes
+  // repetidas (ver lib/formatColor.ts).
+  const colorValues = ordered.map((p) =>
+    p.base_colors && p.base_colors.length > 0 ? p.base_colors.join(' / ') : dedupeColor(p.color)
+  )
   const genderValues = ordered.map((p) => capitalize(p.gender ?? null))
   const storeCountValues = compareData.map((d) => d.storeCount)
   // Nome da loja com o preço mais baixo de cada ténis (dado real das
