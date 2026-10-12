@@ -12,8 +12,11 @@
 // Se um dia se acrescentar uma coluna nova à tabela "products" e ela tiver
 // de aparecer no site, é preciso acrescentá-la também aqui.
 export const PRODUCT_COLUMNS =
-  'id, brand_id, model_name, slug, category, gender, description, image_url, image_urls, is_active, created_at, updated_at, color, material, sole_type, closure_type, fit, article_code, weight, drop_height, sustainability, base_colors, color_variant_group'
+  'id, brand_id, model_name, slug, category, gender, description, image_url, image_urls, is_active, created_at, updated_at, color, material, sole_type, closure_type, fit, article_code, weight, drop_height, sustainability, base_colors, color_variant_group, sport_profile'
 
+// sport_profile: ficha desportiva dos ténis de corrida, trail e ginásio
+// (ver lib/sportProfile.ts).
+//
 // Junta as colunas acima às relações de cada consulta (ex.: "brands (*),
 // product_offers (...)").
 // O tipo devolvido é "*" de propósito: o texto real enviado à base de dados
