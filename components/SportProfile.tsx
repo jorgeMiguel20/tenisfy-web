@@ -72,7 +72,11 @@ export function SportProfileSection({ profile, brandName }: { profile: SportProf
   if (profile.stack_mm != null) numbers.push({ label: 'Altura da sola', value: `${profile.stack_mm} mm` })
 
   const notes = [
-    brandName ? `Dados oficiais da ${brandName}` : 'Dados oficiais da marca',
+    profile.source_name
+      ? `Dados da ${profile.source_name}`
+      : brandName
+        ? `Dados oficiais da ${brandName}`
+        : 'Dados oficiais da marca',
     profile.weight_g != null && profile.weight_note ? `peso no ${profile.weight_note}` : null,
     profile.stack_mm != null ? 'altura da sola medida no calcanhar' : null,
   ].filter(Boolean)
