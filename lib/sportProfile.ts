@@ -8,6 +8,9 @@
 //
 // Regra: só dados oficiais da marca (página do produto ou ficha técnica),
 // nunca notas inventadas. "source_url" guarda de onde vieram.
+//
+// Os ténis de trail ficam na categoria "trail" da tabela products (aparece
+// como "Trail" no filtro do catálogo); os de estrada em "running".
 
 export type SportUse = 'treino-diario' | 'ritmos-rapidos' | 'competicao' | 'trail' | 'ginasio' | 'caminhada'
 export type SportSurface = 'estrada' | 'trilho' | 'misto' | 'interior'
