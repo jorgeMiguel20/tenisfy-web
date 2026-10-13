@@ -24,6 +24,9 @@ export type SportProfile = {
   weight_note?: string // ex.: "tamanho 42 de homem"
   stack_mm?: number // altura da sola no calcanhar
   source_url?: string
+  // Quando os dados vêm da ficha de uma loja (e não do site da marca), o
+  // nome da loja - a página diz "Dados da <loja>" em vez de "Dados oficiais".
+  source_name?: string
 }
 
 export const USE_LABELS: Record<SportUse, string> = {
