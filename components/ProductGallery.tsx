@@ -214,7 +214,13 @@ export default function ProductGallery({
   return (
     <div className="md:flex md:items-stretch md:gap-3">
       {hasMultiple && (
-        <div className="hidden md:flex md:flex-col md:gap-2 md:w-16 md:shrink-0 md:overflow-y-auto md:max-h-full">
+        // A coluna das miniaturas não pode decidir a altura da galeria: com
+        // 7 ou mais fotos ficava mais alta do que a foto grande (quadrada) e
+        // esticava-a, o que deixava faixas desfocadas por cima e por baixo.
+        // Agora a altura vem só da foto grande e as miniaturas que não cabem
+        // ficam acessíveis com a roda do rato (scroll dentro da coluna).
+        <div className="hidden md:block md:relative md:w-16 md:shrink-0">
+        <div className="md:absolute md:inset-0 md:flex md:flex-col md:gap-2 md:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {images.map((src, index) => (
             <button
               key={src}
@@ -241,6 +247,7 @@ export default function ProductGallery({
               />
             </button>
           ))}
+        </div>
         </div>
       )}
       {imageBox}
