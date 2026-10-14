@@ -142,6 +142,7 @@ const COLOR_SWATCH_HEX: Record<string, string> = {
   Azul: '#2563eb',
   Vermelho: '#dc2626',
   Verde: '#16a34a',
+  Amarelo: '#eab308',
   Bege: '#d6c7a1',
   Multicolor: '#f97316',
 }
