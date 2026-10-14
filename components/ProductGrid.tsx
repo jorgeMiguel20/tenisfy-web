@@ -32,7 +32,7 @@ const GENDER_LABELS: Record<GenderGroupValue, string> = {
   crianca: 'Criança',
 }
 
-const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Bege', 'Multicolor']
+const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Amarelo', 'Bege', 'Multicolor']
 
 // Amostra de cor ao lado do nome, no filtro "Cor" (como na Nike). Só as
 // cores de COLOR_ORDER; uma cor sem amostra aparece só com o nome.
@@ -43,6 +43,7 @@ const COLOR_SWATCHES: Record<string, string> = {
   Azul: '#2F5DA8',
   Vermelho: '#C8322F',
   Verde: '#2F7A55',
+  Amarelo: '#E8C547',
   Bege: '#D9C7A7',
   Multicolor: 'conic-gradient(#C8322F, #E0A33A, #2F7A55, #2F5DA8, #7A4FA0, #C8322F)',
 }
