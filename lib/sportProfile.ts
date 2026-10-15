@@ -12,7 +12,8 @@
 // Os ténis de trail ficam na categoria "trail" da tabela products (aparece
 // como "Trail" no filtro do catálogo); os de estrada em "running".
 // Depois de ativar ténis novos, publicar o site (ou esperar até 1 hora) para
-// o catálogo, a homepage e as marcas os mostrarem.
+// o catálogo, a homepage e as marcas os mostrarem. O mesmo vale quando se
+// mudam as fotos ou a ordem da galeria de um ténis.
 
 export type SportUse = 'treino-diario' | 'ritmos-rapidos' | 'competicao' | 'trail' | 'ginasio' | 'caminhada'
 export type SportSurface = 'estrada' | 'trilho' | 'misto' | 'interior'
