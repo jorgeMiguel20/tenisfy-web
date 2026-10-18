@@ -8,24 +8,27 @@
 # Modos:
 #   explore - só conta o que há no ficheiro, não muda nada no site
 #   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão
-#   full    - importa tudo e atualiza preços/stock dos ténis importados
+#   full    - importa tudo, atualiza preços/stock e trata as fotos; com
+#             "activate_new" ligado, os ténis com foto tratada e stock
+#             ficam visíveis no site
+#   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
 name: Importar About You
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'explore, test ou full'
+        description: 'explore, test, full ou photos'
         required: true
         default: explore
         type: choice
-        options: [explore, test, full]
+        options: [explore, test, full, photos]
       limit:
         description: 'test: quantos ténis novos criar'
         required: false
         default: '50'
       activate_new:
-        description: 'full: os ténis novos ficam logo visíveis no site?'
+        description: 'full/photos: os ténis com foto tratada ficam visíveis no site?'
         required: false
         default: false
         type: boolean
@@ -33,7 +36,7 @@ on:
 jobs:
   importar:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -46,10 +49,20 @@ jobs:
       - name: Explorar o ficheiro da About You
         if: inputs.mode == 'explore'
         run: node scripts/feed-explore.mjs
+      # O tratamento das fotos usa a biblioteca "sharp". É instalada numa
+      # pasta à parte para não instalar o site inteiro.
+      - name: Preparar o importador
+        if: inputs.mode != 'explore'
+        run: |
+          mkdir -p /tmp/imp
+          cp scripts/feed-stream.mjs scripts/feed-photos.mjs scripts/import-aboutyou.mjs /tmp/imp/
+          cd /tmp/imp
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund sharp@0.34.5
       - name: Importar ténis da About You
-        if: inputs.mode == 'test' || inputs.mode == 'full'
+        if: inputs.mode != 'explore'
         env:
           MODE: ${{ inputs.mode }}
           LIMIT: ${{ inputs.limit }}
           ACTIVATE_NEW: ${{ inputs.activate_new }}
-        run: node scripts/import-aboutyou.mjs
+        run: node /tmp/imp/import-aboutyou.mjs
