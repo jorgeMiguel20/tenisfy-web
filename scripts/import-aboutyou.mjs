@@ -213,9 +213,17 @@ function baseColors(color) {
   return out.slice(0, 2)
 }
 
-// "42,5-43" -> "42.5-43"; "35xregular" -> "35"
-function normSize(s) {
-  return String(s || '').trim().replace(/x?regular$/i, '').replace(/,/g, '.').replace(/\s+/g, ' ').trim()
+// Tamanhos: "42,5" -> "42.5"; "35xregular" -> "35". A About You escreve os
+// tamanhos de 1/3 (adidas) como intervalos: "42,5-43" é o 42 2/3 e "43-43,5"
+// é o 43 1/3 - passam a ter o mesmo nome que o resto do Parjusto usa.
+export function normSize(s) {
+  const v = String(s || '').trim().replace(/x?regular$/i, '').replace(/,/g, '.').replace(/\s+/g, ' ').trim()
+  const m = v.match(/^(\d+(?:\.5)?)-(\d+(?:\.5)?)$/)
+  if (m && Number(m[2]) - Number(m[1]) === 0.5) {
+    const a = Number(m[1])
+    return Number.isInteger(a) ? `${a} 1/3` : `${Math.floor(a)} 2/3`
+  }
+  return v
 }
 
 function directUrl(productUrl) {
@@ -338,21 +346,33 @@ try {
     toCreate.push({ g, paths, rows })
   }
 
-  // Modo teste: escolher LIMIT ténis variados (alternando categorias e géneros)
+  // Modo teste: escolher LIMIT ténis variados - alternando marcas e, dentro
+  // de cada marca, categorias e géneros (no máximo 6 por marca).
   let createList = toCreate
   if (MODE === 'test') {
-    const buckets = new Map()
+    const byBrand = new Map()
     for (const c of toCreate) {
+      const brand = mapBrand(c.g.first.brand).slug
       const k = `${mapCategory(c.paths)}|${mapGender(c.g.first)}`
-      if (!buckets.has(k)) buckets.set(k, [])
-      buckets.get(k).push(c)
+      if (!byBrand.has(brand)) byBrand.set(brand, new Map())
+      const m = byBrand.get(brand)
+      if (!m.has(k)) m.set(k, [])
+      m.get(k).push(c)
     }
-    // dentro de cada grupo, primeiro os que têm mais tamanhos (mais úteis)
-    for (const list of buckets.values()) list.sort((a, b) => b.rows.length - a.rows.length)
+    const perBrand = []
+    for (const m of byBrand.values()) {
+      const lists = [...m.values()].map((l) => l.sort((a, b) => b.rows.length - a.rows.length))
+      const picked = []
+      for (let i = 0; picked.length < 6 && lists.some((l) => i < l.length); i++) {
+        for (const l of lists) if (i < l.length && picked.length < 6) picked.push(l[i])
+      }
+      perBrand.push(picked)
+    }
+    // marcas com mais artigos primeiro
+    perBrand.sort((a, b) => b.length - a.length)
     createList = []
-    const lists = [...buckets.values()]
-    for (let i = 0; createList.length < LIMIT && lists.some((l) => i < l.length); i++) {
-      for (const l of lists) if (i < l.length && createList.length < LIMIT) createList.push(l[i])
+    for (let i = 0; createList.length < LIMIT && perBrand.some((l) => i < l.length); i++) {
+      for (const l of perBrand) if (i < l.length && createList.length < LIMIT) createList.push(l[i])
     }
   }
 
