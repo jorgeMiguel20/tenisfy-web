@@ -19,6 +19,18 @@ const nextConfig: NextConfig = {
   // Não anunciar que o site é feito com Next.js.
   poweredByHeader: false,
 
+  // Fotos que não estão na pasta public do site: as fotos principais dos
+  // ténis importados (tratadas e guardadas no Supabase Storage) e as fotos
+  // extra que vêm diretamente da About You. Estas fotos são mostradas sem
+  // passar pela otimização de imagens da Vercel (unoptimized nos
+  // componentes) - com milhares de ténis, o limite grátis acabava logo.
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'byuxqagyeideqeurplho.supabase.co', pathname: '/storage/v1/object/public/**' },
+      { protocol: 'https', hostname: 'cdn.aboutyou.de' },
+    ],
+  },
+
   async headers() {
     return [
       {
