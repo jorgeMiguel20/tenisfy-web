@@ -393,7 +393,7 @@ export default function PriceAlertButton({
               <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
                 <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-none bg-[#F9FBFC]">
                   {imageUrl && (
-                    <Image src={imageUrl} alt={modelName} fill sizes="48px" className="object-cover" />
+                    <Image src={imageUrl} alt={modelName} unoptimized={imageUrl.startsWith('http')} fill sizes="48px" className="object-cover" />
                   )}
                 </div>
                 <div className="min-w-0">

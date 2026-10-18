@@ -61,7 +61,7 @@ function AlertsList() {
             <li key={alert.id} className="flex items-center gap-3 border-b border-[#17232B]/10 py-3">
               <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden bg-[#F9FBFC]">
                 {alert.imageUrl && (
-                  <Image src={alert.imageUrl} alt={alert.modelName} fill sizes="48px" className="object-cover" />
+                  <Image src={alert.imageUrl} alt={alert.modelName} unoptimized={alert.imageUrl.startsWith('http')} fill sizes="48px" className="object-cover" />
                 )}
               </div>
               <div className="min-w-0 flex-1">

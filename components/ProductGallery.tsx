@@ -130,6 +130,7 @@ export default function ProductGallery({
                 diferentes entre si (ex: branco puro vs. cinza de estudio) */}
             <Image
               src={src}
+              unoptimized={src.startsWith('http')}
               alt=""
               aria-hidden="true"
               fill
@@ -140,6 +141,7 @@ export default function ProductGallery({
             />
             <Image
               src={src}
+              unoptimized={src.startsWith('http')}
               alt={`${alt} - foto ${index + 1} de ${images.length}`}
               fill
               sizes={sizes}
@@ -237,6 +239,7 @@ export default function ProductGallery({
               )}
               <Image
                 src={src}
+                unoptimized={src.startsWith('http')}
                 alt=""
                 fill
                 sizes="64px"

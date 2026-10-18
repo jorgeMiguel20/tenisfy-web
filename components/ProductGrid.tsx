@@ -1,7 +1,7 @@
 // components/ProductGrid.tsx
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
@@ -18,6 +18,13 @@ import { compareSizes } from '@/lib/sizeSort'
 // este ficheiro já não precisa do estado/lógica de pesquisa por imagem.
 
 type SortOrder = 'default' | 'price-asc' | 'price-desc' | 'newest'
+
+// Quantos cartões se mostram de cada vez. O catálogo tem milhares de ténis:
+// desenhar todos de uma vez deixava a página lenta, por isso aparecem 48 e,
+// quando se chega perto do fim, aparecem automaticamente os 48 seguintes
+// (sem botão "Ver mais" - pedido do Jorge). Os filtros, a contagem de
+// produtos e a ordenação continuam a contar com o catálogo todo.
+const GRID_PAGE_SIZE = 48
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'default', label: 'Relevância' },
@@ -819,6 +826,37 @@ export default function ProductGrid({
     effectiveSelectedPriceRange,
   ])
 
+  // Carregamento contínuo: quantos cartões estão desenhados. Volta aos
+  // primeiros 48 sempre que o resultado muda (filtro, pesquisa, ordenação).
+  const [visibleCount, setVisibleCount] = useState(GRID_PAGE_SIZE)
+  const [visibleFor, setVisibleFor] = useState(filteredProducts)
+  if (visibleFor !== filteredProducts) {
+    setVisibleFor(filteredProducts)
+    setVisibleCount(GRID_PAGE_SIZE)
+  }
+  const visibleProducts = filteredProducts.slice(0, visibleCount)
+  const hasMore = visibleCount < filteredProducts.length
+
+  // Marcador invisível no fim da grelha: quando fica a menos de ~1000px do
+  // ecrã, juntam-se mais 48 cartões. O observador é recriado depois de cada
+  // bloco - se o marcador continuar à vista (ecrã grande), carrega o
+  // seguinte logo a seguir.
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = loadMoreRef.current
+    if (!el || !hasMore) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => count + GRID_PAGE_SIZE)
+        }
+      },
+      { rootMargin: '0px 0px 1000px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMore, visibleCount, filteredProducts])
+
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = []
 
@@ -1116,7 +1154,7 @@ export default function ProductGrid({
             desktopCols === 3 ? 'xl:grid-cols-3' : desktopCols === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'
           }`}
         >
-          {filteredProducts.map((product) => (
+          {visibleProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -1127,6 +1165,8 @@ export default function ProductGrid({
           ))}
         </div>
       )}
+
+      {hasMore && <div ref={loadMoreRef} aria-hidden="true" className="h-px w-full" />}
 
       {compareLimitWarning && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-none border border-red-200">
