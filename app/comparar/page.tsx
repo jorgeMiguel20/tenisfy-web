@@ -1,6 +1,7 @@
 // app/comparar/page.tsx
 import { supabase } from '@/lib/supabase'
 import { productSelect } from '@/lib/productColumns'
+import { fetchAll } from '@/lib/fetchAll'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import ComparePicker, { type PickerProduct } from '@/components/ComparePicker'
@@ -271,14 +272,21 @@ export default async function CompararPage({
   // nenhum benefício visível.
   let pickerProducts: PickerProduct[] = []
   if (placeholderCount > 0) {
-    const { data: allProducts } = await supabase
-      .from('products')
-      .select(`
-        id, slug, model_name, image_url,
-        brands (name),
-        product_offers (price, in_stock, discontinued_at)
-      `)
-      .eq('is_active', true)
+    // Aos bocados de 1000 (ver lib/fetchAll.ts): com os ténis importados das
+    // lojas afiliadas o catálogo passou das 1000 linhas por pedido.
+    const { data: allProducts } = await fetchAll<unknown>((from, to) =>
+      supabase
+        .from('products')
+        .select(`
+          id, slug, model_name, image_url,
+          brands (name),
+          product_offers (price, in_stock, discontinued_at)
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to) as unknown as PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>
+    )
 
     type PickerRow = {
       id: string
