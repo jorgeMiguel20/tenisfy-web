@@ -57,8 +57,11 @@ try {
     if (!/Sapat|Chutei|Cal[cç]ado|T[eé]nis/i.test(raw)) continue
     let p
     try { p = JSON.parse(raw) } catch { inc(report, 'parseErrors'); continue }
-    const paths = (p.categories || []).map((c) => c.name)
-    if (!paths.some((c) => / - (Sapatos|Calçado)( - |$)|Sapatilhas|Chuteiras/i.test(c))) continue
+    if (!report.sampleRaw && /Sapatilhas/.test(raw)) { report.sampleRaw = raw.slice(0, 4000); report.sampleKeys = Object.keys(p) }
+    const fieldCats = ['1st_category', '2nd_category', '3rd_category', '4th_category', '5th_category'].map((n) => field(p, n)).filter(Boolean)
+    const paths = (p.categories || []).map((c) => c.name || c.tdCategoryName || JSON.stringify(c))
+    if (paths.length === 0 && fieldCats.length) paths.push(fieldCats.join(' - '))
+    if (!paths.some((c) => /(^| - )(Sapatos|Calçado)( - |$)|Sapatilhas|Chuteiras/i.test(c)) && !fieldCats.some((c) => /^(Sapatos|Calçado|Sapatilhas|Chuteiras)/i.test(c))) continue
     report.footwear++
     if (!report.keys) report.keys = Object.keys(p)
     for (const f of p.fields || []) inc(report.fieldNames, f.name)
