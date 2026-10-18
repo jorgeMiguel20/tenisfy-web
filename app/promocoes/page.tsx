@@ -33,7 +33,9 @@ const H2 = 'font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B] sm
 const GRID = 'mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'
 
 export default async function PromocoesPage() {
-  const { products, error } = await getProductsWithPrice()
+  // Só os ténis escolhidos à mão (como até agora) - os importados das lojas
+  // afiliadas ficam no catálogo.
+  const { products, error } = await getProductsWithPrice({ onlyCurated: true })
 
   const belowOfficial = error
     ? []
