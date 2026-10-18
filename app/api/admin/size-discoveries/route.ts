@@ -24,6 +24,10 @@ function isValidItem(item: unknown): item is IncomingItem {
   if (typeof i.product_id !== 'string' || !i.product_id) return false
   if (typeof i.store_id !== 'string' || !i.store_id) return false
   if (typeof i.size !== 'string' || !i.size) return false
+  // Um tamanho de sapato começa sempre por um número ("42", "42 2/3",
+  // "8.5 US"). Texto como "sm", "full-width" ou "fit-width" são restos da
+  // página da loja (ex.: About You) e nunca devem virar proposta de tamanho.
+  if (!/^\d/.test(i.size.trim())) return false
   if (typeof i.url !== 'string' || !i.url) return false
   if (i.price !== undefined && i.price !== null && typeof i.price !== 'number') return false
   if (i.in_stock !== undefined && i.in_stock !== null && typeof i.in_stock !== 'boolean') return false
