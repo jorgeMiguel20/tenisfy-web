@@ -1,0 +1,34 @@
+# .github/workflows/import-aboutyou.yml
+#
+# Importação dos ténis da About You (ficheiro de produtos da Tradedoubler).
+# Por agora só corre quando alguém carrega em "Run workflow" no separador
+# Actions do GitHub (não corre sozinho todos os dias). As chaves vêm dos
+# "secrets" do repositório - nunca ficam escritas aqui.
+name: Importar About You
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'explore = só contar, não muda nada no site'
+        required: true
+        default: explore
+        type: choice
+        options: [explore]
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Explorar o ficheiro da About You
+        if: inputs.mode == 'explore'
+        env:
+          SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
+        run: node scripts/feed-explore.mjs
