@@ -2,24 +2,42 @@
 #
 # Importação dos ténis da About You (ficheiro de produtos da Tradedoubler).
 # Por agora só corre quando alguém carrega em "Run workflow" no separador
-# Actions do GitHub (não corre sozinho todos os dias). As chaves vêm dos
-# "secrets" do repositório - nunca ficam escritas aqui.
+# Actions do GitHub (ainda não corre sozinho todos os dias). As chaves vêm
+# dos "secrets" do repositório - nunca ficam escritas aqui.
+#
+# Modos:
+#   explore - só conta o que há no ficheiro, não muda nada no site
+#   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão
+#   full    - importa tudo e atualiza preços/stock dos ténis importados
 name: Importar About You
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'explore = só contar, não muda nada no site'
+        description: 'explore, test ou full'
         required: true
         default: explore
         type: choice
-        options: [explore]
+        options: [explore, test, full]
+      limit:
+        description: 'test: quantos ténis novos criar'
+        required: false
+        default: '50'
+      activate_new:
+        description: 'full: os ténis novos ficam logo visíveis no site?'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   importar:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,8 +45,11 @@ jobs:
           node-version: 22
       - name: Explorar o ficheiro da About You
         if: inputs.mode == 'explore'
-        env:
-          SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
         run: node scripts/feed-explore.mjs
+      - name: Importar ténis da About You
+        if: inputs.mode == 'test' || inputs.mode == 'full'
+        env:
+          MODE: ${{ inputs.mode }}
+          LIMIT: ${{ inputs.limit }}
+          ACTIVATE_NEW: ${{ inputs.activate_new }}
+        run: node scripts/import-aboutyou.mjs
