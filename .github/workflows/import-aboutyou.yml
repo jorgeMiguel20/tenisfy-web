@@ -12,17 +12,19 @@
 #             "activate_new" ligado, os ténis com foto tratada e stock
 #             ficam visíveis no site
 #   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
+#   embeddings - só prepara a pesquisa por foto dos ténis importados que
+#             ainda não estão preparados (o modo full também o faz no fim)
 name: Importar About You
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'explore, test, full ou photos'
+        description: 'explore, test, full, photos ou embeddings'
         required: true
         default: explore
         type: choice
-        options: [explore, test, full, photos]
+        options: [explore, test, full, photos, embeddings]
       limit:
         description: 'test: quantos ténis novos criar'
         required: false
@@ -52,7 +54,7 @@ jobs:
       # O tratamento das fotos usa a biblioteca "sharp". É instalada numa
       # pasta à parte para não instalar o site inteiro.
       - name: Preparar o importador
-        if: inputs.mode != 'explore'
+        if: inputs.mode != 'explore' && inputs.mode != 'embeddings'
         run: |
           mkdir -p /tmp/imp
           cp scripts/feed-stream.mjs scripts/feed-photos.mjs scripts/import-aboutyou.mjs /tmp/imp/
@@ -60,9 +62,19 @@ jobs:
           npm init -y > /dev/null
           npm install --no-audit --no-fund sharp@0.34.5
       - name: Importar ténis da About You
-        if: inputs.mode != 'explore'
+        if: inputs.mode != 'explore' && inputs.mode != 'embeddings'
         env:
           MODE: ${{ inputs.mode }}
           LIMIT: ${{ inputs.limit }}
           ACTIVATE_NEW: ${{ inputs.activate_new }}
         run: node /tmp/imp/import-aboutyou.mjs
+      # Pesquisa por foto: o mesmo modelo que o site usa no browser.
+      - name: Preparar a pesquisa por foto
+        if: inputs.mode == 'full' || inputs.mode == 'embeddings'
+        run: |
+          mkdir -p /tmp/emb
+          cp scripts/feed-embeddings.mjs /tmp/emb/
+          cd /tmp/emb
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @huggingface/transformers@4.2.0
+          node /tmp/emb/feed-embeddings.mjs
