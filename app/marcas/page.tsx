@@ -26,7 +26,10 @@ type BrandRow = { id: string; name: string; slug: string }
 export default async function MarcasPage() {
   const [{ data: brandRows }, { products }] = await Promise.all([
     supabase.from('brands').select('id, name, slug').order('name'),
-    getProductsWithPrice(),
+    // Só os ténis escolhidos à mão (como até agora) - a lista de marcas
+    // fica igual; as marcas novas da importação automática continuam a
+    // ter a sua página (/marcas/<marca>) e a aparecer no catálogo.
+    getProductsWithPrice({ onlyCurated: true }),
   ])
 
   const brands = ((brandRows ?? []) as BrandRow[])

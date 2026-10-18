@@ -32,11 +32,16 @@ async function getData() {
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 
   const [{ data: products, error }, { data: indexed }, { count: promptCount }] = await Promise.all([
+    // Só os ténis escolhidos à mão. Os milhares de ténis importados das lojas
+    // afiliadas são preparados para a pesquisa por foto automaticamente, no
+    // GitHub (ver .github/workflows/import-aboutyou.yml) - neste botão
+    // demorariam horas.
     supabase
       .from('products')
       .select('id, slug, model_name, image_url, image_urls, is_active, brands (name)')
+      .is('source', null)
       .order('model_name'),
-    supabase.from('product_image_embeddings').select('product_id'),
+    supabase.from('product_image_embeddings').select('product_id, products!inner (source)').is('products.source', null),
     supabase.from('photo_search_prompts').select('label', { count: 'exact', head: true }),
   ])
 

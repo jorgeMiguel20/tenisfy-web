@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isPriceSyncAuthorized } from '@/lib/priceSync'
+import { fetchAll } from '@/lib/fetchAll'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -18,20 +19,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
-  const { data, error } = await supabase
-    .from('product_offers')
-    .select(`
+  // Só os ténis escolhidos à mão: os importados automaticamente das lojas
+  // afiliadas (products.source preenchido) têm preço e stock atualizados
+  // todos os dias pelo próprio importador, a partir do ficheiro de produtos
+  // da loja - não entram nesta verificação.
+  // Aos bocados de 1000 (ver lib/fetchAll.ts) - antes ficava cortado às
+  // 1000 ofertas sem dar erro.
+  const { data, error } = await fetchAll<unknown>((from, to) =>
+    supabase
+      .from('product_offers')
+      .select(`
       id, size, price, in_stock, affiliate_url, last_checked_at,
       products!inner (model_name, slug, is_active, brands (name)),
       stores!inner (name, is_active)
     `)
-    .eq('products.is_active', true)
-    .eq('stores.is_active', true)
-    .is('discontinued_at', null)
-    .order('id')
+      .eq('products.is_active', true)
+      .is('products.source', null)
+      .eq('stores.is_active', true)
+      .is('discontinued_at', null)
+      .order('id')
+      .order('id')
+      .range(from, to) as unknown as PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>
+  )
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error }, { status: 500 })
   }
 
   // Forma das linhas devolvidas pela consulta acima (só os campos usados).

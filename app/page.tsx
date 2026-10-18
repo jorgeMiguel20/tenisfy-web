@@ -76,7 +76,10 @@ function pickComparePair<T extends { category: string | null }>(group: T[]): T[]
 export const revalidate = 3600
 
 export default async function Home() {
-  const { products: productsWithPrice, error } = await getProductsWithPrice()
+  // onlyCurated: a homepage mostra só os ténis escolhidos à mão - os ténis
+  // importados automaticamente das lojas afiliadas ficam no catálogo, para
+  // a homepage ficar exatamente como estava (só muda com aprovação do Jorge).
+  const { products: productsWithPrice, error } = await getProductsWithPrice({ onlyCurated: true })
 
   if (error) {
     return (

@@ -42,7 +42,11 @@ export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do proj
 
 export async function generateStaticParams() {
 
-  const { data: products } = await supabase.from('products').select('slug')
+  // Na publicação do site só se preparam as páginas dos ténis escolhidos à
+  // mão. Os milhares de ténis importados das lojas afiliadas ficam prontos
+  // na primeira visita (e depois guardados 1 hora) - assim a publicação
+  // continua rápida mesmo com o catálogo grande.
+  const { data: products } = await supabase.from('products').select('slug').is('source', null)
 
   return (products ?? []).map((p) => ({ slug: p.slug }))
 
