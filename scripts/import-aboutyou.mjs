@@ -93,6 +93,8 @@ const field = (p, name) => {
 
 // Calçado que NÃO é ténis.
 const EXCLUDE = /Botas|Botins|Sandálias|Chinelos|Pantufas|Sabrinas|Socas|Saltos|Praia e Surf|Sapatos Clássicos|Mocassins|Alpercatas|Sapatos de vela|Sapatos baixos/i
+// Tipos de calçado no endereço da About You que não são ténis.
+const NOT_SNEAKER_URL = /aboutyou\.pt\/p\/[^/]+\/(botas|botins|bota-|sandalias|sandalia|chinelos|sapato-de-praia|sapatos-de-praia|sapato-de-agua|sapatos-de-agua|pantufas|sabrinas|mocassins|socas|alpercatas)/i
 // Calçado que é ténis.
 const SNEAKER = /Sapatilha|Sapatos de caminhada|Sapatos de fitness|Tipos de desporto > (Corrida|Outdoor|Fitness)/i
 
@@ -173,11 +175,18 @@ function mapBrand(raw) {
   return { slug: slugify(pretty), name: pretty }
 }
 
+// "VURON" -> "Vuron", "UNO - SUITED ON AIR" -> "Uno - Suited On Air". Siglas
+// curtas e com números ("GT-2000", "GTX", "AS") e numeração romana ficam.
+function fixCaps(m) {
+  if (!/[A-ZÀ-Ý]{4,}/.test(m)) return m
+  return m.split(' ').map((w) => (/^[A-ZÀ-Ý]{2,}$/.test(w) && !/^[IVX]+$/.test(w) ? w.charAt(0) + w.slice(1).toLowerCase() : w)).join(' ')
+}
+
 function modelName(p, brandRaw) {
   const m = field(p, 'model')
-  if (m) return m.trim()
+  if (m) return fixCaps(m.trim())
   const quoted = (p.name || '').match(/'([^']+)'/)
-  if (quoted) return quoted[1].trim()
+  if (quoted) return fixCaps(quoted[1].trim())
   let n = (p.name || '').split(/\s{2,}/)[0]
   if (brandRaw && n.toLowerCase().startsWith(brandRaw.toLowerCase())) n = n.slice(brandRaw.length)
   return n.trim() || 'Sapatilhas'
@@ -323,6 +332,9 @@ try {
     report.groups++
     const rows = g.rows.filter((r) => r.size && r.price && r.url)
     if (rows.length === 0) { report.skippedNoPrice++; continue }
+    // O endereço da About You diz o tipo de calçado ("/botas-moab-3-...",
+    // "/sapato-de-praia-..."): mais uma rede para não entrar o que não é ténis.
+    if (NOT_SNEAKER_URL.test(rows[0].url)) { inc(report, 'excludedByUrl'); continue }
 
     let productId = importedByRef.get(g.id)?.id
     if (!productId) {
