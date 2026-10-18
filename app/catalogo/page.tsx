@@ -4,7 +4,9 @@ import type { Metadata } from 'next'
 import ProductGrid from '@/components/ProductGrid'
 import RecentDropsGrid from '@/components/RecentDropsGrid'
 import CatalogoBackBar from '@/components/CatalogoBackBar'
+import BackToTopButton from '@/components/BackToTopButton'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import type { ProductWithPrice } from '@/lib/types'
 
 export const metadata: Metadata = {
   title: 'Catálogo de ténis: compara preços nas lojas portuguesas | Parjusto',
@@ -20,6 +22,54 @@ export const metadata: Metadata = {
 // lidos no browser pelo ProductGrid, por isso a cache serve para todos.
 export const revalidate = 3600
 
+// Só os campos que a grelha, os filtros e os cartões usam. Com milhares de
+// ténis (importação automática das lojas afiliadas), mandar para o browser
+// as ofertas de cada tamanho, descrições, etc. tornava o catálogo pesado.
+// As fotos extra do cartão (que se veem ao deslizar no telemóvel) ficam
+// limitadas a 3 por ténis.
+function slimForGrid(p: ProductWithPrice): ProductWithPrice {
+  return {
+    id: p.id,
+    brand_id: p.brand_id,
+    model_name: p.model_name,
+    slug: p.slug,
+    category: p.category,
+    gender: p.gender,
+    color: p.color,
+    base_colors: p.base_colors,
+    color_variant_group: null,
+    image_urls: (p.image_urls ?? []).slice(0, 3),
+    description: null,
+    image_url: p.image_url,
+    is_active: p.is_active,
+    created_at: p.created_at,
+    brands: { id: p.brands?.id, name: p.brands?.name, slug: p.brands?.slug, logo_url: null } as ProductWithPrice['brands'],
+    lowest_price: p.lowest_price,
+    store_count: p.store_count,
+    sizes: p.sizes,
+    savings: p.savings ?? null,
+    priceDrop: p.priceDrop ?? null,
+  }
+}
+
+// Ordem "Relevância": primeiro os ténis escolhidos à mão (pela ordem de
+// sempre), depois os importados das lojas afiliadas - os que estão em mais
+// lojas primeiro (são os que mais vale a pena comparar), depois os que
+// estão com desconto, depois os mais recentes.
+function relevanceOrder(products: ProductWithPrice[]): ProductWithPrice[] {
+  const curated = products.filter((p) => !(p as { source?: string | null }).source)
+  const imported = products.filter((p) => (p as { source?: string | null }).source)
+  const withStock = (p: ProductWithPrice) => (p.lowest_price != null ? 1 : 0)
+  imported.sort(
+    (a, b) =>
+      withStock(b) - withStock(a) ||
+      (b.store_count ?? 0) - (a.store_count ?? 0) ||
+      (b.priceDrop ? 1 : 0) - (a.priceDrop ? 1 : 0) ||
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
+  return [...curated, ...imported]
+}
+
 export default async function CatalogoPage() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
 
@@ -31,9 +81,16 @@ export default async function CatalogoPage() {
     )
   }
 
+  const gridProducts = relevanceOrder(productsWithPrice).map(slimForGrid)
+
+  // "Descidas de preço recentes" (fundo da página): só os ténis escolhidos à
+  // mão e no máximo 8, como até agora - com milhares de ténis importados a
+  // secção ficaria enorme.
   const recentDrops = productsWithPrice
-    .filter((p) => p.priceDrop)
+    .filter((p) => p.priceDrop && !(p as { source?: string | null }).source)
     .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
+    .slice(0, 8)
+    .map(slimForGrid)
 
 
   return (
@@ -49,7 +106,7 @@ export default async function CatalogoPage() {
       </div>
 
       <Suspense fallback={null}>
-        <ProductGrid products={productsWithPrice as any} />
+        <ProductGrid products={gridProducts} />
       </Suspense>
 
       {recentDrops.length > 0 && (
@@ -58,6 +115,8 @@ export default async function CatalogoPage() {
           <RecentDropsGrid products={recentDrops} />
         </section>
       )}
+
+      <BackToTopButton />
     </main>
   )
 }
