@@ -18,16 +18,21 @@ export const revalidate = 3600 // ISR: 1 hora, como o resto do catálogo
 
 type Brand = { id: string; name: string; slug: string }
 
+// Na publicação do site só se preparam as páginas das marcas dos ténis
+// escolhidos à mão. As centenas de marcas que chegam com a importação
+// automática ficam prontas na primeira visita (e depois guardadas 1 hora,
+// como as outras) - assim a publicação continua rápida.
 export async function generateStaticParams() {
-  const { data } = await supabase.from('brands').select('slug')
-  return (data ?? []).map((brand) => ({ slug: brand.slug }))
+  const { data } = await supabase.from('brands').select('slug, products!inner (id)').is('products.source', null)
+  const slugs = new Set(((data ?? []) as { slug: string }[]).map((brand) => brand.slug))
+  return Array.from(slugs).map((slug) => ({ slug }))
 }
 
 async function getBrandPageData(slug: string) {
   const { data: brand } = await supabase.from('brands').select('id, name, slug').eq('slug', slug).maybeSingle()
   if (!brand) return null
 
-  const { products, error } = await getProductsWithPrice()
+  const { products, error } = await getProductsWithPrice({ brandId: (brand as Brand).id })
   const brandProducts = error
     ? []
     : products
