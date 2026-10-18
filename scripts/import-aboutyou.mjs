@@ -19,14 +19,24 @@
 //      categoria, fotos da About You) e uma oferta por tamanho.
 //   4. Tamanhos que deixaram de aparecer no ficheiro ficam "esgotados".
 //
+//   5. Trata a foto principal de cada ténis novo (fundo igual ao do
+//      Parjusto, ténis centrado e inteiro - ver feed-photos.mjs) e guarda-a
+//      no Supabase Storage. Um ténis só fica visível no site depois de ter a
+//      foto tratada (assim nunca aparece uma foto cortada no catálogo).
+//
 // Modos (variável MODE):
-//   test - cria no máximo LIMIT ténis novos (50 por defeito), ESCONDIDOS
-//          (is_active = false), e não mexe em mais nada. Serve para o Jorge
-//          ver como ficam antes de aprovar.
-//   full - faz tudo: cria os ténis novos já visíveis (ACTIVATE_NEW=true) ou
-//          escondidos, e atualiza preços/stock dos já importados.
+//   test   - cria no máximo LIMIT ténis novos (50 por defeito), ESCONDIDOS
+//            (is_active = false), e não mexe em mais nada. Serve para o
+//            Jorge ver como ficam antes de aprovar.
+//   full   - faz tudo: cria os ténis novos, atualiza preços/stock dos já
+//            importados, trata as fotos e, com ACTIVATE_NEW=true, deixa
+//            visíveis os ténis com foto tratada e com stock (e esconde os
+//            importados que ficaram sem stock nenhum).
+//   photos - só trata as fotos dos ténis importados que ainda têm a foto
+//            original da loja (não lê o ficheiro da loja).
 // O resumo de cada execução fica na tabela import_runs.
 import { streamProducts } from './feed-stream.mjs'
+import { processAndUpload } from './feed-photos.mjs'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -35,13 +45,14 @@ const FEED_ID = process.env.TD_FEED_ID || '119264'
 const MODE = process.env.MODE || 'test'
 const LIMIT = Number(process.env.LIMIT || 50)
 const ACTIVATE_NEW = process.env.ACTIVATE_NEW === 'true'
+const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 3000)
 const SOURCE = 'aboutyou'
 const STORE_SLUG = 'about-you'
 
-for (const [v, n] of [[SUPABASE_URL, 'SUPABASE_URL'], [SUPABASE_KEY, 'SUPABASE_SERVICE_ROLE_KEY'], [TD_TOKEN, 'TRADEDOUBLER_TOKEN']]) {
+for (const [v, n] of [[SUPABASE_URL, 'SUPABASE_URL'], [SUPABASE_KEY, 'SUPABASE_SERVICE_ROLE_KEY'], [MODE === 'photos' ? 'x' : TD_TOKEN, 'TRADEDOUBLER_TOKEN']]) {
   if (!v) { console.error(`Falta a variável ${n}`); process.exit(1) }
 }
-if (!['test', 'full'].includes(MODE)) { console.error(`Modo desconhecido: ${MODE}`); process.exit(1) }
+if (!['test', 'full', 'photos'].includes(MODE)) { console.error(`Modo desconhecido: ${MODE}`); process.exit(1) }
 
 // ---------------------------------------------------------------- Supabase
 const H = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
@@ -270,7 +281,7 @@ async function download() {
 // ------------------------------------------------------------------ Main
 const t0 = Date.now()
 const now = new Date().toISOString()
-const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, newBrands: [], categories: {}, genders: {}, created_slugs: [], errors: [] }
+const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, created_slugs: [], errors: [] }
 const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
 
 try {
@@ -279,7 +290,7 @@ try {
   if (!store) throw new Error('Loja about-you não encontrada')
   const brands = await sbAll('brands?select=id,slug,name')
   const brandBySlug = new Map(brands.map((b) => [b.slug, b]))
-  const products = await sbAll('products?select=id,slug,source,source_ref')
+  const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active&order=id')
   const slugs = new Set(products.map((p) => p.slug))
   const productById = new Map(products.map((p) => [p.id, p]))
   const importedByRef = new Map(products.filter((p) => p.source === SOURCE).map((p) => [p.source_ref, p]))
@@ -293,6 +304,7 @@ try {
   }
   console.log(`Parjusto: ${products.length} ténis, ${brands.length} marcas, ${gtinRows.length} EAN, ${ayOffers.length} ofertas About You`)
 
+  if (MODE !== 'photos') {
   // 2) Ler o ficheiro e juntar as linhas (uma por tamanho) por artigo
   const groups = new Map()
   const res = await download()
@@ -434,7 +446,9 @@ try {
       image_urls: gallery.filter((u) => u !== image),
       color,
       base_colors: baseColors(color),
-      is_active: MODE === 'test' ? false : ACTIVATE_NEW,
+      // sempre escondido ao criar: só fica visível depois de a foto estar
+      // tratada (passo 7)
+      is_active: false,
       source: SOURCE,
       source_ref: c.g.id,
       created_at: now,
@@ -491,6 +505,62 @@ try {
       await sb(`product_offers?id=in.(${gone.slice(i, i + 200).join(',')})`, { method: 'PATCH', body: { in_stock: false, last_checked_at: now }, prefer: 'return=minimal' })
     }
     report.markedOutOfStock = gone.length
+  }
+  } // fim de "if (MODE !== 'photos')"
+
+  // 7) Fotos: tratar a foto principal dos ténis importados que ainda têm a
+  // foto original da loja (os novos de hoje e os que falharam antes).
+  if (MODE !== 'test' || report.created > 0) {
+    const todo = (await sbAll(`products?source=eq.${SOURCE}&image_url=like.https://cdn.aboutyou.de*&select=id,slug,image_url,image_urls&order=created_at.desc`)).slice(0, PHOTO_LIMIT)
+    console.log(`Fotos por tratar: ${todo.length}`)
+    let next = 0
+    async function worker() {
+      while (next < todo.length) {
+        const p = todo[next++]
+        const candidates = [p.image_url, ...(p.image_urls ?? [])].filter((u) => u && u.startsWith('https://cdn.aboutyou.de'))
+        let done = false
+        for (const sourceUrl of candidates.slice(0, 3)) {
+          try {
+            const url = await processAndUpload({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, sourceUrl, path: `aboutyou/${p.slug}.webp` })
+            // a foto original da loja passa a ser a primeira das fotos extra
+            const gallery = [p.image_url, ...(p.image_urls ?? [])].filter((u, i, all) => u && all.indexOf(u) === i).slice(0, 6)
+            await sb(`products?id=eq.${p.id}`, { method: 'PATCH', body: { image_url: url, image_urls: gallery, updated_at: new Date().toISOString() }, prefer: 'return=minimal' })
+            report.photosDone++
+            done = true
+            break
+          } catch (e) {
+            if (report.photoErrors.length < 20) report.photoErrors.push(`${p.slug}: ${String(e?.message || e).slice(0, 120)}`)
+          }
+        }
+        if (!done) report.photosFailed++
+      }
+    }
+    await Promise.all(Array.from({ length: 6 }, worker))
+    console.log(`Fotos tratadas: ${report.photosDone}, falharam: ${report.photosFailed}`)
+  }
+
+  // 8) Visível / escondido (só no modo full com ACTIVATE_NEW, ou no modo
+  // photos com ACTIVATE_NEW): fica visível o ténis importado com foto
+  // tratada e pelo menos um tamanho em stock; fica escondido o que ficou
+  // sem stock nenhum (volta a aparecer quando a loja voltar a ter).
+  if (ACTIVATE_NEW && MODE !== 'test') {
+    const imported = await sbAll(`products?source=eq.${SOURCE}&select=id,is_active,image_url,product_offers(in_stock,discontinued_at)&order=id`)
+    const toOn = []
+    const toOff = []
+    for (const p of imported) {
+      const hasStock = (p.product_offers ?? []).some((o) => o.in_stock && !o.discontinued_at)
+      const photoOk = String(p.image_url || '').includes('/product-photos/')
+      if (!p.is_active && hasStock && photoOk) toOn.push(p.id)
+      if (p.is_active && !hasStock) toOff.push(p.id)
+    }
+    for (const [ids, value] of [[toOn, true], [toOff, false]]) {
+      for (let i = 0; i < ids.length; i += 200) {
+        await sb(`products?id=in.(${ids.slice(i, i + 200).join(',')})`, { method: 'PATCH', body: { is_active: value, updated_at: new Date().toISOString() }, prefer: 'return=minimal' })
+      }
+    }
+    report.activated = toOn.length
+    report.deactivated = toOff.length
+    console.log(`Visíveis agora: +${toOn.length}, escondidos: ${toOff.length}`)
   }
 } catch (e) {
   report.errors.push(String(e?.stack || e).slice(0, 2000))
