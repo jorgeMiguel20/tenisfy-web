@@ -1,10 +1,12 @@
 # .github/workflows/import-4elementos.yml
 #
-# Importação dos ténis da 4 Elementos PT (ficheiro de produtos da Awin),
-# nos servidores do GitHub (não precisa do computador do Jorge ligado).
-# Por agora só corre à mão, em "Run workflow" no separador Actions do
-# GitHub - a importação diária sozinha só é ligada depois de o Jorge
-# aprovar o teste. As chaves vêm dos "secrets" do repositório - nunca ficam
+# Importação dos ténis da 4 Elementos PT (ficheiro de produtos da Awin).
+# Corre sozinho todos os dias às 03:13 (hora UTC), nos servidores do
+# GitHub (não precisa do computador do Jorge ligado), no modo "full", com
+# os ténis novos a ficarem logo visíveis - pedido do Jorge em 2026-10-19.
+# Corre antes da About You (04:43) para as duas importações nunca estarem
+# a escrever ao mesmo tempo. Também se pode correr à mão em "Run workflow"
+# no separador Actions do GitHub. As chaves vêm dos "secrets" do repositório - nunca ficam
 # escritas aqui.
 #
 # Modos:
@@ -16,6 +18,8 @@
 name: Importar 4 Elementos
 
 on:
+  schedule:
+    - cron: '13 3 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -39,7 +43,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      RUN_MODE: ${{ inputs.mode || 'test' }}
+      # Quando corre sozinho (schedule) não há escolhas: modo full, ténis
+      # novos visíveis.
+      RUN_MODE: ${{ inputs.mode || 'full' }}
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
@@ -61,7 +67,7 @@ jobs:
         env:
           MODE: ${{ env.RUN_MODE }}
           LIMIT: ${{ inputs.limit || '50' }}
-          ACTIVATE_NEW: ${{ inputs.activate_new }}
+          ACTIVATE_NEW: ${{ github.event_name == 'schedule' || inputs.activate_new }}
         run: node /tmp/imp/import-4elementos.mjs
       # Pesquisa por foto: o mesmo modelo que o site usa no browser. Os
       # ténis que não ficarem prontos aqui ficam na importação da About You.
