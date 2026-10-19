@@ -50,7 +50,10 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
     if (options.onlyCurated) query = query.is('source', null)
     if (options.brandId) query = query.eq('brand_id', options.brandId)
     return query.order('created_at', { ascending: true }).order('id', { ascending: true }).range(from, to)
-  })
+    // Bocados de 400 ténis (com as ofertas de cada um): com milhares de
+    // ténis, bocados de 1000 chegavam a passar o limite de 3 segundos da
+    // base de dados e o catálogo mostrava "Erro ao carregar produtos".
+  }, 400)
 
   if (error) {
     return { products: [], error }
