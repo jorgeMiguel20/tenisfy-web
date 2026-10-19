@@ -89,6 +89,11 @@ async function sbInsertChunks(table, rows, { onConflict, ignore = false, returni
 // em espanhol em alguns artigos; em "Sapatos" estão modelos como o Nike Air
 // Rift e o Birkenstock Utti, que também são sapatilhas).
 const SNEAKER_CATEGORY = /^(Ténis|Sapatilhas|Zapatillas|Sapatos)$/i
+// Calçado que não é ténis, mesmo estando nessas categorias: mocassins e
+// modelos de calçar sem atacadores ("Hut Moc", "ACG Moc"), sapatos (o nome
+// da loja diz "Sapatos"), socas, chinelos, sandálias e botas (pedido do
+// Jorge, 2026-10-19).
+const NOT_SNEAKER_NAME = /\b(moc|mocs|mocassim|mocassins|loafers?|sapatos?|mules?|slides?|socas?|tamancos?|chinelos?|sandálias?|sandals?|botas?|boots?)\b/i
 
 // Marcas: as mesmas regras do importador da About You (ver BRAND_ALIASES em
 // scripts/import-aboutyou.mjs) - se mudar uma, mudar a outra.
@@ -134,6 +139,7 @@ function isArticleCode(t) {
   const digits = (t.match(/\d/g) || []).length
   if (/^[A-Z]{1,3}\d{4}(-\d{2,3})?$/.test(t)) return true // DR6694-400, IF4336
   if (/^\d{5,}(-\d+)?$/.test(t)) return true // 380686-10
+  if (/^\d+\.\d{4,}$/.test(t)) return true // 501.178565 (Diadora)
   if (/^[A-Z0-9]+(-[A-Z0-9]+)*$/.test(t) && t.length >= 6 && digits >= 2 && /[A-Z]/.test(t)) return true // 1203A394-600, BB650RBR, A05348C
   return false
 }
@@ -144,6 +150,7 @@ function modelName(productName, brandRaw, brandDisplay) {
   // "Nike Air Max 95 Big Bubble IR1944-400 - 42.5" -> "Air Max 95 Big Bubble"
   let n = String(productName || '').replace(/\s+-\s+[^-]+$/, '').trim()
   n = n.replace(/^Novo Balance\s+/i, 'New Balance ') // tradução automática da loja
+  for (const [re, to] of TRANSLATION_FIXES) n = n.replace(re, to)
   // tira a marca do início do nome, uma só vez ("Jordan Jordan 4 Retro" ->
   // "Jordan 4 Retro")
   for (const b of ['Hoka One One', brandRaw, brandDisplay]) {
@@ -161,8 +168,29 @@ function modelName(productName, brandRaw, brandDisplay) {
     .replace(/\s+Sapatos$/i, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
-  return fixCaps(n) || 'Sapatilhas'
+  // New Balance: o código de artigo vem às vezes só em letras ("URAINOG",
+  // "BBKLSCA1") - os nomes de modelo da NB são números ou palavras normais.
+  if (/new balance/i.test(brandDisplay)) n = n.split(' ').filter((t) => !/^[A-Z0-9]{6,}$/.test(t) || /^\d+$/.test(t)).join(' ')
+  // Jordan: "Jordan 1 Mid" é o "Air Jordan 1 Mid" (nome oficial), para não
+  // aparecer "Jordan Jordan 1 Mid" no site.
+  if (/^jordan$/i.test(brandDisplay)) n = n.replace(/^Jordan\s+(?=\d)/i, 'Air Jordan ')
+  return fixCaps(n.replace(/\s{2,}/g, ' ').trim()) || 'Sapatilhas'
 }
+
+// Partes do nome que a loja traduziu automaticamente do inglês e que ficam
+// sem sentido - voltam ao nome original do modelo.
+const TRANSLATION_FIXES = [
+  [/\bPreto Toe\b/g, 'Black Toe'],
+  [/\bBranco Toe\b/g, 'White Toe'],
+  [/\bFabricado nos EUA\b/gi, 'Made in USA'],
+  [/\bFeito nos EUA\b/gi, 'Made in USA'],
+  [/\bFabricado no Reino Unido\b/gi, 'Made in UK'],
+  [/\bCamurça\b/g, 'Suede'],
+  [/\bMalha em V\b/gi, 'V-Knit'],
+  [/\bLeite de corte em linha\b/gi, 'Row Cut Milk'],
+  [/\bPacote de pequeno-almoço\b/gi, 'Breakfast Pack'],
+  [/\bPacote\b/g, 'Pack'],
+]
 
 // "AZTREK" -> "Aztrek" (como no importador da About You). Siglas curtas e
 // com números ("LV8", "GEL-1130", "ACG") ficam.
@@ -298,6 +326,7 @@ try {
     const groups = new Map()
     for (const p of rows) {
       if (!SNEAKER_CATEGORY.test((p.merchant_category || '').trim())) continue
+      if (NOT_SNEAKER_NAME.test(p.product_name || '')) { inc(report, 'excludedByName'); continue }
       report.sneakerRows++
       const gid = p.parent_product_id || p.merchant_product_id
       let g = groups.get(gid)
