@@ -6,6 +6,7 @@ import RecentDropsGrid from '@/components/RecentDropsGrid'
 import CatalogoBackBar from '@/components/CatalogoBackBar'
 import BackToTopButton from '@/components/BackToTopButton'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import { slimForGrid } from '@/lib/slimForGrid'
 import type { ProductWithPrice } from '@/lib/types'
 
 export const metadata: Metadata = {
@@ -21,36 +22,6 @@ export const metadata: Metadata = {
 // (0,7-1,1 s de espera no servidor, medido). Os filtros (?genero=, ?q=) são
 // lidos no browser pelo ProductGrid, por isso a cache serve para todos.
 export const revalidate = 3600
-
-// Só os campos que a grelha, os filtros e os cartões usam. Com milhares de
-// ténis (importação automática das lojas afiliadas), mandar para o browser
-// as ofertas de cada tamanho, descrições, etc. tornava o catálogo pesado.
-// As fotos extra do cartão (que se veem ao deslizar no telemóvel) ficam
-// limitadas a 3 por ténis.
-function slimForGrid(p: ProductWithPrice): ProductWithPrice {
-  return {
-    id: p.id,
-    brand_id: p.brand_id,
-    model_name: p.model_name,
-    slug: p.slug,
-    category: p.category,
-    gender: p.gender,
-    color: p.color,
-    base_colors: p.base_colors,
-    color_variant_group: null,
-    image_urls: (p.image_urls ?? []).slice(0, 3),
-    description: null,
-    image_url: p.image_url,
-    is_active: p.is_active,
-    created_at: p.created_at,
-    brands: { id: p.brands?.id, name: p.brands?.name, slug: p.brands?.slug, logo_url: null } as ProductWithPrice['brands'],
-    lowest_price: p.lowest_price,
-    store_count: p.store_count,
-    sizes: p.sizes,
-    savings: p.savings ?? null,
-    priceDrop: p.priceDrop ?? null,
-  }
-}
 
 // Ordem "Relevância": primeiro os ténis escolhidos à mão (pela ordem de
 // sempre), depois os importados das lojas afiliadas - os que estão em mais
