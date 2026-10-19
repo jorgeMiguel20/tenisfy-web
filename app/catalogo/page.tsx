@@ -44,12 +44,12 @@ function relevanceOrder(products: ProductWithPrice[]): ProductWithPrice[] {
 export default async function CatalogoPage() {
   const { products: productsWithPrice, error } = await getProductsWithPrice()
 
+  // Se a base de dados falhar, não se guarda uma página de erro: o site
+  // continua a mostrar a última versão boa do catálogo (cache de 1 hora) e
+  // tenta outra vez mais tarde. Antes, a mensagem "Erro ao carregar
+  // produtos" ficava guardada e aparecia a toda a gente durante 1 hora.
   if (error) {
-    return (
-      <main className="w-full py-10">
-        <p className="text-red-600">Erro ao carregar produtos: {error}</p>
-      </main>
-    )
+    throw new Error(`Catálogo: erro ao carregar produtos (${error})`)
   }
 
   const gridProducts = relevanceOrder(productsWithPrice).map(slimForGrid)
