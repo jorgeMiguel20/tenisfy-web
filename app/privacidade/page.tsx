@@ -125,10 +125,15 @@ export default function PrivacidadePage() {
             nem de rastreamento.
           </p>
           <p className="mt-3">
-            Os links &ldquo;Ver oferta&rdquo; levam diretamente à página da loja,
-            sem qualquer identificador de afiliado (ver Divulgação de Afiliados).
-            Depois de saíres do Parjusto, a loja pode usar os seus próprios cookies,
-            segundo a política dela.
+            Nas lojas com quem temos programa de afiliados (About You e 4
+            Elementos), o link &ldquo;Ver oferta&rdquo; passa primeiro pela rede de
+            afiliados dessa loja (Tradedoubler ou Awin), que pode usar os seus
+            próprios cookies para registar que a visita veio do Parjusto e, se
+            comprares, atribuir-nos uma comissão - sem qualquer custo para ti (ver
+            Divulgação de Afiliados). Nas outras lojas, o link leva diretamente à
+            página da loja, sem qualquer identificador de afiliado. Depois de
+            saíres do Parjusto, a loja e a rede de afiliados podem usar os seus
+            próprios cookies, segundo as respetivas políticas.
           </p>
         </section>
 
