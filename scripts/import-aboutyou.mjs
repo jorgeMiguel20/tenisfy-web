@@ -361,7 +361,10 @@ try {
 
     if (productId) {
       const prod = productById.get(productId)
-      if (!prod || prod.source !== SOURCE) { report.matchedManual++; continue } // ténis criado à mão: não mexer
+      // ténis criado à mão (source vazio): não mexer. Ténis importado de
+      // outra loja afiliada (ex.: 4 Elementos): junta-se a oferta da About
+      // You ao mesmo ténis, para se poder comparar o preço.
+      if (!prod || !prod.source) { report.matchedManual++; continue }
       report.matchedImported++
       if (MODE === 'test') continue
       for (const r of rows) {
@@ -504,7 +507,7 @@ try {
     report.priceChanges = history.length
 
     // tamanhos de ténis importados que já não estão no ficheiro -> esgotados
-    const importedIds = new Set(products.filter((p) => p.source === SOURCE).map((p) => p.id))
+    const importedIds = new Set(products.filter((p) => p.source).map((p) => p.id))
     const gone = ayOffers.filter((o) => importedIds.has(o.product_id) && o.in_stock && !seenOfferKeys.has(`${o.product_id}|${o.size}`)).map((o) => o.id)
     for (let i = 0; i < gone.length; i += 200) {
       await sb(`product_offers?id=in.(${gone.slice(i, i + 200).join(',')})`, { method: 'PATCH', body: { in_stock: false, last_checked_at: now }, prefer: 'return=minimal' })

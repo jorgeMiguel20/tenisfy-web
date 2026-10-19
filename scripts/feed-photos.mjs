@@ -22,7 +22,8 @@ const MAX_W = 0.85
 const MAX_H = 0.58
 const TOLERANCE = 14
 
-// Pede à About You a foto num tamanho razoável (as do ficheiro vêm a 2000px).
+// Pede à loja a foto num tamanho razoável (as do ficheiro da About You vêm a
+// 2000px).
 export function sourcePhotoUrl(url) {
   try {
     const u = new URL(url)
@@ -30,6 +31,9 @@ export function sourcePhotoUrl(url) {
       u.searchParams.set('width', '800')
       u.searchParams.set('height', '1000')
     }
+    // 4 Elementos (loja Shopify): as fotos do ficheiro vêm no tamanho
+    // original; 1000px chega e descarrega muito mais depressa.
+    if (u.hostname === 'cdn.shopify.com') u.searchParams.set('width', '1000')
     return u.toString()
   } catch {
     return url
