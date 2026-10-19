@@ -4,6 +4,7 @@
 // texto próprios para pesquisas como "ténis Nike preço", com a lista de
 // ténis dessa marca e o preço mais baixo de cada um. Dados sempre reais
 // (os mesmos do catálogo), nunca inventados.
+import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -30,14 +31,17 @@ export async function generateStaticParams() {
   return Array.from(slugs).map((slug) => ({ slug }))
 }
 
-async function getBrandPageData(slug: string) {
+// cache(): o título da página (generateMetadata) e a página em si usam os
+// mesmos dados - assim só se pedem uma vez à base de dados.
+const getBrandPageData = cache(async function getBrandPageData(slug: string) {
   const { data: brand } = await supabase.from('brands').select('id, name, slug').eq('slug', slug).maybeSingle()
   if (!brand) return null
 
   const { products, error } = await getProductsWithPrice({ brandId: (brand as Brand).id })
-  const brandProducts = error
-    ? []
-    : products
+  // Erro da base de dados: não guardar uma página vazia (fica a versão
+  // anterior, ver app/catalogo/page.tsx).
+  if (error) throw new Error(`Marca ${slug}: erro ao carregar produtos (${error})`)
+  const brandProducts = products
         .filter((product) => product.brand_id === (brand as Brand).id)
         .sort((a, b) => {
           // Com stock primeiro, depois do mais barato para o mais caro.
@@ -56,7 +60,7 @@ async function getBrandPageData(slug: string) {
   // Para o browser só seguem os campos que os cartões usam (ver
   // lib/slimForGrid.ts) - sem isto a página da adidas passava dos 20 MB.
   return { brand: brand as Brand, products: brandProducts.map(slimForGrid), lowestPrice, storeCount }
-}
+})
 
 export async function generateMetadata({
   params,
