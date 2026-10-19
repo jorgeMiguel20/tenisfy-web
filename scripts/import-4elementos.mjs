@@ -151,6 +151,16 @@ function modelName(productName, brandRaw, brandDisplay) {
     if (re && re.test(n)) { n = n.replace(re, ''); break }
   }
   n = n.split(/\s+/).filter((t) => !isArticleCode(t)).join(' ').trim()
+  // restos da tradução automática da loja: "(gancho e laço)", "Homens ...",
+  // "... para mulher", "W Clifton 10", "Wn's", "... Sapatos"
+  n = n
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/^(Homens?|Mulher(es)?|Homem|W|M)\s+/i, '')
+    .replace(/\s+(para (homem|mulher|homens|mulheres|criança|crianças))$/i, '')
+    .replace(/\s+(Wn'?s|W)$/i, '')
+    .replace(/\s+Sapatos$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
   return fixCaps(n) || 'Sapatilhas'
 }
 
