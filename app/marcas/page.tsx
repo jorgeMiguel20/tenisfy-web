@@ -26,17 +26,21 @@ type BrandRow = { id: string; name: string; slug: string }
 export default async function MarcasPage() {
   const [{ data: brandRows }, { products }] = await Promise.all([
     supabase.from('brands').select('id, name, slug').order('name'),
-    // Só os ténis escolhidos à mão (como até agora) - a lista de marcas
-    // fica igual; as marcas novas da importação automática continuam a
-    // ter a sua página (/marcas/<marca>) e a aparecer no catálogo.
-    getProductsWithPrice({ onlyCurated: true }),
+    // Todas as marcas com pelo menos um ténis no catálogo, incluindo as que
+    // chegaram com a importação automática das lojas afiliadas.
+    getProductsWithPrice(),
   ])
 
   const brands = ((brandRows ?? []) as BrandRow[])
     .map((brand) => {
       const brandProducts = products.filter((p) => p.brand_id === brand.id)
       const prices = brandProducts.map((p) => p.lowest_price).filter((price): price is number => price != null)
-      const cover = brandProducts.find((p) => p.image_url)?.image_url ?? null
+      // Foto da marca: de preferência um ténis escolhido à mão (as fotos de
+      // sempre); se a marca só tiver ténis importados, a foto de um deles.
+      const cover =
+        brandProducts.find((p) => p.image_url && !(p as { source?: string | null }).source)?.image_url ??
+        brandProducts.find((p) => p.image_url)?.image_url ??
+        null
       return {
         ...brand,
         count: brandProducts.length,
