@@ -1,0 +1,78 @@
+# .github/workflows/import-4elementos.yml
+#
+# Importação dos ténis da 4 Elementos PT (ficheiro de produtos da Awin),
+# nos servidores do GitHub (não precisa do computador do Jorge ligado).
+# Por agora só corre à mão, em "Run workflow" no separador Actions do
+# GitHub - a importação diária sozinha só é ligada depois de o Jorge
+# aprovar o teste. As chaves vêm dos "secrets" do repositório - nunca ficam
+# escritas aqui.
+#
+# Modos:
+#   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão
+#   full    - importa tudo, atualiza preços/stock e trata as fotos; com
+#             "activate_new" ligado, os ténis com foto tratada e stock
+#             ficam visíveis no site
+#   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
+name: Importar 4 Elementos
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'test, full ou photos'
+        required: true
+        default: test
+        type: choice
+        options: [test, full, photos]
+      limit:
+        description: 'test: quantos ténis novos criar'
+        required: false
+        default: '50'
+      activate_new:
+        description: 'full/photos: os ténis com foto tratada ficam visíveis no site?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      RUN_MODE: ${{ inputs.mode || 'test' }}
+      SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # O tratamento das fotos usa a biblioteca "sharp", instalada numa
+      # pasta à parte para não instalar o site inteiro.
+      - name: Preparar o importador
+        run: |
+          mkdir -p /tmp/imp
+          cp scripts/feed-photos.mjs scripts/import-4elementos.mjs /tmp/imp/
+          cd /tmp/imp
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund sharp@0.34.5
+      - name: Importar ténis da 4 Elementos
+        env:
+          MODE: ${{ env.RUN_MODE }}
+          LIMIT: ${{ inputs.limit || '50' }}
+          ACTIVATE_NEW: ${{ inputs.activate_new }}
+        run: node /tmp/imp/import-4elementos.mjs
+      # Pesquisa por foto: o mesmo modelo que o site usa no browser. Os
+      # ténis que não ficarem prontos aqui ficam na importação da About You.
+      - name: Preparar a pesquisa por foto
+        if: env.RUN_MODE == 'full'
+        env:
+          EMBED_MAX_MINUTES: '20'
+        run: |
+          mkdir -p /tmp/emb
+          cp scripts/feed-embeddings.mjs /tmp/emb/
+          cd /tmp/emb
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @huggingface/transformers@4.2.0
+          node /tmp/emb/feed-embeddings.mjs
