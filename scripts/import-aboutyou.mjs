@@ -145,7 +145,7 @@ function mapGender(p) {
 // Marcas: junta as sub-marcas da About You à marca principal (ex.: "ADIDAS
 // ORIGINALS" e "ADIDAS PERFORMANCE" são "adidas").
 const BRAND_ALIASES = [
-  [/^adidas( originals| performance| sportswear| terrex| by stella mccartney)?$/i, 'adidas', 'adidas'],
+  [/^adidas( originals| performance| sportswear| terrex| golf| by stella mccartney)?$/i, 'adidas', 'adidas'],
   [/^nike( sportswear| performance)?$/i, 'nike', 'Nike'],
   [/^jordan$/i, 'jordan', 'Jordan'],
   [/^new balance$/i, 'new-balance', 'New Balance'],
@@ -159,6 +159,11 @@ const BRAND_ALIASES = [
   [/^altra$/i, 'altra', 'Altra'],
   [/^reebok$/i, 'reebok', 'Reebok'],
   [/^on$/i, 'on', 'On'],
+  // Marcas que a loja escreve de mais do que uma maneira - juntadas numa só
+  // (pedido do Jorge, 2026-10-19), para não aparecerem repetidas em /marcas.
+  [/^u\.?\s?s\.? polo assn\.?$/i, 'us-polo-assn', 'US Polo Assn.'],
+  [/^genesis( footwear)?$/i, 'genesis', 'Genesis'],
+  [/^(patrick )?ewing( athletics)?$/i, 'ewing', 'Ewing'],
 ]
 
 export function slugify(s) {
