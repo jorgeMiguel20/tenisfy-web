@@ -7,9 +7,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import ProductCard from '@/components/ProductCard'
+import BrandProductGrid from '@/components/BrandProductGrid'
+import BackToTopButton from '@/components/BackToTopButton'
 import { supabase } from '@/lib/supabase'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import { slimForGrid } from '@/lib/slimForGrid'
 import { formatPrice } from '@/lib/formatPrice'
 import { SITE_URL } from '@/lib/siteUrl'
 import { getBrandIntro, BRAND_PAGE_FOOTNOTE } from '@/lib/brandContent'
@@ -47,7 +49,13 @@ async function getBrandPageData(slug: string) {
   const prices = brandProducts.map((p) => p.lowest_price).filter((price): price is number => price != null)
   const lowestPrice = prices.length > 0 ? Math.min(...prices) : null
 
-  return { brand: brand as Brand, products: brandProducts, lowestPrice }
+  const storeCount = new Set(
+    brandProducts.flatMap((p) => (p.product_offers ?? []).filter((o) => o.in_stock).map((o) => o.store_id))
+  ).size
+
+  // Para o browser só seguem os campos que os cartões usam (ver
+  // lib/slimForGrid.ts) - sem isto a página da adidas passava dos 20 MB.
+  return { brand: brand as Brand, products: brandProducts.map(slimForGrid), lowestPrice, storeCount }
 }
 
 export async function generateMetadata({
@@ -86,14 +94,12 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   const data = await getBrandPageData(slug)
   if (!data) notFound()
 
-  const { brand, products, lowestPrice } = data
+  const { brand, products, lowestPrice, storeCount } = data
   const pageUrl = `${SITE_URL}/marcas/${brand.slug}`
-  const storeCount = new Set(
-    products.flatMap((p) => (p.product_offers ?? []).filter((o) => o.in_stock).map((o) => o.store_id))
-  ).size
 
   // Dados estruturados para o Google: percurso (Parjusto > Marcas > Nike)
-  // e a lista de ténis desta página.
+  // e a lista de ténis desta página (os primeiros 100 - com milhares de
+  // ténis a lista ficava enorme).
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -108,7 +114,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       name: `Ténis ${brand.name}`,
-      itemListElement: products.map((product, index) => ({
+      itemListElement: products.slice(0, 100).map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         url: `${SITE_URL}/produto/${product.slug}`,
@@ -161,14 +167,12 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           </Link>
         </div>
       ) : (
-        <div className="mt-10 grid grid-cols-2 border-l border-t border-[#17232B]/10 sm:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} inGrid />
-          ))}
-        </div>
+        <BrandProductGrid products={products} />
       )}
 
       <p className="mt-10 max-w-2xl px-6 text-sm leading-relaxed text-[#5C6770]">{BRAND_PAGE_FOOTNOTE}</p>
+
+      <BackToTopButton />
     </main>
   )
 }
