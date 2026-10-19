@@ -184,22 +184,32 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
         <h3 className="mt-1 mb-2 line-clamp-2 min-h-[2.5rem] text-[15px] font-medium leading-snug text-[#17232B]">{product.model_name}</h3>
         {lowestPrice ? (
           <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold tabular-nums text-[#17232B]">
+            {/* No telemóvel o cartão é estreito: o preço riscado e o número de
+                lojas não cabiam na mesma linha e ficavam cortados (pedido do
+                Jorge, 2026-10-20). Aí o número de lojas passa para a linha de
+                baixo e, se o preço for muito grande, o preço riscado também
+                desce (flex-wrap). No computador fica tudo numa linha. */}
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="whitespace-nowrap text-xl font-bold tabular-nums text-[#17232B]">
                 {formatPrice(lowestPrice)}
               </span>
               {referencePrice != null && (
-                <span className="text-sm tabular-nums text-[#5C6770] line-through" title={referenceLabel}>
+                <span className="whitespace-nowrap text-sm tabular-nums text-[#5C6770] line-through" title={referenceLabel}>
                   <span className="sr-only">{referenceLabel}: </span>
                   {formatPrice(referencePrice)}
                 </span>
               )}
               {storeCount > 0 && (
-                <span className="text-xs text-[#5C6770]">
+                <span className="hidden whitespace-nowrap text-xs text-[#5C6770] sm:inline">
                   · {storeCount} {storeCount === 1 ? 'loja' : 'lojas'}
                 </span>
               )}
             </div>
+            {storeCount > 0 && (
+              <p className="mt-0.5 text-xs text-[#5C6770] sm:hidden">
+                {storeCount} {storeCount === 1 ? 'loja' : 'lojas'}
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-[#5C6770]">Sem oferta disponível</p>
