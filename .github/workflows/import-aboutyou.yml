@@ -1,9 +1,12 @@
 # .github/workflows/import-aboutyou.yml
 #
 # Importação dos ténis da About You (ficheiro de produtos da Tradedoubler).
-# Por agora só corre quando alguém carrega em "Run workflow" no separador
-# Actions do GitHub (ainda não corre sozinho todos os dias). As chaves vêm
-# dos "secrets" do repositório - nunca ficam escritas aqui.
+# Corre sozinho todos os dias às 04:43 (hora UTC), nos servidores do
+# GitHub (não precisa do computador do Jorge ligado), no modo "full", com
+# os ténis novos a ficarem logo visíveis - pedido do Jorge em 2026-10-19.
+# Também se pode correr à mão em "Run workflow" no separador Actions do
+# GitHub. As chaves vêm dos "secrets" do repositório - nunca ficam
+# escritas aqui.
 #
 # Modos:
 #   explore - só conta o que há no ficheiro, não muda nada no site
@@ -17,6 +20,8 @@
 name: Importar About You
 
 on:
+  schedule:
+    - cron: '43 4 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -40,6 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
+      # Quando corre sozinho (schedule) não há escolhas: modo full, ténis
+      # novos visíveis.
+      RUN_MODE: ${{ inputs.mode || 'full' }}
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
@@ -49,12 +57,12 @@ jobs:
         with:
           node-version: 22
       - name: Explorar o ficheiro da About You
-        if: inputs.mode == 'explore'
+        if: env.RUN_MODE == 'explore'
         run: node scripts/feed-explore.mjs
       # O tratamento das fotos usa a biblioteca "sharp". É instalada numa
       # pasta à parte para não instalar o site inteiro.
       - name: Preparar o importador
-        if: inputs.mode != 'explore' && inputs.mode != 'embeddings'
+        if: env.RUN_MODE != 'explore' && env.RUN_MODE != 'embeddings'
         run: |
           mkdir -p /tmp/imp
           cp scripts/feed-stream.mjs scripts/feed-photos.mjs scripts/import-aboutyou.mjs /tmp/imp/
@@ -62,15 +70,15 @@ jobs:
           npm init -y > /dev/null
           npm install --no-audit --no-fund sharp@0.34.5
       - name: Importar ténis da About You
-        if: inputs.mode != 'explore' && inputs.mode != 'embeddings'
+        if: env.RUN_MODE != 'explore' && env.RUN_MODE != 'embeddings'
         env:
-          MODE: ${{ inputs.mode }}
-          LIMIT: ${{ inputs.limit }}
-          ACTIVATE_NEW: ${{ inputs.activate_new }}
+          MODE: ${{ env.RUN_MODE }}
+          LIMIT: ${{ inputs.limit || '50' }}
+          ACTIVATE_NEW: ${{ github.event_name == 'schedule' || inputs.activate_new }}
         run: node /tmp/imp/import-aboutyou.mjs
       # Pesquisa por foto: o mesmo modelo que o site usa no browser.
       - name: Preparar a pesquisa por foto
-        if: inputs.mode == 'full' || inputs.mode == 'embeddings'
+        if: env.RUN_MODE == 'full' || env.RUN_MODE == 'embeddings'
         run: |
           mkdir -p /tmp/emb
           cp scripts/feed-embeddings.mjs /tmp/emb/
