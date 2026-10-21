@@ -12,6 +12,10 @@ const FUSE_OPTIONS = {
   minMatchCharLength: 2,
 }
 
+// O índice do Fuse demora a construir com milhares de ténis; guarda-se um por
+// lista de produtos para não o refazer a cada letra escrita.
+const fuseCache = new WeakMap<object, Fuse<unknown>>()
+
 // Genérica: funciona com o produto completo (grelha do catálogo) e com a
 // versão reduzida do seletor do /comparar - só precisa do nome e da marca.
 export function searchProducts<T extends Pick<ProductWithPrice, 'model_name'> & { brands?: { name: string } | null }>(
@@ -22,7 +26,11 @@ export function searchProducts<T extends Pick<ProductWithPrice, 'model_name'> & 
   const trimmed = query.trim()
   if (trimmed.length < 2) return []
 
-  const fuse = new Fuse(products, FUSE_OPTIONS)
+  let fuse = fuseCache.get(products) as Fuse<T> | undefined
+  if (!fuse) {
+    fuse = new Fuse(products, FUSE_OPTIONS)
+    fuseCache.set(products, fuse as Fuse<unknown>)
+  }
   const results = fuse.search(trimmed)
   const items = results.map((r) => r.item)
   return limit != null ? items.slice(0, limit) : items

@@ -41,8 +41,22 @@ async function loadModel() {
       const visionModel = await CLIPVisionModelWithProjection.from_pretrained(MODEL_NAME)
       return { processor, visionModel }
     })()
+    // Se a descarga falhar (rede), a próxima tentativa começa de novo em vez
+    // de ficar presa ao erro.
+    modelPromise.catch(() => {
+      modelPromise = null
+    })
   }
   return modelPromise
+}
+
+// Começa a descarregar e a preparar o modelo (cerca de 85 MB na primeira vez
+// num aparelho; depois fica guardado no browser) ANTES de a pessoa escolher a
+// foto. Chama-se quando a pessoa abre a pesquisa ou carrega no botão da
+// câmara - enquanto escolhe a foto, o modelo já vai a descarregar, e a
+// análise começa logo a seguir. Não tem efeito se já estiver pronto.
+export function warmUpImageModel(): void {
+  void loadModel().catch(() => {})
 }
 
 // Modelo de TEXTO (só usado no admin, para o "porteiro" da pesquisa por

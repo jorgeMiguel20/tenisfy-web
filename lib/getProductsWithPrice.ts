@@ -30,6 +30,11 @@ export type GetProductsOptions = {
 
 const SHOW_HIDDEN_IMPORTS = process.env.VERCEL_ENV === 'preview'
 
+// Marcas com até este número de ofertas em stock pedem só o seu histórico;
+// acima disso compensa o resumo geral da base de dados.
+const MAX_OFFERS_FOR_TARGETED_HISTORY = 1500
+const HISTORY_OFFERS_PER_REQUEST = 50
+
 type DailyMinPriceRow = { product_id: string; day: string; price: number }
 
 export async function getProductsWithPrice(options: GetProductsOptions = {}): Promise<{
@@ -72,18 +77,62 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
   // continua a funcionar - só não mostra descidas.
   const historyByProduct = new Map<string, { price: number; recorded_at: string }[]>()
   const wanted = new Set(products.map((p) => p.id as string))
-  const { data: historyRows } = await fetchAll<DailyMinPriceRow>((from, to) =>
-    supabase
-      .rpc('catalog_daily_min_prices', { p_days: PRICE_DROP_WINDOW_DAYS + 1 })
-      .order('product_id')
-      .order('day')
-      .range(from, to)
+
+  // Página de uma marca pequena: só se pede o histórico das ofertas em stock
+  // dessa marca. Antes pedia-se sempre o resumo de TODOS os ténis do site, e
+  // a primeira visita a uma marca com 1 ténis demorava 5 a 10 segundos.
+  // Marcas com muitas ofertas (ex.: adidas) continuam a usar o resumo
+  // pronto da base de dados, que aí compensa.
+  const inStockOffers = products.flatMap((p) =>
+    ((p.product_offers ?? []) as any[]).filter((o) => o.in_stock).map((o) => ({ offerId: o.id as string, productId: p.id as string }))
   )
-  for (const row of historyRows) {
-    if (!wanted.has(row.product_id)) continue
-    const list = historyByProduct.get(row.product_id) ?? []
-    list.push({ price: Number(row.price), recorded_at: row.day })
-    historyByProduct.set(row.product_id, list)
+  if (options.brandId && inStockOffers.length <= MAX_OFFERS_FOR_TARGETED_HISTORY) {
+    const productByOffer = new Map(inStockOffers.map((o) => [o.offerId, o.productId]))
+    const since = new Date()
+    since.setDate(since.getDate() - (PRICE_DROP_WINDOW_DAYS + 1))
+    const sinceDay = since.toISOString().slice(0, 10)
+    const offerIds = inStockOffers.map((o) => o.offerId)
+    const chunks: string[][] = []
+    for (let i = 0; i < offerIds.length; i += HISTORY_OFFERS_PER_REQUEST) chunks.push(offerIds.slice(i, i + HISTORY_OFFERS_PER_REQUEST))
+    for (let i = 0; i < chunks.length; i += 4) {
+      const results = await Promise.all(
+        chunks.slice(i, i + 4).map((ids) =>
+          fetchAll<{ product_offer_id: string; price: number; recorded_at: string }>((from, to) =>
+            supabase
+              .from('price_history')
+              .select('product_offer_id, price, recorded_at')
+              .in('product_offer_id', ids)
+              .gte('recorded_at', sinceDay)
+              .order('recorded_at')
+              .order('product_offer_id')
+              .range(from, to)
+          )
+        )
+      )
+      for (const { data: rows } of results) {
+        for (const row of rows) {
+          const productId = productByOffer.get(row.product_offer_id)
+          if (!productId) continue
+          const list = historyByProduct.get(productId) ?? []
+          list.push({ price: Number(row.price), recorded_at: row.recorded_at })
+          historyByProduct.set(productId, list)
+        }
+      }
+    }
+  } else {
+    const { data: historyRows } = await fetchAll<DailyMinPriceRow>((from, to) =>
+      supabase
+        .rpc('catalog_daily_min_prices', { p_days: PRICE_DROP_WINDOW_DAYS + 1 })
+        .order('product_id')
+        .order('day')
+        .range(from, to)
+    )
+    for (const row of historyRows) {
+      if (!wanted.has(row.product_id)) continue
+      const list = historyByProduct.get(row.product_id) ?? []
+      list.push({ price: Number(row.price), recorded_at: row.day })
+      historyByProduct.set(row.product_id, list)
+    }
   }
 
   const productsWithPrice: ProductWithPrice[] = products.map((p) => {
