@@ -1,10 +1,9 @@
 // app/comparar/page.tsx
 import { supabase } from '@/lib/supabase'
 import { productSelect } from '@/lib/productColumns'
-import { fetchAll } from '@/lib/fetchAll'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import ComparePicker, { type PickerProduct } from '@/components/ComparePicker'
+import ComparePicker from '@/components/ComparePicker'
 import RemoveCompareButton from '@/components/RemoveCompareButton'
 import CompareSelectionSync from '@/components/CompareSelectionSync'
 import CompareRestoreFromStorage from '@/components/CompareRestoreFromStorage'
@@ -265,52 +264,12 @@ export default async function CompararPage({
   // Catálogo para o seletor "+ Adicionar produto" (mesma pesquisa
   // client-side da homepage, ver lib/searchProducts.ts) - só é preciso
   // quando sobra pelo menos um lugar por preencher.
-  // Só com os campos que o seletor mostra/pesquisa (nome, marca, foto,
-  // preço mais baixo): esta lista vai inteira para o browser, e antes ia
-  // com todas as colunas de cada ténis (incluindo o "embedding" da
-  // pesquisa por foto), o que tornava o /comparar bem mais pesado sem
-  // nenhum benefício visível.
-  let pickerProducts: PickerProduct[] = []
-  if (placeholderCount > 0) {
-    // Aos bocados de 1000 (ver lib/fetchAll.ts): com os ténis importados das
-    // lojas afiliadas o catálogo passou das 1000 linhas por pedido.
-    const { data: allProducts } = await fetchAll<unknown>((from, to) =>
-      supabase
-        .from('products')
-        .select(`
-          id, slug, model_name, image_url,
-          brands (name),
-          product_offers (price, in_stock, discontinued_at)
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: true })
-        .order('id', { ascending: true })
-        .range(from, to) as unknown as PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>
-    )
-
-    type PickerRow = {
-      id: string
-      slug: string
-      model_name: string
-      image_url: string | null
-      brands: { name: string } | null
-      product_offers: { price: number; in_stock: boolean; discontinued_at: string | null }[] | null
-    }
-    pickerProducts = ((allProducts ?? []) as unknown as PickerRow[]).map((p) => {
-      const inStockOffers = (p.product_offers ?? []).filter((o) => o.in_stock && !o.discontinued_at)
-      const lowest_price = inStockOffers.length > 0
-        ? Math.min(...inStockOffers.map((o) => o.price))
-        : null
-      return {
-        id: p.id,
-        slug: p.slug,
-        model_name: p.model_name,
-        image_url: p.image_url ?? null,
-        brands: p.brands ? { name: p.brands.name } : null,
-        lowest_price,
-      }
-    })
-  }
+  // A lista de todos os ténis para a caixa "Adicionar outro produto" já não
+  // é carregada aqui: antes cada abertura do /comparar (e cada "remover")
+  // ia buscar à base de dados os ~8.400 ténis com todas as ofertas, só para
+  // preparar essa caixa - demorava cerca de 7 segundos e a página pesava
+  // 2,8 MB. Agora o seletor pede essa lista só quando a pessoa o abre
+  // (ver components/ComparePicker.tsx e app/api/pesquisa-produtos).
 
   // Histórico de preços das ofertas em stock dos produtos comparados, só
   // para saber se cada um desceu de preço esta semana (linha "Desceu esta
@@ -550,7 +509,7 @@ export default async function CompararPage({
 
   const mobilePicker = withSlot ? (
     <div className="md:hidden">
-      <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} fullWidth />
+      <ComparePicker currentSlugs={slugs} fullWidth />
     </div>
   ) : null
 
@@ -617,7 +576,7 @@ export default async function CompararPage({
         {/* Sem produtos: só o lugar vazio com o seletor. */}
         {ordered.length === 0 && (
           <div className="mt-10 flex min-h-[240px] items-center justify-center bg-[#F9FBFC] p-6">
-            <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} />
+            <ComparePicker currentSlugs={slugs} />
           </div>
         )}
 
@@ -666,7 +625,7 @@ export default async function CompararPage({
                 <div className={`hidden md:block md:border-l md:px-6 md:pt-6 ${COMPARE_LINE}`}>
                   {/* Lugar livre, com o mesmo tamanho e fundo das fotos. */}
                   <div className="flex aspect-[4/3] w-full items-center justify-center bg-[#F9FBFC] p-4">
-                    <ComparePicker allProducts={pickerProducts} currentSlugs={slugs} fullWidth />
+                    <ComparePicker currentSlugs={slugs} fullWidth />
                   </div>
                 </div>
               )}
