@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import SortDropdown from './SortDropdown'
@@ -576,6 +576,7 @@ export default function ProductGrid({
   belowSearch?: React.ReactNode
 }) {
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
@@ -858,7 +859,14 @@ export default function ProductGrid({
   }, [hasMore, visibleCount, filteredProducts])
 
   const activeChips = useMemo(() => {
-    const chips: { key: string; label: string; onRemove: () => void }[] = []
+    const chips: { key: string; label: string; onRemove: () => void; outlined?: boolean }[] = []
+
+    // O que a pessoa pesquisou aparece como primeira etiqueta (contorno em
+    // vez de fundo escuro, para se distinguir dos filtros) e pode ser tirado
+    // com o ×.
+    if (search.trim() !== '') {
+      chips.push({ key: 'search', label: search.trim(), onRemove: clearSearch, outlined: true })
+    }
 
     for (const brand of selectedBrands) {
       chips.push({
@@ -910,6 +918,7 @@ export default function ProductGrid({
 
     return chips
   }, [
+    search,
     selectedBrands,
     selectedGenders,
     selectedCategories,
@@ -922,8 +931,12 @@ export default function ProductGrid({
   ])
 
   const hasActiveFilters = activeChips.length > 0
+  // O número em "Filtros (N)" só conta filtros a sério - a pesquisa tem a sua
+  // própria etiqueta e o seu título.
+  const filterCount = activeChips.filter((chip) => chip.key !== 'search').length
 
   function clearFilters() {
+    clearSearch()
     setSelectedBrands([])
     setSelectedGenders([])
     setSelectedCategories([])
@@ -931,6 +944,20 @@ export default function ProductGrid({
     setSelectedColors([])
     setSortOrder('default')
     setSelectedPriceRange(null)
+  }
+
+  // Tira a pesquisa: limpa o texto e também o ?q= do endereço, para que
+  // recarregar a página não a traga de volta.
+  function clearSearch() {
+    setSearch('')
+    // Lê o endereço no momento do clique (e não o que havia quando a
+    // etiqueta foi criada), para nunca desfazer outras mudanças.
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('q')) {
+      params.delete('q')
+      const rest = params.toString()
+      router.replace(rest ? `${window.location.pathname}?${rest}` : window.location.pathname, { scroll: false })
+    }
   }
 
   function openDrawer() {
@@ -1069,11 +1096,15 @@ export default function ProductGrid({
         key={chip.key}
         type="button"
         onClick={chip.onRemove}
-        aria-label={`Remover filtro ${chip.label}`}
-        className="inline-flex items-center gap-1.5 bg-[#17232B] hover:bg-[#17232B]/85 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors"
+        aria-label={chip.outlined ? `Tirar a pesquisa ${chip.label}` : `Remover filtro ${chip.label}`}
+        className={
+          chip.outlined
+            ? 'inline-flex max-w-full items-center gap-1.5 border border-[#17232B] bg-white text-[#17232B] text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors hover:bg-[#F9FBFC]'
+            : 'inline-flex items-center gap-1.5 bg-[#17232B] hover:bg-[#17232B]/85 text-white text-sm font-medium pl-3 pr-2.5 py-1.5 rounded-none transition-colors'
+        }
       >
-        {chip.label}
-        <span aria-hidden="true" className="text-gray-300">×</span>
+        <span className="truncate">{chip.label}</span>
+        <span aria-hidden="true" className={chip.outlined ? 'text-[#5C6770]' : 'text-gray-300'}>×</span>
       </button>
     ))
   }
@@ -1083,6 +1114,28 @@ export default function ProductGrid({
       {/* A pesquisa por texto e por foto passaram para o modal unificado
           aberto pela lupa do cabeçalho (ver components/SearchModal.tsx) -
           já não há um atalho de pesquisa por foto aqui no meio da página. */}
+      {/* Título da página: "Catálogo" normalmente; com uma pesquisa feita,
+          passa a "Resultados para “...”" com o número de ténis encontrados
+          (como na JD). É um h1 só - o mesmo markup do título de espera em
+          app/catalogo/page.tsx, para a página não "saltar". */}
+      <div className="px-6">
+        {search.trim() !== '' ? (
+          <>
+            <p className={FILTER_LABEL}>Pesquisa</p>
+            <h1 className="mt-2 break-words font-display text-[28px] font-bold leading-[1.1] tracking-[-0.02em] text-[#17232B] md:text-[44px]">
+              Resultados para <span className="text-[#123F3A]">“{search.trim()}”</span>
+            </h1>
+            <p className="mb-8 mt-3 text-sm text-[#5C6770]">
+              {filteredProducts.length === 0
+                ? 'Nenhum ténis encontrado'
+                : `${filteredProducts.length} ténis encontrado${filteredProducts.length !== 1 ? 's' : ''}`}
+            </p>
+          </>
+        ) : (
+          <h1 className="mt-2 mb-8 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] md:text-[44px]">Catálogo</h1>
+        )}
+      </div>
+
       {belowSearch}
 
       {/* Barra de filtros única, para todos os tamanhos de ecrã - estilo
@@ -1101,7 +1154,7 @@ export default function ProductGrid({
           className="inline-flex min-h-[44px] items-center gap-2 bg-[#17232B] text-white rounded-none px-4 text-sm font-medium hover:bg-[#17232B]/85 transition-colors shrink-0"
         >
           <FilterIcon className="h-4 w-4" />
-          Filtros{hasActiveFilters ? ` (${activeChips.length})` : ''}
+          Filtros{filterCount > 0 ? ` (${filterCount})` : ''}
         </button>
 
         {renderActiveChips()}
