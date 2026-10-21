@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import SortDropdown from './SortDropdown'
@@ -576,7 +576,6 @@ export default function ProductGrid({
   belowSearch?: React.ReactNode
 }) {
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
@@ -956,7 +955,9 @@ export default function ProductGrid({
     if (params.has('q')) {
       params.delete('q')
       const rest = params.toString()
-      router.replace(rest ? `${window.location.pathname}?${rest}` : window.location.pathname, { scroll: false })
+      // replaceState muda o endereço de imediato (o Next acompanha-o), sem ir
+      // buscar de novo a página inteira do catálogo ao servidor.
+      window.history.replaceState(null, '', rest ? `${window.location.pathname}?${rest}` : window.location.pathname)
     }
   }
 
