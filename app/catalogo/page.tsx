@@ -72,11 +72,18 @@ export default async function CatalogoPage() {
     <main className="w-full py-10">
       <div className="px-6">
         <CatalogoBackBar />
-
-        <h1 className="mt-2 mb-8 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] md:text-[44px]">Catálogo</h1>
       </div>
 
-      <Suspense fallback={null}>
+      {/* O título "Catálogo" vive dentro da grelha (passa a "Resultados para
+          ..." quando há uma pesquisa). Enquanto a grelha não carrega, mostra-se
+          este mesmo título, que também fica no HTML para o Google. */}
+      <Suspense
+        fallback={
+          <div className="px-6">
+            <h1 className="mt-2 mb-8 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] md:text-[44px]">Catálogo</h1>
+          </div>
+        }
+      >
         <ProductGrid products={gridProducts} />
       </Suspense>
 
