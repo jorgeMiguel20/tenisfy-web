@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import HeroPhotoSearchButton from './HeroPhotoSearchButton'
 import { useSearchModalOpen } from '@/lib/searchModal'
-import { getImageEmbedding } from '@/lib/imageEmbedding'
+import { getImageEmbedding, warmUpImageModel } from '@/lib/imageEmbedding'
 
 // Chips de sugestão: apontam para /catalogo?q=..., que o ProductGrid já lê
 // como pesquisa inicial (ver o parâmetro "q" sincronizado em ProductGrid.tsx).
@@ -90,7 +90,7 @@ export default function HeroSearchBar() {
           placeholder="Pesquisa por modelo, marca ou foto..."
           className="flex-1 min-w-0 text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent"
         />
-        <HeroPhotoSearchButton onClick={() => fileInputRef.current?.click()} loading={imageLoading} />
+        <HeroPhotoSearchButton onClick={() => { warmUpImageModel(); fileInputRef.current?.click() }} loading={imageLoading} />
         <button
           type="submit"
           aria-label="Pesquisar"

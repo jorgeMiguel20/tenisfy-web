@@ -1,15 +1,15 @@
 // components/ComparePicker.tsx
 'use client'
 
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { searchProducts } from '@/lib/searchProducts'
 import { useCompare } from '@/lib/compare'
 import { formatPrice } from '@/lib/formatPrice'
 
-// Só os campos que o seletor mostra e pesquisa - a página /comparar envia
-// esta lista inteira para o browser, por isso não leva mais nada (ver o
-// comentário em app/comparar/page.tsx).
+// Só os campos que o seletor mostra e pesquisa. A lista inteira vem de
+// /api/pesquisa-produtos (guardada 1 hora no servidor) e só é pedida quando a
+// pessoa abre o seletor - nunca faz parte da página /comparar.
 export type PickerProduct = {
   id: string
   slug: string
@@ -19,12 +19,34 @@ export type PickerProduct = {
   brands: { name: string } | null
 }
 
+// Pedido uma só vez por visita: se a pessoa abrir o seletor outra vez (ou
+// noutra posição da página) usa-se a lista que já veio.
+let productListPromise: Promise<PickerProduct[]> | null = null
+
+function loadProductList(): Promise<PickerProduct[]> {
+  if (!productListPromise) {
+    productListPromise = fetch('/api/pesquisa-produtos')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json() as Promise<PickerProduct[]>
+      })
+      .catch((error) => {
+        // Se falhar, a próxima abertura do seletor tenta de novo.
+        productListPromise = null
+        throw error
+      })
+  }
+  return productListPromise
+}
+
 export default function ComparePicker({
-  allProducts,
+  allProducts: initialProducts,
   currentSlugs,
   fullWidth = false,
 }: {
-  allProducts: PickerProduct[]
+  // Opcional: se a página já trouxer a lista (versão antiga do /comparar),
+  // usa-a; sem ela, o seletor pede-a à API quando é aberto.
+  allProducts?: PickerProduct[]
   currentSlugs: string[]
   // Ocupa a largura toda do sítio onde está (lugar vazio da grelha no
   // desktop, linha própria no telemóvel), em vez da largura fixa de 300px.
@@ -36,9 +58,15 @@ export default function ComparePicker({
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [allProducts, setAllProducts] = useState<PickerProduct[] | null>(initialProducts ?? null)
+  const [loadFailed, setLoadFailed] = useState(false)
 
-  const results = searchProducts(allProducts, query, 8).filter(
-    (p) => !currentSlugs.includes(p.slug)
+  const results = useMemo(
+    () =>
+      allProducts
+        ? searchProducts(allProducts, query, 8).filter((p) => !currentSlugs.includes(p.slug))
+        : [],
+    [allProducts, query, currentSlugs]
   )
 
   // Antes do primeiro produto o texto convida a escolher; a partir do
@@ -48,6 +76,12 @@ export default function ComparePicker({
 
   function openPicker() {
     setOpen(true)
+    setLoadFailed(false)
+    if (!allProducts) {
+      loadProductList()
+        .then(setAllProducts)
+        .catch(() => setLoadFailed(true))
+    }
     setQuery('')
     setActiveIndex(-1)
     // O input só existe depois deste render; adia o focus para o próximo tick.
@@ -148,7 +182,11 @@ export default function ComparePicker({
 
       {query.trim().length >= 2 && (
         <div className="mt-3 flex max-h-[240px] w-full flex-col gap-1 overflow-y-auto">
-          {results.length === 0 ? (
+          {loadFailed ? (
+            <p className="mt-6 text-center text-xs text-[#5C6770]">Não foi possível carregar os produtos. Fecha e abre outra vez.</p>
+          ) : !allProducts ? (
+            <p className="mt-6 text-center text-xs text-[#5C6770]">A carregar...</p>
+          ) : results.length === 0 ? (
             <p className="mt-6 text-center text-xs text-[#5C6770]">Nenhum produto encontrado.</p>
           ) : (
             results.map((p, index) => (

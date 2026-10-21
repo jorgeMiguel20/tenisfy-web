@@ -3,6 +3,7 @@
 
 import { useRef } from 'react'
 import { setPendingImageFile } from '@/lib/searchModal'
+import { warmUpImageModel } from '@/lib/imageEmbedding'
 
 // CTA da secção "Pesquisa por foto" da homepage. Tem o seu próprio input de
 // ficheiro, sempre montado (nunca escondido com display:none - em vários
@@ -27,7 +28,7 @@ export default function PesquisaPorFotoButton() {
     <>
       <button
         type="button"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => { warmUpImageModel(); fileInputRef.current?.click() }}
         // Cor neutra escura (não verde) - o verde da marca fica reservado
         // ao "Ver este par", o botão mais próximo da compra em si; as
         // outras secções da homepage usam este tom neutro para não repetir

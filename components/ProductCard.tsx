@@ -8,6 +8,23 @@ import { formatPrice } from '@/lib/formatPrice'
 import FavoriteButton from './FavoriteButton'
 import PriceAlertButton from './PriceAlertButton'
 
+// Fotos extra vindas da About You: o original tem 1500x2000 px (centenas de
+// KB cada) e o cartão mostra-as com ~400 px de largura. Pedimos já à loja
+// uma versão mais pequena (a loja aceita width/height no endereço).
+function cardPhotoUrl(src: string): string {
+  try {
+    const u = new URL(src)
+    if (u.hostname === 'cdn.aboutyou.de') {
+      u.searchParams.set('width', '500')
+      u.searchParams.set('height', '625')
+      return u.toString()
+    }
+  } catch {
+    // endereço inválido: usa-se tal como está
+  }
+  return src
+}
+
 type ProductCardProps = {
   product: ProductWithPrice
   isSelected?: boolean
@@ -52,15 +69,26 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
     (url, index, all): url is string => !!url && all.indexOf(url) === index
   )
   const [photoIndex, setPhotoIndex] = useState(0)
+  // As fotos extra só são pedidas quando a pessoa mexe na galeria do cartão
+  // (toca/desliza ou carrega num pontinho). Antes todos os cartões
+  // descarregavam as 3 fotos extra logo ao aparecer no ecrã, mesmo sem
+  // ninguém as ver - era isso que tornava o catálogo tão lento.
+  const [extraPhotosOn, setExtraPhotosOn] = useState(false)
   const touchStartX = useRef<number | null>(null)
+  // A capa aparece sempre; as extra só depois de a pessoa mexer na galeria.
+  const visiblePhotos = photos
+    .map((rawSrc, index) => ({ rawSrc, index }))
+    .filter(({ index }) => index === 0 || extraPhotosOn)
 
   function selectPhoto(index: number, e: MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
+    setExtraPhotosOn(true)
     setPhotoIndex(index)
   }
 
   function handleTouchStart(e: TouchEvent) {
+    setExtraPhotosOn(true)
     touchStartX.current = e.touches[0].clientX
   }
 
@@ -121,9 +149,11 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
           </div>
         </div>
 
-        {photos.map((src, index) => (
+        {visiblePhotos.map(({ rawSrc, index }) => {
+          const src = index > 0 ? cardPhotoUrl(rawSrc) : rawSrc
+          return (
           <div
-            key={src}
+            key={rawSrc}
             aria-hidden={index === photoIndex ? undefined : true}
             className={`absolute inset-0 transition-opacity duration-300 ${
               index === photoIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -147,11 +177,13 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
             <img
               src={src}
               alt={index === photoIndex ? product.model_name : ''}
-              loading={index === 0 ? 'eager' : 'lazy'}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
           </div>
-        ))}
+          )
+        })}
 
         {/* Pontinhos (estilo Armani): só no mobile e só quando há mais de
             uma foto. */}

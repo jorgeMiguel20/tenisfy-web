@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { closeSearchModal, consumePendingImageFile, usePendingImageFile } from '@/lib/searchModal'
-import { getImageEmbedding } from '@/lib/imageEmbedding'
+import { getImageEmbedding, warmUpImageModel } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
   id: string
@@ -131,7 +131,7 @@ export default function HeaderSearchBar() {
         />
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => { warmUpImageModel(); fileInputRef.current?.click() }}
           disabled={imageLoading}
           aria-label="Pesquisar por foto"
           className="w-10 h-10 rounded-none bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center text-gray-700 shrink-0 disabled:opacity-50"

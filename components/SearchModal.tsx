@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { closeSearchModal, consumePendingImageFile, usePendingImageFile, useSearchModalOpen } from '@/lib/searchModal'
-import { getImageEmbedding } from '@/lib/imageEmbedding'
+import { getImageEmbedding, warmUpImageModel } from '@/lib/imageEmbedding'
 
 type ImageSearchResult = {
   id: string
@@ -149,7 +149,7 @@ export default function SearchModal() {
           <div className="h-6 w-px bg-gray-200 shrink-0" aria-hidden="true" />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => { warmUpImageModel(); fileInputRef.current?.click() }}
             disabled={imageLoading}
             aria-label="Pesquisar por foto"
             className="shrink-0 flex items-center justify-center h-9 w-9 rounded-full text-gray-500 hover:bg-gray-100 hover:text-[#123F3A] transition-colors disabled:opacity-50"
