@@ -10,6 +10,7 @@
 // Usado no catálogo (app/catalogo/page.tsx) e nas páginas de cada marca
 // (app/marcas/[slug]/page.tsx).
 import type { ProductWithPrice } from '@/lib/types'
+import { mainColor } from '@/lib/colors'
 
 export function slimForGrid(p: ProductWithPrice): ProductWithPrice {
   return {
@@ -21,6 +22,7 @@ export function slimForGrid(p: ProductWithPrice): ProductWithPrice {
     gender: p.gender,
     color: p.color,
     base_colors: p.base_colors,
+    main_color: mainColor(p.color),
     color_variant_group: null,
     image_urls: (p.image_urls ?? []).slice(0, 3),
     description: null,

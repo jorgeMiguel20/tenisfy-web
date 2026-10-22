@@ -50,6 +50,10 @@ export type ProductWithPrice = Product & {
   sizes: string[]
   savings?: SavingsResult
   priceDrop?: PriceDropResult
+  // Cor principal (a primeira cor que a loja indica), calculada em
+  // lib/slimForGrid.ts a partir do texto da cor. undefined = ainda não
+  // calculada (lib/productFilters.ts calcula nessa altura).
+  main_color?: string | null
   // Presente em tempo de execução (vem direto da query em
   // lib/getProductsWithPrice.ts) mas opcional no tipo - nem todos os sítios
   // que usam ProductWithPrice precisam do detalhe por oferta/loja.
