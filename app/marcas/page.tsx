@@ -8,6 +8,7 @@
 // Em cima fica a barra das letras A-Z, sempre visível ao descer a página
 // (as letras sem marcas ficam a cinzento claro). Por baixo, cada letra com
 // as suas marcas em colunas e o número de modelos de cada uma.
+// O cabeçalho não leva a contagem de marcas (pedido do Jorge, 2026-10-22).
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
