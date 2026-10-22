@@ -559,9 +559,16 @@ export function PriceFilterGroup({
 export default function ProductGrid({
   products,
   belowSearch,
+  heading,
+  hideBrandFilter = false,
 }: {
   products: ProductWithPrice[]
   belowSearch?: React.ReactNode
+  // Título próprio no topo (usado nas páginas de marca: nome da marca e
+  // total de ténis). Sem isto aparece "Catálogo" ou "Resultados para…".
+  heading?: React.ReactNode
+  // Esconde o filtro "Marca" (nas páginas de marca a marca já está escolhida).
+  hideBrandFilter?: boolean
 }) {
   const searchParams = useSearchParams()
 
@@ -1035,15 +1042,17 @@ export default function ProductGrid({
           </div>
         )}
 
-        <SidebarFilterGroup
-          label="Marca"
-          options={drawerFacets.brandOptions}
-          selected={brands}
-          onToggle={(v) => setBrands((prev) => toggleValue(prev, v))}
-          collapsible
-          defaultOpen={!isSidebar}
-          initialVisible={6}
-        />
+        {!hideBrandFilter && (
+          <SidebarFilterGroup
+            label="Marca"
+            options={drawerFacets.brandOptions}
+            selected={brands}
+            onToggle={(v) => setBrands((prev) => toggleValue(prev, v))}
+            collapsible
+            defaultOpen={!isSidebar}
+            initialVisible={6}
+          />
+        )}
         <SidebarFilterGroup
           label="Género"
           options={genderOptions}
@@ -1115,6 +1124,9 @@ export default function ProductGrid({
           passa a "Resultados para “...”" com o número de ténis encontrados
           (como na JD). É um h1 só - o mesmo markup do título de espera em
           app/catalogo/page.tsx, para a página não "saltar". */}
+      {heading ? (
+        heading
+      ) : (
       <div className="px-6">
         {search.trim() !== '' ? (
           <>
@@ -1132,6 +1144,7 @@ export default function ProductGrid({
           <h1 className="mt-2 mb-8 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] md:text-[44px]">Catálogo</h1>
         )}
       </div>
+      )}
 
       {belowSearch}
 
