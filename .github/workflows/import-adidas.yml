@@ -12,17 +12,19 @@
 #             "activate_new" ligado, os ténis com foto tratada e stock
 #             ficam visíveis no site
 #   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
+#   review  - não altera nada: lista os ténis escondidos e guarda uma folha
+#             com as fotos (endereço no fim do registo), para o Jorge ver
 name: Importar adidas
 
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'test, full ou photos'
+        description: 'test, full, photos ou review'
         required: true
         default: test
         type: choice
-        options: [test, full, photos]
+        options: [test, full, photos, review]
       limit:
         description: 'test: quantos ténis novos criar'
         required: false
