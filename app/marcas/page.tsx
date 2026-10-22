@@ -66,9 +66,6 @@ export default async function MarcasPage() {
   }
   const letters = [...(groups.has('#') ? ['#'] : []), ...ALPHABET.filter((l) => groups.has(l))]
 
-  const first = brands[0]?.name
-  const last = brands[brands.length - 1]?.name
-
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -96,7 +93,6 @@ export default async function MarcasPage() {
           Marcas de ténis
         </h1>
         <p className="mt-4 text-base leading-relaxed text-[#5C6770]">
-          {brands.length > 1 ? `${brands.length} marcas, de ${first} a ${last}. ` : ''}
           Escolhe a marca e compara o preço de cada modelo nas lojas portuguesas.
         </p>
       </header>
