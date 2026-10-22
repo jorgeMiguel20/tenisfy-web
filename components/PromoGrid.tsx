@@ -33,7 +33,11 @@ export type PromoItem = {
 }
 
 const H2 = 'font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B] sm:text-[28px]'
-const GRID = 'mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'
+// Grelha igual à do catálogo: sem espaços, linhas finas entre os cartões (cada
+// PromoCard 'grid' desenha as de baixo e da direita; a grelha as de cima e da
+// esquerda). 2 colunas no telemóvel, 3 no tablet, 4 no computador.
+const GRID =
+  'grid grid-cols-2 border-l border-t border-[#17232B]/10 sm:grid-cols-3 lg:grid-cols-4'
 
 export default function PromoGrid({ items }: { items: PromoItem[] }) {
   const products = useMemo(() => items.map((i) => i.product), [items])
@@ -135,7 +139,9 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
 
   return (
     <div>
-      <div className="mt-8 flex flex-wrap items-center gap-2 border-y border-[#17232B]/10 py-3">
+      {/* Barra de filtros fixa (como no catálogo): fica logo abaixo do cabeçalho
+          do site (top-20) ao fazer scroll da lista. */}
+      <div className="sticky top-20 z-30 mt-8 flex flex-wrap items-center gap-2 border-y border-[#17232B]/10 bg-white/95 py-3 backdrop-blur-sm">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
@@ -165,7 +171,7 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
             Limpar tudo
           </button>
         )}
-        <p className="ml-auto hidden text-sm text-[#5C6770] sm:block">
+        <p className="ml-auto text-sm text-[#5C6770]">
           {total} produto{total !== 1 ? 's' : ''}
         </p>
       </div>
@@ -183,7 +189,7 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
         // Sem título nem frase própria (pedido de marketing): a frase do
         // topo da página já explica esta lista, e cada cartão diz em que
         // loja está e qual o preço na loja oficial.
-        <section className="mt-10">
+        <section>
           <div className={GRID}>
             {below.map((item) => (
               <PromoCard
@@ -195,6 +201,7 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
                 price={item.price}
                 referencePrice={item.referencePrice}
                 note={item.note}
+                variant="grid"
               />
             ))}
           </div>
@@ -202,9 +209,9 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
       )}
 
       {drops.length > 0 && (
-        <section className={`mt-12 pt-10 ${below.length > 0 ? 'border-t border-[#17232B]/10' : ''}`}>
-          <h2 className={H2}>Desceram nos últimos 14 dias</h2>
-          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#5C6770]">
+        <section className={below.length > 0 ? 'pt-12' : ''}>
+          <h2 className={`${H2} ${below.length > 0 ? '' : 'mt-10'}`}>Desceram nos últimos 14 dias</h2>
+          <p className="mt-2 mb-6 max-w-xl text-[15px] leading-relaxed text-[#5C6770]">
             O melhor preço de hoje, comparado com o melhor preço registado há até 14 dias.
           </p>
           <div className={GRID}>
@@ -218,6 +225,7 @@ export default function PromoGrid({ items }: { items: PromoItem[] }) {
                 price={item.price}
                 referencePrice={item.referencePrice}
                 note={item.note}
+                variant="grid"
               />
             ))}
           </div>
