@@ -14,7 +14,8 @@
 // catálogo e os alertas de preço - nunca fica em branco.
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import PromoCard from '@/components/PromoCard'
+import PromoGrid, { type PromoItem } from '@/components/PromoGrid'
+import { slimForGrid } from '@/lib/slimForGrid'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 import { formatPrice } from '@/lib/formatPrice'
 import { formatDay } from '@/lib/formatDay'
@@ -30,7 +31,6 @@ export const metadata: Metadata = {
 
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
 const H2 = 'font-display text-2xl font-bold tracking-[-0.01em] text-[#17232B] sm:text-[28px]'
-const GRID = 'mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'
 
 export default async function PromocoesPage() {
   // Só os ténis escolhidos à mão (como até agora) - os importados das lojas
@@ -50,6 +50,33 @@ export default async function PromocoesPage() {
         .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
 
   const nothing = belowOfficial.length === 0 && recentDrops.length === 0
+
+  // Os dados de cada cartão (preço, preço de referência e a frase que explica
+  // a poupança) ficam prontos aqui; os filtros e o desenho das listas estão
+  // em components/PromoGrid.tsx.
+  const items: PromoItem[] = [
+    ...belowOfficial.map((p): PromoItem => {
+      const s = p.savings!
+      return {
+        product: slimForGrid(p),
+        section: 'below',
+        price: Math.round((s.officialPrice - s.amount) * 100) / 100,
+        referencePrice: s.officialPrice,
+        note: `Na ${s.store} · ${formatPrice(s.officialPrice)} na ${s.officialStore}`,
+      }
+    }),
+    ...recentDrops.map((p): PromoItem => {
+      const d = p.priceDrop!
+      const price = p.lowest_price!
+      return {
+        product: slimForGrid(p),
+        section: 'drops',
+        price,
+        referencePrice: Math.round((price + d.amount) * 100) / 100,
+        note: `Desceu ${formatPrice(d.amount)} desde ${formatDay(d.sinceDate)}`,
+      }
+    }),
+  ]
 
   return (
     <main className="mx-auto max-w-7xl px-6 pb-20 pt-10">
@@ -92,57 +119,7 @@ export default async function PromocoesPage() {
         </section>
       )}
 
-      {belowOfficial.length > 0 && (
-        // Sem título nem frase própria (pedido de marketing): a frase do
-        // topo da página já explica esta lista, e cada cartão diz em que
-        // loja está e qual o preço na loja oficial.
-        <section className="mt-10">
-          <div className={GRID}>
-            {belowOfficial.map((p) => {
-              const s = p.savings!
-              return (
-                <PromoCard
-                  key={p.id}
-                  slug={p.slug}
-                  imageUrl={p.image_url}
-                  brandName={p.brands?.name}
-                  modelName={p.model_name}
-                  price={Math.round((s.officialPrice - s.amount) * 100) / 100}
-                  referencePrice={s.officialPrice}
-                  note={`Na ${s.store} · ${formatPrice(s.officialPrice)} na ${s.officialStore}`}
-                />
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {recentDrops.length > 0 && (
-        <section className="mt-12 border-t border-[#17232B]/10 pt-10">
-          <h2 className={H2}>Desceram nos últimos 14 dias</h2>
-          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[#5C6770]">
-            O melhor preço de hoje, comparado com o melhor preço registado há até 14 dias.
-          </p>
-          <div className={GRID}>
-            {recentDrops.map((p) => {
-              const d = p.priceDrop!
-              const price = p.lowest_price!
-              return (
-                <PromoCard
-                  key={p.id}
-                  slug={p.slug}
-                  imageUrl={p.image_url}
-                  brandName={p.brands?.name}
-                  modelName={p.model_name}
-                  price={price}
-                  referencePrice={Math.round((price + d.amount) * 100) / 100}
-                  note={`Desceu ${formatPrice(d.amount)} desde ${formatDay(d.sinceDate)}`}
-                />
-              )
-            })}
-          </div>
-        </section>
-      )}
+      {!error && !nothing && <PromoGrid items={items} />}
     </main>
   )
 }
