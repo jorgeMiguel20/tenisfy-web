@@ -27,7 +27,9 @@
 //
 // Modos (variável MODE): test (até LIMIT ténis novos ESCONDIDOS, variados),
 // full (tudo; com ACTIVATE_NEW=true ficam visíveis os que têm foto tratada e
-// stock) e photos (só as fotos). Resumo de cada execução: tabela import_runs.
+// stock), photos (só as fotos) e review (não altera nada: lista os ténis
+// escondidos da adidas e guarda uma folha com as fotos para o Jorge ver, em
+// product-photos/_review/). Resumo de cada execução: tabela import_runs.
 import { processAndUpload } from './feed-photos.mjs'
 import { streamCsvRows } from './awin-csv.mjs'
 
@@ -42,10 +44,10 @@ const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 4000)
 const SOURCE = 'adidas'
 const PHOTO_HOST = 'https://assets.adidas.com'
 
-for (const [v, n] of [[SUPABASE_URL, 'SUPABASE_URL'], [SUPABASE_KEY, 'SUPABASE_SERVICE_ROLE_KEY'], [MODE === 'photos' ? 'x' : AWIN_KEY, 'AWIN_API_KEY']]) {
+for (const [v, n] of [[SUPABASE_URL, 'SUPABASE_URL'], [SUPABASE_KEY, 'SUPABASE_SERVICE_ROLE_KEY'], [MODE === 'photos' || MODE === 'review' ? 'x' : AWIN_KEY, 'AWIN_API_KEY']]) {
   if (!v) { console.error(`Falta a variável ${n}`); process.exit(1) }
 }
-if (!['test', 'full', 'photos'].includes(MODE)) { console.error(`Modo desconhecido: ${MODE}`); process.exit(1) }
+if (!['test', 'full', 'photos', 'review'].includes(MODE)) { console.error(`Modo desconhecido: ${MODE}`); process.exit(1) }
 
 // ---------------------------------------------------------------- Supabase
 const H = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
@@ -228,6 +230,54 @@ async function openFeed() {
     await sleep(30_000)
   }
   throw new Error('Não consegui descarregar o ficheiro da Awin')
+}
+
+
+// ------------------------------------------------------------------ Revisão
+// Modo "review": não altera nada. Escreve no registo a lista dos ténis da
+// adidas que ainda estão escondidos e guarda uma folha com as fotos
+// (5 por linha, com nome, cor, género, categoria e preço) em
+// product-photos/_review/, para ver no browser.
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+async function reviewSheet() {
+  const { default: sharp } = await import('sharp')
+  const rows = await sb(`products?source=eq.${SOURCE}&is_active=eq.false&select=id,slug,model_name,color,category,gender,image_url,product_offers(price,size,in_stock)&order=created_at.desc&limit=60`)
+  const items = rows.map((p) => {
+    const prices = (p.product_offers ?? []).map((o) => Number(o.price))
+    return { ...p, from: prices.length ? Math.min(...prices) : null, sizes: (p.product_offers ?? []).length }
+  })
+  console.log(`Ténis escondidos da adidas: ${items.length}`)
+  for (const p of items) console.log(`REVISAO | ${p.slug} | ${p.model_name} | ${p.color} | ${p.gender} | ${p.category} | desde ${p.from} € | ${p.sizes} tamanhos`)
+  const COLS = 5, W = 260, IMG = 200, H = 290
+  const rowsN = Math.ceil(items.length / COLS)
+  const layers = []
+  for (let i = 0; i < items.length; i++) {
+    const p = items[i]
+    const x = (i % COLS) * W
+    const y = Math.floor(i / COLS) * H
+    try {
+      const res = await fetch(p.image_url)
+      const img = await sharp(Buffer.from(await res.arrayBuffer())).resize(W - 8, IMG, { fit: 'contain', background: '#F9FAFB' }).flatten({ background: '#F9FAFB' }).png().toBuffer()
+      layers.push({ input: img, left: x + 4, top: y + 4 })
+    } catch (e) { console.log(`sem foto tratada: ${p.slug}`) }
+    const lines = [
+      [`${p.model_name}`.slice(0, 30), 15, 700],
+      [`${p.color || ''} · ${p.gender}`.slice(0, 34), 12, 400],
+      [`${p.category} · desde ${p.from} € · ${p.sizes} tam.`.slice(0, 38), 12, 400],
+    ]
+    const text = lines.map(([t, size, weight], k) => `<text x="10" y="${28 + k * 20}" font-family="DejaVu Sans, Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="#17232B">${esc(t)}</text>`).join('')
+    layers.push({ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H - IMG - 8}">${text}</svg>`), left: x, top: y + IMG + 8 })
+  }
+  const sheet = await sharp({ create: { width: COLS * W, height: Math.max(1, rowsN) * H, channels: 3, background: '#FFFFFF' } }).composite(layers).webp({ quality: 82 }).toBuffer()
+  const path = `_review/adidas-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.webp`
+  const { uploadPhoto } = await import('./feed-photos.mjs')
+  console.log(`FOLHA ${await uploadPhoto({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, path, buffer: sheet })}`)
+}
+
+if (MODE === 'review') {
+  try { await reviewSheet() } catch (e) { console.error(String(e?.stack || e)); process.exitCode = 1 }
+  process.exit(process.exitCode || 0)
 }
 
 // ------------------------------------------------------------------ Main
