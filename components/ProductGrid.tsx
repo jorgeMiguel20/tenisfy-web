@@ -10,8 +10,18 @@ import FilterDrawer from './FilterDrawer'
 import type { ProductWithPrice } from '@/lib/types'
 import { GENDER_GROUPS, GENDER_GROUP_VALUES, type GenderGroupValue } from '@/lib/genderGroups'
 import { useCompare } from '@/lib/compare'
-import { searchProducts } from '@/lib/searchProducts'
 import { compareSizes } from '@/lib/sizeSort'
+import { COLOR_SWATCHES } from '@/lib/colors'
+import {
+  GENDER_LABELS,
+  applyAttributeFilters,
+  buildBrandOptions,
+  buildColorOptions,
+  capitalize,
+  priceBoundsFromProducts,
+  toggleValue,
+  type FilterOption,
+} from '@/lib/productFilters'
 
 // A pesquisa por foto deixou de estar aqui - passou para o modal unificado
 // aberto pela lupa do cabeçalho (ver components/SearchModal.tsx), por isso
@@ -33,28 +43,6 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'price-desc', label: 'Preço maior' },
 ]
 
-const GENDER_LABELS: Record<GenderGroupValue, string> = {
-  homem: 'Homem',
-  mulher: 'Mulher',
-  crianca: 'Criança',
-}
-
-const COLOR_ORDER = ['Preto', 'Branco', 'Cinzento', 'Azul', 'Vermelho', 'Verde', 'Amarelo', 'Bege', 'Multicolor']
-
-// Amostra de cor ao lado do nome, no filtro "Cor" (como na Nike). Só as
-// cores de COLOR_ORDER; uma cor sem amostra aparece só com o nome.
-const COLOR_SWATCHES: Record<string, string> = {
-  Preto: '#17232B',
-  Branco: '#FFFFFF',
-  Cinzento: '#9AA3AB',
-  Azul: '#2F5DA8',
-  Vermelho: '#C8322F',
-  Verde: '#2F7A55',
-  Amarelo: '#E8C547',
-  Bege: '#D9C7A7',
-  Multicolor: 'conic-gradient(#C8322F, #E0A33A, #2F7A55, #2F5DA8, #7A4FA0, #C8322F)',
-}
-
 // Rótulo dos grupos de filtros - o mesmo estilo de rótulo do resto do site
 // (11px, maiúsculas, peso 500, espaçamento 0.08em, cinzento #5C6770).
 const FILTER_LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
@@ -63,68 +51,13 @@ const FILTER_LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[
 // cada grupo (a última fica sem linha, encostada ao rodapé do painel).
 const DRAWER_GROUP = 'border-b border-[#17232B]/10 py-5 last:border-b-0'
 
-function capitalize(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function toggleValue(list: string[], value: string) {
-  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
-}
-
-type AttributeFilters = {
-  brands: string[]
-  genders: string[]
-  categories: string[]
-  sizes: string[]
-  colors: string[]
-  search: string
-}
-
-// Aplica todos os filtros exceto o de preço. Usada tanto para calcular a
-// grelha final (+ filtro de preço) como para calcular os limites (mín/máx)
-// do slider de preço a partir do mesmo conjunto de produtos "sobreviventes".
-function applyAttributeFilters(products: ProductWithPrice[], filters: AttributeFilters) {
-  let result = products
-  if (filters.brands.length > 0) {
-    result = result.filter((p) => p.brands?.name && filters.brands.includes(p.brands.name))
-  }
-  if (filters.genders.length > 0) {
-    result = result.filter(
-      (p) =>
-        p.gender &&
-        filters.genders.some((v) => GENDER_GROUPS[v as GenderGroupValue]?.includes(p.gender!))
-    )
-  }
-  if (filters.categories.length > 0) {
-    result = result.filter((p) => p.category && filters.categories.includes(p.category))
-  }
-  if (filters.sizes.length > 0) {
-    result = result.filter((p) => p.sizes.some((s) => filters.sizes.includes(s)))
-  }
-  if (filters.colors.length > 0) {
-    result = result.filter((p) => p.base_colors?.some((c) => filters.colors.includes(c)))
-  }
-  if (filters.search.trim() !== '') {
-    result = searchProducts(result, filters.search)
-  }
-  return result
-}
-
-function priceBoundsFromProducts(products: ProductWithPrice[]) {
-  const prices = products
-    .map((p) => p.lowest_price)
-    .filter((p): p is number => p !== null && p !== undefined)
-  if (prices.length === 0) return { min: 0, max: 0 }
-  return { min: Math.floor(Math.min(...prices)), max: Math.ceil(Math.max(...prices)) }
-}
-
 function sidebarItemClass(active: boolean) {
   return `flex min-h-[44px] items-center gap-2.5 px-3 rounded-none text-sm font-medium text-left transition-colors ${
     active ? 'bg-[#123F3A] text-white' : 'text-[#5C6770] hover:bg-[#F9FBFC] hover:text-[#17232B]'
   }`
 }
 
-function FilterIcon({ className }: { className?: string }) {
+export function FilterIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
@@ -188,7 +121,7 @@ function DesktopGridViewToggle({
   )
 }
 
-type PillOption = { value: string; display: string }
+type PillOption = FilterOption
 
 function Checkbox({ active }: { active: boolean }) {
   return (
@@ -222,20 +155,25 @@ function RadioDot({ active }: { active: boolean }) {
 }
 
 // Grupo de filtro de seleção múltipla (Marca, Género, Categoria, Tamanho, Cor).
-// Quando collapsible=true (sidebar), começa fechado e é preciso clicar no
-// título para ver as opções. Quando collapsible=false (drawer), está sempre aberto.
+// Quando collapsible=true começa fechado (ou aberto, com defaultOpen) e é
+// preciso clicar no título para ver/esconder as opções; mostra ao lado do
+// título quantas opções estão escolhidas.
 //
 // variant:
-// - "list" (Marca, Género, Categoria): uma linha por opção, com quadrado.
+// - "list" (Marca, Género, Categoria): uma linha por opção, com quadrado e
+//   sem rectângulo à volta. Com initialVisible, só se veem as primeiras N
+//   (mais as escolhidas) e um "Mostrar mais" abre a lista toda.
 // - "sizes" (Tamanho): grelha de caixas, 4 por linha, como na Nike e na
 //   BSTN - pedido do Jorge; a lista de uma coluna obrigava a descer muito.
 // - "colors" (Cor): caixas de 2 por linha, com a amostra da cor.
-function SidebarFilterGroup({
+export function SidebarFilterGroup({
   label,
   options,
   selected,
   onToggle,
   collapsible = false,
+  defaultOpen = false,
+  initialVisible,
   variant = 'list',
 }: {
   label: string
@@ -243,26 +181,43 @@ function SidebarFilterGroup({
   selected: string[]
   onToggle: (value: string) => void
   collapsible?: boolean
+  defaultOpen?: boolean
+  initialVisible?: number
   variant?: 'list' | 'sizes' | 'colors'
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
+  const [expanded, setExpanded] = useState(false)
 
   if (options.length === 0) return null
 
   const showOptions = !collapsible || open
   // "2 selecionados" ao lado do título, para se ver o que está escolhido
-  // sem ter de percorrer as opções todas.
+  // sem ter de abrir o grupo.
   const selectedCount = options.filter((o) => selected.includes(o.value)).length
 
+  const limited = variant === 'list' && initialVisible !== undefined && options.length > initialVisible
+  const listOptions =
+    limited && !expanded
+      ? options.filter((o, index) => index < initialVisible! || selected.includes(o.value))
+      : options
+
   return (
-    <div className={collapsible ? 'mb-4 border-b border-[#17232B]/10 pb-4' : DRAWER_GROUP}>
+    <div className={collapsible ? 'border-b border-[#17232B]/10 py-4' : DRAWER_GROUP}>
       {collapsible ? (
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="w-full flex items-center justify-between mb-2"
+          aria-expanded={open}
+          className={`flex w-full items-center justify-between ${showOptions ? 'mb-3' : ''}`}
         >
-          <p className={FILTER_LABEL}>{label}</p>
+          <span className="flex items-baseline gap-2">
+            <span className={FILTER_LABEL}>{label}</span>
+            {selectedCount > 0 && (
+              <span className="text-[11px] font-medium tracking-[0.08em] text-[#123F3A]">
+                {selectedCount} selecionado{selectedCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </span>
           <svg
             className={`h-3.5 w-3.5 text-[#5C6770] transition-transform ${open ? 'rotate-180' : ''}`}
             viewBox="0 0 24 24"
@@ -337,6 +292,11 @@ function SidebarFilterGroup({
                   />
                 )}
                 <span>{option.display}</span>
+                {option.count !== undefined && (
+                  <span className={`text-xs tabular-nums ${active ? 'text-white/70' : 'text-[#8A949C]'}`}>
+                    ({option.count})
+                  </span>
+                )}
               </button>
             )
           })}
@@ -344,26 +304,53 @@ function SidebarFilterGroup({
       )}
 
       {showOptions && variant === 'list' && (
-        // -mx-3: as linhas têm px-3 (para o fundo verde da opção ativa não
-        // encostar ao texto), e assim o quadrado fica alinhado com o título.
-        <div className="-mx-3 flex flex-col gap-0.5">
-          {options.map((option) => {
-            const active = selected.includes(option.value)
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="checkbox"
-                aria-checked={active}
-                onClick={() => onToggle(option.value)}
-                className={sidebarItemClass(active)}
+        <>
+          {/* -mx-3: as linhas têm px-3 (para o fundo verde da opção ativa não
+              encostar ao texto), e assim o quadrado fica alinhado com o título.
+              Com a lista toda aberta (muitas marcas), ganha scroll próprio. */}
+          <div
+            className={`-mx-3 flex flex-col gap-0.5 ${
+              limited && expanded ? 'max-h-[360px] overflow-y-auto overscroll-contain' : ''
+            }`}
+          >
+            {listOptions.map((option) => {
+              const active = selected.includes(option.value)
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={active}
+                  onClick={() => onToggle(option.value)}
+                  className={sidebarItemClass(active)}
+                >
+                  <Checkbox active={active} />
+                  <span>{option.display}</span>
+                  {option.count !== undefined && (
+                    <span className={`text-xs font-normal tabular-nums ${active ? 'text-white/70' : 'text-[#8A949C]'}`}>
+                      ({option.count})
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {limited && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="mt-3 inline-flex min-h-[36px] items-center gap-2 font-mono text-sm text-[#17232B] underline underline-offset-4"
+            >
+              {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#17232B] text-[15px] leading-none no-underline"
               >
-                <Checkbox active={active} />
-                <span>{option.display}</span>
-              </button>
-            )
-          })}
-        </div>
+                {expanded ? '−' : '+'}
+              </span>
+            </button>
+          )}
+        </>
       )}
     </div>
   )
@@ -515,7 +502,7 @@ function PriceRangeSlider({
 // Mesma "casca" colapsável do SidebarFilterGroup, mas para o slider de preço
 // em vez de uma lista de checkboxes. Some se não houver variação de preço
 // (0 ou 1 produtos no conjunto atual) já que não haveria nada para filtrar.
-function PriceFilterGroup({
+export function PriceFilterGroup({
   label,
   min,
   max,
@@ -539,12 +526,13 @@ function PriceFilterGroup({
   const showOptions = !collapsible || open
 
   return (
-    <div className={collapsible ? 'mb-4 border-b border-[#17232B]/10 pb-4' : DRAWER_GROUP}>
+    <div className={collapsible ? 'border-b border-[#17232B]/10 py-4' : DRAWER_GROUP}>
       {collapsible ? (
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="w-full flex items-center justify-between mb-2"
+          aria-expanded={open}
+          className={`flex w-full items-center justify-between ${showOptions ? 'mb-3' : ''}`}
         >
           <p className={FILTER_LABEL}>{label}</p>
           <svg
@@ -756,13 +744,6 @@ export default function ProductGrid({
     setCompareLimitWarning(!ok)
   }
 
-  const brandOptions = useMemo(() => {
-    const uniqueBrands = Array.from(
-      new Set(products.map((p) => p.brands?.name).filter(Boolean))
-    ) as string[]
-    return uniqueBrands.map((name) => ({ value: name, display: name }))
-  }, [products])
-
   const genderOptions = useMemo(() => {
     return GENDER_GROUP_VALUES.filter((value) =>
       products.some((p) => p.gender && GENDER_GROUPS[value].includes(p.gender))
@@ -779,10 +760,23 @@ export default function ProductGrid({
     return unique.sort(compareSizes).map((s) => ({ value: s, display: s }))
   }, [products])
 
-  const colorOptions = useMemo(() => {
-    const present = new Set(products.flatMap((p) => p.base_colors ?? []))
-    return COLOR_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c, display: c }))
-  }, [products])
+  // Marcas (A–Z) e cores do painel, cada uma com o nº de ténis que sobram dos
+  // outros filtros ainda por aplicar. Só se calcula com o painel aberto.
+  const drawerFacets = useMemo(() => {
+    if (!drawerOpen) return { brandOptions: [] as FilterOption[], colorOptions: [] as FilterOption[] }
+    const filters = {
+      brands: draftBrands,
+      genders: draftGenders,
+      categories: draftCategories,
+      sizes: draftSizes,
+      colors: draftColors,
+      search,
+    }
+    return {
+      brandOptions: buildBrandOptions(products, filters),
+      colorOptions: buildColorOptions(products, filters),
+    }
+  }, [drawerOpen, products, draftBrands, draftGenders, draftCategories, draftSizes, draftColors, search])
 
   const filteredProducts = useMemo(() => {
     let result = applyAttributeFilters(products, {
@@ -993,8 +987,8 @@ export default function ProductGrid({
     setDraftPriceRange(null)
   }
 
-  // mode "sidebar": recolhível, aplica em tempo real.
-  // mode "drawer": sempre aberto, opera sobre o estado rascunho (só aplica ao clicar em "Aplicar filtros").
+  // Todos os grupos são recolhíveis (Marca abre aberto no painel). O modo
+  // "drawer" opera sobre o estado rascunho (só aplica ao clicar em "Ver N produtos").
   function renderFilterGroups(mode: 'sidebar' | 'drawer') {
     const isSidebar = mode === 'sidebar'
     const brands = isSidebar ? selectedBrands : draftBrands
@@ -1043,39 +1037,41 @@ export default function ProductGrid({
 
         <SidebarFilterGroup
           label="Marca"
-          options={brandOptions}
+          options={drawerFacets.brandOptions}
           selected={brands}
           onToggle={(v) => setBrands((prev) => toggleValue(prev, v))}
-          collapsible={isSidebar}
+          collapsible
+          defaultOpen={!isSidebar}
+          initialVisible={6}
         />
         <SidebarFilterGroup
           label="Género"
           options={genderOptions}
           selected={genders}
           onToggle={(v) => setGenders((prev) => toggleValue(prev, v))}
-          collapsible={isSidebar}
+          collapsible
         />
         <SidebarFilterGroup
           label="Categoria"
           options={categoryOptions}
           selected={categories}
           onToggle={(v) => setCategories((prev) => toggleValue(prev, v))}
-          collapsible={isSidebar}
+          collapsible
         />
         <SidebarFilterGroup
           label="Tamanho"
           options={sizeOptions}
           selected={sizes}
           onToggle={(v) => setSizes((prev) => toggleValue(prev, v))}
-          collapsible={isSidebar}
+          collapsible
           variant="sizes"
         />
         <SidebarFilterGroup
           label="Cor"
-          options={colorOptions}
+          options={drawerFacets.colorOptions}
           selected={colors}
           onToggle={(v) => setColors((prev) => toggleValue(prev, v))}
-          collapsible={isSidebar}
+          collapsible
           variant="colors"
         />
         <PriceFilterGroup
@@ -1084,7 +1080,7 @@ export default function ProductGrid({
           max={priceBounds.max}
           value={priceRange}
           onChange={setPriceRange}
-          collapsible={isSidebar}
+          collapsible
           idPrefix={mode}
         />
       </>
