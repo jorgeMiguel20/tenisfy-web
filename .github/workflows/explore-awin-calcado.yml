@@ -1,0 +1,22 @@
+name: Explorar calçado Awin
+
+on:
+  workflow_dispatch:
+    inputs:
+      feed_id:
+        description: 'Número do ficheiro de produtos da Awin'
+        default: '92150'
+
+jobs:
+  explorar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Explorar o calçado
+        env:
+          AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
+          AWIN_FEED_ID: ${{ inputs.feed_id }}
+        run: node scripts/explore-awin-calcado.mjs
