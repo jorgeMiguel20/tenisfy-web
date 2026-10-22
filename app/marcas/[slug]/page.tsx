@@ -1,21 +1,21 @@
 // app/marcas/[slug]/page.tsx
 //
-// Página de cada marca (ex.: /marcas/nike) - feita para o Google: título e
-// texto próprios para pesquisas como "ténis Nike preço", com a lista de
-// ténis dessa marca e o preço mais baixo de cada um. Dados sempre reais
-// (os mesmos do catálogo), nunca inventados.
-import { cache } from 'react'
+// Página de cada marca (ex.: /marcas/nike): só o nome da marca, o total de
+// ténis e os filtros do catálogo (sem o filtro "Marca", que já está
+// escolhida). O título e a descrição para o Google continuam próprios
+// ("Ténis Nike: compara preços em Portugal"). Dados sempre reais (os mesmos
+// do catálogo), nunca inventados.
+import { Suspense, cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import BrandProductGrid from '@/components/BrandProductGrid'
+import ProductGrid from '@/components/ProductGrid'
 import BackToTopButton from '@/components/BackToTopButton'
 import { supabase } from '@/lib/supabase'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
 import { slimForGrid } from '@/lib/slimForGrid'
 import { formatPrice } from '@/lib/formatPrice'
 import { SITE_URL } from '@/lib/siteUrl'
-import { getBrandIntro, BRAND_PAGE_FOOTNOTE } from '@/lib/brandContent'
 
 export const revalidate = 3600 // ISR: 1 hora, como o resto do catálogo
 
@@ -53,13 +53,9 @@ const getBrandPageData = cache(async function getBrandPageData(slug: string) {
   const prices = brandProducts.map((p) => p.lowest_price).filter((price): price is number => price != null)
   const lowestPrice = prices.length > 0 ? Math.min(...prices) : null
 
-  const storeCount = new Set(
-    brandProducts.flatMap((p) => (p.product_offers ?? []).filter((o) => o.in_stock).map((o) => o.store_id))
-  ).size
-
   // Para o browser só seguem os campos que os cartões usam (ver
   // lib/slimForGrid.ts) - sem isto a página da adidas passava dos 20 MB.
-  return { brand: brand as Brand, products: brandProducts.map(slimForGrid), lowestPrice, storeCount }
+  return { brand: brand as Brand, products: brandProducts.map(slimForGrid), lowestPrice }
 })
 
 export async function generateMetadata({
@@ -91,14 +87,12 @@ export async function generateMetadata({
   }
 }
 
-const LABEL = 'text-[11px] font-medium uppercase tracking-[0.08em] text-[#5C6770]'
-
 export default async function MarcaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const data = await getBrandPageData(slug)
   if (!data) notFound()
 
-  const { brand, products, lowestPrice, storeCount } = data
+  const { brand, products } = data
   const pageUrl = `${SITE_URL}/marcas/${brand.slug}`
 
   // Dados estruturados para o Google: percurso (Parjusto > Marcas > Nike)
@@ -127,54 +121,53 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
     },
   ]
 
+  // Cabeçalho: percurso, nome da marca e total de ténis. É também o que se
+  // vê enquanto a grelha carrega (Suspense), por isso a página não "salta".
+  const heading = (
+    <div className="px-6">
+      <nav className="text-[13px] text-[#5C6770]">
+        <Link href="/" className="transition-colors hover:text-[#17232B]">
+          Parjusto
+        </Link>
+        <span className="mx-1.5">/</span>
+        <Link href="/marcas" className="transition-colors hover:text-[#17232B]">
+          Marcas
+        </Link>
+        <span className="mx-1.5">/</span>
+        <span className="text-[#17232B]">{brand.name}</span>
+      </nav>
+
+      <h1 className="mt-6 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] sm:text-[44px]">
+        {brand.name}
+      </h1>
+      <p className="mb-8 mt-3 text-sm text-[#5C6770]">
+        {products.length} ténis
+      </p>
+    </div>
+  )
+
   return (
     <main className="w-full pb-20 pt-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="px-6">
-        <nav className="text-[13px] text-[#5C6770]">
-          <Link href="/" className="transition-colors hover:text-[#17232B]">
-            Parjusto
-          </Link>
-          <span className="mx-1.5">/</span>
-          <Link href="/marcas" className="transition-colors hover:text-[#17232B]">
-            Marcas
-          </Link>
-          <span className="mx-1.5">/</span>
-          <span className="text-[#17232B]">{brand.name}</span>
-        </nav>
-
-        <header className="mt-6 max-w-2xl">
-          <p className={LABEL}>Marca</p>
-          <h1 className="mt-2 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.02em] text-[#17232B] sm:text-[44px]">
-            Ténis {brand.name}
-          </h1>
-          <p className="mt-4 text-base leading-relaxed text-[#5C6770]">{getBrandIntro(brand.slug, brand.name)}</p>
-          {products.length > 0 && (
-            <p className="mt-4 text-sm text-[#17232B]">
-              {products.length} modelo{products.length !== 1 ? 's' : ''}
-              {lowestPrice ? ` · desde ${formatPrice(lowestPrice)}` : ''}
-              {storeCount > 0 ? ` · em ${storeCount} loja${storeCount !== 1 ? 's' : ''}` : ''}
-            </p>
-          )}
-        </header>
-      </div>
-
       {products.length === 0 ? (
-        <div className="mt-10 px-6">
-          <p className="text-[#5C6770]">Neste momento não temos ténis {brand.name} no catálogo.</p>
-          <Link
-            href="/catalogo"
-            className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-none bg-[#17232B] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#17232B]/85"
-          >
-            Ver o catálogo
-          </Link>
-        </div>
+        <>
+          {heading}
+          <div className="mt-10 px-6">
+            <p className="text-[#5C6770]">Neste momento não temos ténis {brand.name} no catálogo.</p>
+            <Link
+              href="/catalogo"
+              className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-none bg-[#17232B] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#17232B]/85"
+            >
+              Ver o catálogo
+            </Link>
+          </div>
+        </>
       ) : (
-        <BrandProductGrid products={products} />
+        <Suspense fallback={heading}>
+          <ProductGrid products={products} heading={heading} hideBrandFilter />
+        </Suspense>
       )}
-
-      <p className="mt-10 max-w-2xl px-6 text-sm leading-relaxed text-[#5C6770]">{BRAND_PAGE_FOOTNOTE}</p>
 
       <BackToTopButton />
     </main>
