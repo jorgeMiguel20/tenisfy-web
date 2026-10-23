@@ -22,8 +22,12 @@
 //   5. Trata a foto principal (fundo igual ao do Parjusto, ténis inteiro -
 //      ver feed-photos.mjs). Um ténis só fica visível no site depois disso.
 //
-// Os endereços de compra são os da própria adidas (merchant_deep_link). Só
-// depois de o Jorge aprovar é que passam a ser os de afiliado.
+// Os endereços de compra guardados são sempre os da própria adidas
+// (merchant_deep_link). Os links de afiliado ligam-se de uma só vez, no
+// "template" da loja (stores.affiliate_url_template; o site junta-o ao link
+// na hora de mostrar o botão "Ver oferta", ver lib/offerUrl.ts): assim
+// vale também para os ténis criados à mão e desliga-se com uma só alteração.
+// Variável AFFILIATE_LINKS: "on" liga, "off" desliga, vazia não mexe.
 //
 // Modos (variável MODE): test (até LIMIT ténis novos ESCONDIDOS, variados),
 // full (tudo; com ACTIVATE_NEW=true ficam visíveis os que têm foto tratada e
@@ -43,6 +47,9 @@ const ACTIVATE_NEW = process.env.ACTIVATE_NEW === 'true'
 const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 4000)
 const SOURCE = 'adidas'
 const PHOTO_HOST = 'https://assets.adidas.com'
+// Link de afiliado da Awin (programa da adidas PT, conta Parjusto.pt); {url}
+// é o endereço da adidas, que o site codifica.
+const AFFILIATE_TEMPLATE = 'https://www.awin1.com/cread.php?awinmid=77026&awinaffid=3107069&ued={url}'
 
 for (const [v, n] of [[SUPABASE_URL, 'SUPABASE_URL'], [SUPABASE_KEY, 'SUPABASE_SERVICE_ROLE_KEY'], [MODE === 'photos' || MODE === 'review' ? 'x' : AWIN_KEY, 'AWIN_API_KEY']]) {
   if (!v) { console.error(`Falta a variável ${n}`); process.exit(1) }
@@ -296,6 +303,11 @@ try {
     console.log('Loja adidas criada')
   }
   console.log(`Loja: ${store.name} (${store.slug})`)
+  if (process.env.AFFILIATE_LINKS === 'on' || process.env.AFFILIATE_LINKS === 'off') {
+    const template = process.env.AFFILIATE_LINKS === 'on' ? AFFILIATE_TEMPLATE : null
+    await sb(`stores?id=eq.${store.id}`, { method: 'PATCH', body: { affiliate_url_template: template }, prefer: 'return=minimal' })
+    console.log(`Links de afiliado da adidas: ${template ? 'LIGADOS' : 'desligados'}`)
+  }
   const brands = await sbAll('brands?select=id,slug,name')
   const brandBySlug = new Map(brands.map((b) => [b.slug, b]))
   const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active&order=id')
