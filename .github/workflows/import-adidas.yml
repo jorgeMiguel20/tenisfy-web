@@ -1,10 +1,13 @@
 # .github/workflows/import-adidas.yml
 #
 # Importação do calçado da adidas PT (ficheiro de produtos da Awin, feed
-# 92150). Por agora corre SÓ à mão em "Run workflow" no separador Actions do
-# GitHub (primeiro um lote de teste escondido, para o Jorge rever). Depois de
-# aprovado, acrescenta-se o horário diário (schedule), como nas outras lojas.
-# As chaves vêm dos "secrets" do repositório - nunca ficam escritas aqui.
+# 92150). Corre sozinho todos os dias às 06:43 (hora UTC), nos servidores do
+# GitHub (não precisa do computador do Jorge ligado), no modo "full", com os
+# ténis novos a ficarem logo visíveis - pedido do Jorge em 2026-10-23. Corre
+# depois da 4 Elementos (03:13) e da About You (04:43) para as importações
+# nunca estarem a escrever ao mesmo tempo. Também se pode correr à mão em
+# "Run workflow" no separador Actions do GitHub. As chaves vêm dos "secrets"
+# do repositório - nunca ficam escritas aqui.
 #
 # Modos:
 #   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão
@@ -12,19 +15,23 @@
 #             "activate_new" ligado, os ténis com foto tratada e stock
 #             ficam visíveis no site
 #   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
+#   embeddings - só prepara a pesquisa por foto dos ténis importados que
+#             ainda não estão preparados (o modo full também o faz no fim)
 #   review  - não altera nada: lista os ténis escondidos e guarda uma folha
 #             com as fotos (endereço no fim do registo), para o Jorge ver
 name: Importar adidas
 
 on:
+  schedule:
+    - cron: '43 6 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'test, full, photos ou review'
+        description: 'test, full, photos, embeddings ou review'
         required: true
         default: test
         type: choice
-        options: [test, full, photos, review]
+        options: [test, full, photos, embeddings, review]
       limit:
         description: 'test: quantos ténis novos criar'
         required: false
@@ -34,13 +41,22 @@ on:
         required: false
         default: false
         type: boolean
+      embed_minutes:
+        description: 'embeddings/full: minutos máximos para preparar a pesquisa por foto'
+        required: false
+        default: '20'
 
 jobs:
   importar:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      RUN_MODE: ${{ inputs.mode }}
+      # Quando corre sozinho (schedule) não há escolhas: modo full, ténis
+      # novos visíveis.
+      RUN_MODE: ${{ inputs.mode || 'full' }}
+      # Links de afiliado da adidas: "on" liga, "off" desliga, vazio não
+      # mexe (ver scripts/import-adidas.mjs).
+      AFFILIATE_LINKS: ''
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
@@ -52,6 +68,7 @@ jobs:
       # O tratamento das fotos usa a biblioteca "sharp", instalada numa
       # pasta à parte para não instalar o site inteiro.
       - name: Preparar o importador
+        if: env.RUN_MODE != 'embeddings'
         run: |
           mkdir -p /tmp/imp
           cp scripts/feed-photos.mjs scripts/awin-csv.mjs scripts/import-adidas.mjs /tmp/imp/
@@ -59,8 +76,22 @@ jobs:
           npm init -y > /dev/null
           npm install --no-audit --no-fund sharp@0.34.5
       - name: Importar calçado da adidas
+        if: env.RUN_MODE != 'embeddings'
         env:
           MODE: ${{ env.RUN_MODE }}
           LIMIT: ${{ inputs.limit || '50' }}
-          ACTIVATE_NEW: ${{ inputs.activate_new }}
+          ACTIVATE_NEW: ${{ github.event_name == 'schedule' || inputs.activate_new }}
         run: node /tmp/imp/import-adidas.mjs
+      # Pesquisa por foto: o mesmo modelo que o site usa no browser. Pára ao
+      # fim do tempo indicado e continua no dia seguinte com os que faltarem.
+      - name: Preparar a pesquisa por foto
+        if: env.RUN_MODE == 'full' || env.RUN_MODE == 'embeddings'
+        env:
+          EMBED_MAX_MINUTES: ${{ inputs.embed_minutes || '20' }}
+        run: |
+          mkdir -p /tmp/emb
+          cp scripts/feed-embeddings.mjs /tmp/emb/
+          cd /tmp/emb
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @huggingface/transformers@4.2.0
+          node /tmp/emb/feed-embeddings.mjs
