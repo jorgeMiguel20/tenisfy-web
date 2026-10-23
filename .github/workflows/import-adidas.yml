@@ -55,8 +55,9 @@ jobs:
       # novos visíveis.
       RUN_MODE: ${{ inputs.mode || 'full' }}
       # Links de afiliado da adidas: "on" liga, "off" desliga, vazio não
-      # mexe (ver scripts/import-adidas.mjs).
-      AFFILIATE_LINKS: ''
+      # mexe (ver scripts/import-adidas.mjs). Ligados em 2026-10-23, depois
+      # de o aviso de afiliados estar no site.
+      AFFILIATE_LINKS: 'on'
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
