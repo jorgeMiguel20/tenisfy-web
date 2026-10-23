@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { formatPrice } from '@/lib/formatPrice'
 import { buildOfferUrl } from '@/lib/offerUrl'
 import { storeLogoSrc, storeLogoFallbackSrc } from '@/lib/storeLogo'
@@ -226,6 +227,18 @@ export default function StoreOffersList({
       {offers.some((offer) => getShippingDisplay(offer)) && (
         <p className="text-xs text-gray-400 mt-1">
           As taxas de envio são estimadas (Portugal continental). Confirma sempre na loja antes de finalizar a compra.
+        </p>
+      )}
+
+      {/* Aviso de afiliados (pedido do Jorge, 2026-10-23): só aparece quando
+          alguma das lojas listadas tem link de afiliado ligado (template na
+          tabela stores). Sem nomes de lojas nem de redes. */}
+      {offers.some((offer) => offer.affiliate_url_template) && (
+        <p className="text-xs text-gray-400 mt-1">
+          Alguns links são de afiliado.{' '}
+          <Link href="/divulgacao-afiliados" className="underline underline-offset-2 transition-colors hover:text-gray-700">
+            Saber mais
+          </Link>
         </p>
       )}
     </div>
