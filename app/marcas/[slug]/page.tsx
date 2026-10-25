@@ -17,7 +17,7 @@ import { slimForGrid } from '@/lib/slimForGrid'
 import { formatPrice } from '@/lib/formatPrice'
 import { SITE_URL } from '@/lib/siteUrl'
 
-export const revalidate = 3600 // ISR: 1 hora, como o resto do catálogo
+export const revalidate = 86400 // ISR: 24 horas (evita estourar o limite de escritas da Vercel)
 
 type Brand = { id: string; name: string; slug: string }
 
