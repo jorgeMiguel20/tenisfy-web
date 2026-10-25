@@ -36,7 +36,7 @@ import { SportChips, SportProfileSection } from '@/components/SportProfile'
 
 
 
-export const revalidate = 3600 // ISR: 1 hora, conforme a regra de cache do projeto
+export const revalidate = 86400 // ISR: 24 horas (os preços atualizam 1x por dia; evita estourar o limite de escritas da Vercel)
 
 
 
