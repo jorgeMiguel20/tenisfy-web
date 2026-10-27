@@ -41,6 +41,11 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
   products: ProductWithPrice[]
   error: string | null
 }> {
+  // Catálogo completo (sem filtro de marca nem "só escolhidos à mão"): bocados
+  // mais pequenos (150), porque com mais de 10 000 ténis cada bocado de 400
+  // com todas as ofertas chegava a passar o limite de 3 segundos da base de
+  // dados e o build do site falhava. Marcas e listas curtas mantêm 400.
+  const pageSize = options.onlyCurated || options.brandId ? 400 : 150
   const { data: rawProducts, error } = await fetchAll<any>((from, to) => {
     let query = supabase
       .from('products')
@@ -58,7 +63,7 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
     // Bocados de 400 ténis (com as ofertas de cada um): com milhares de
     // ténis, bocados de 1000 chegavam a passar o limite de 3 segundos da
     // base de dados e o catálogo mostrava "Erro ao carregar produtos".
-  }, 400)
+  }, pageSize)
 
   if (error) {
     return { products: [], error }
