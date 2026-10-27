@@ -13,9 +13,11 @@ import ProductGrid from '@/components/ProductGrid'
 import BackToTopButton from '@/components/BackToTopButton'
 import { supabase } from '@/lib/supabase'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import { getCatalogGridFromCache } from '@/lib/catalogGridCache'
 import { slimForGrid } from '@/lib/slimForGrid'
 import { formatPrice } from '@/lib/formatPrice'
 import { SITE_URL } from '@/lib/siteUrl'
+import type { ProductWithPrice } from '@/lib/types'
 
 export const revalidate = 86400 // ISR: 24 horas (evita estourar o limite de escritas da Vercel, 27/10)
 
@@ -37,25 +39,36 @@ const getBrandPageData = cache(async function getBrandPageData(slug: string) {
   const { data: brand } = await supabase.from('brands').select('id, name, slug').eq('slug', slug).maybeSingle()
   if (!brand) return null
 
-  const { products, error } = await getProductsWithPrice({ brandId: (brand as Brand).id })
-  // Erro da base de dados: não guardar uma página vazia (fica a versão
-  // anterior, ver app/catalogo/page.tsx).
-  if (error) throw new Error(`Marca ${slug}: erro ao carregar produtos (${error})`)
-  const brandProducts = products
-        .filter((product) => product.brand_id === (brand as Brand).id)
-        .sort((a, b) => {
-          // Com stock primeiro, depois do mais barato para o mais caro.
-          if (a.lowest_price == null) return 1
-          if (b.lowest_price == null) return -1
-          return a.lowest_price - b.lowest_price
-        })
+  // Caminho normal: lê o "resumo do catálogo" (ver lib/catalogGridCache.ts),
+  // já só com os dados da grelha. Na mesma ordem de sempre: do mais antigo
+  // para o mais recente, e depois com stock primeiro e do mais barato para o
+  // mais caro. Plano B (resumo vazio ou com erro): calcula como antes.
+  const byAge = (a: ProductWithPrice, b: ProductWithPrice) =>
+    a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+  const byPrice = (a: ProductWithPrice, b: ProductWithPrice) => {
+    // Com stock primeiro, depois do mais barato para o mais caro.
+    if (a.lowest_price == null) return 1
+    if (b.lowest_price == null) return -1
+    return a.lowest_price - b.lowest_price
+  }
+  const cached = await getCatalogGridFromCache({ brandId: (brand as Brand).id })
+  let brandProducts: ProductWithPrice[]
+  if (cached) {
+    brandProducts = cached.map((row) => row.slim).sort(byAge).sort(byPrice)
+  } else {
+    const { products, error } = await getProductsWithPrice({ brandId: (brand as Brand).id })
+    // Erro da base de dados: não guardar uma página vazia (fica a versão
+    // anterior, ver app/catalogo/page.tsx).
+    if (error) throw new Error(`Marca ${slug}: erro ao carregar produtos (${error})`)
+    brandProducts = products.filter((product) => product.brand_id === (brand as Brand).id).sort(byPrice).map(slimForGrid)
+  }
 
   const prices = brandProducts.map((p) => p.lowest_price).filter((price): price is number => price != null)
   const lowestPrice = prices.length > 0 ? Math.min(...prices) : null
 
   // Para o browser só seguem os campos que os cartões usam (ver
   // lib/slimForGrid.ts) - sem isto a página da adidas passava dos 20 MB.
-  return { brand: brand as Brand, products: brandProducts.map(slimForGrid), lowestPrice }
+  return { brand: brand as Brand, products: brandProducts, lowestPrice }
 })
 
 export async function generateMetadata({
