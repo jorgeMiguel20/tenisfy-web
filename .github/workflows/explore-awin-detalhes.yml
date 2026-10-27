@@ -1,0 +1,30 @@
+# .github/workflows/explore-awin-detalhes.yml
+#
+# Explora os campos de detalhes (descrição, material, etc.) do calçado de um
+# ficheiro de produtos da Awin. Só lê e escreve um resumo no registo da
+# execução; não mexe no site nem na base de dados. Corre à mão em
+# "Run workflow" no separador Actions.
+name: Explorar detalhes Awin
+
+on:
+  workflow_dispatch:
+    inputs:
+      feed_id:
+        description: 'Número do ficheiro (feed) da Awin'
+        required: true
+        default: '92150'
+
+jobs:
+  explorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
+      AWIN_FEED_ID: ${{ inputs.feed_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Explorar os detalhes do ficheiro
+        run: node scripts/explore-awin-detalhes.mjs
