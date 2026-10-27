@@ -25,6 +25,10 @@ export const metadata: Metadata = {
 // lidos no browser pelo ProductGrid, por isso a cache serve para todos.
 export const revalidate = 3600
 
+// Quantos ténis vão no HTML da página; os restantes chegam em segundo plano
+// (ver app/api/catalogo-grelha/route.ts e "moreUrl" em ProductGrid).
+const FIRST_BATCH = 120
+
 export default async function CatalogoPage() {
   // Caminho normal: lê o "resumo do catálogo" (uma linha por ténis, já
   // calculada e ordenada por "Relevância" - ver lib/catalogGridCache.ts e
@@ -32,8 +36,10 @@ export default async function CatalogoPage() {
   // levava a calcular tudo a partir das ofertas de cada tamanho.
   let gridProducts: ProductWithPrice[]
   let recentDrops: ProductWithPrice[]
+  let loadRestInBackground = false
   const cached = await getCatalogGridFromCache()
   if (cached) {
+    loadRestInBackground = true
     gridProducts = cached.map((row) => row.slim)
     // "Descidas de preço recentes" (fundo da página): só os ténis escolhidos
     // à mão e no máximo 8, como até agora - com milhares de ténis
@@ -83,7 +89,15 @@ export default async function CatalogoPage() {
           </div>
         }
       >
-        <ProductGrid products={gridProducts} />
+        {loadRestInBackground ? (
+          <ProductGrid
+            products={gridProducts.slice(0, FIRST_BATCH)}
+            totalCount={gridProducts.length}
+            moreUrl="/api/catalogo-grelha"
+          />
+        ) : (
+          <ProductGrid products={gridProducts} />
+        )}
       </Suspense>
 
       {recentDrops.length > 0 && (
