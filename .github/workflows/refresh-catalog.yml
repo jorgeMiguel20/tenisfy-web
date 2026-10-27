@@ -1,0 +1,46 @@
+# .github/workflows/refresh-catalog.yml
+#
+# Prepara o "resumo do catálogo" (tabela catalog_grid_cache) que o site lê
+# para mostrar o catálogo e as páginas das marcas. Corre:
+#   - logo a seguir a cada importação (4 Elementos, About You, adidas),
+#   - 3 vezes por dia (08:50, 14:50 e 21:20, hora UTC - esta última depois da
+#     verificação de preços das 20:07),
+#   - à mão, em "Run workflow" no separador Actions.
+# As chaves vêm dos "secrets" do repositório - nunca ficam escritas aqui.
+name: Atualizar resumo do catálogo
+
+on:
+  schedule:
+    - cron: '50 8 * * *'
+    - cron: '50 14 * * *'
+    - cron: '20 21 * * *'
+  workflow_run:
+    workflows: ['Importar 4 Elementos', 'Importar About You', 'Importar adidas']
+    types: [completed]
+  workflow_dispatch:
+
+# Nunca duas atualizações ao mesmo tempo.
+concurrency:
+  group: refresh-catalog
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
+      # O código do site lê com esta chave, que aqui é a de serviço (sem o
+      # limite de 3 segundos da chave pública).
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar o necessário
+        run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Atualizar o resumo do catálogo
+        run: npx tsx scripts/refresh-catalog.mjs
