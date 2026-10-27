@@ -114,6 +114,29 @@ function articleOf(merchantProductId) {
   return String(merchantProductId || '').split('-')[0].trim()
 }
 
+// Detalhes do ténis a partir do campo "specifications" do ficheiro da adidas
+// (ex.: "Ajuste normal|Com atacadores|Topo em pele sintética|Forro em
+// têxtil|Sola de borracha"): ajuste, fecho, sola e o resto (materiais e
+// construção) vão para as mesmas colunas que os ténis escolhidos à mão usam
+// (fit, closure_type, sole_type, material) e aparecem em "Detalhes do
+// produto". Sem texto, tudo vazio (nada é inventado).
+function parseSpecs(text) {
+  const items = String(text || '').split('|').map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  const lower = (s) => (/^\p{Lu}\p{Ll}/u.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s)
+  const join = (list) => (list.length ? list.map((s, i) => (i === 0 ? s : lower(s))).join(', ') : null)
+  const fit = []
+  const closure = []
+  const sole = []
+  const material = []
+  for (const it of items) {
+    if (/^ajuste\b/i.test(it)) fit.push(it)
+    else if (/^(sola|entressola)\b/i.test(it)) sole.push(it)
+    else if (/atacadores|velcro|el[aá]stic|fecho|cord[aã]o|tira\b|fivela/i.test(it) && !/^(topo|forro|palmilha)/i.test(it)) closure.push(it)
+    else material.push(it)
+  }
+  return { fit: join(fit.slice(0, 1)), closure_type: join(closure), sole_type: join(sole), material: join(material) }
+}
+
 // Palavras genéricas no início do nome ("Sapatilhas de Caminhada AX5 ...",
 // "SAPATILHAS SAMBA JP", "Chuteiras Predator ..."): saem, porque o tipo de
 // calçado já aparece na categoria e o nome do modelo é o que identifica o
@@ -224,7 +247,7 @@ function mapCategory(merchantCategory, sport, name) {
 const COLUMNS = [
   'merchant_product_id', 'product_name', 'brand_name', 'merchant_category', 'colour', 'Fashion:suitable_for',
   'Fashion:size', 'search_price', 'in_stock', 'stock_quantity', 'merchant_deep_link', 'merchant_image_url',
-  'alternate_image', 'alternate_image_two', 'alternate_image_three', 'ean', 'custom_2',
+  'alternate_image', 'alternate_image_two', 'alternate_image_three', 'ean', 'custom_2', 'specifications',
 ]
 
 async function openFeed() {
@@ -290,7 +313,7 @@ if (MODE === 'review') {
 // ------------------------------------------------------------------ Main
 const t0 = Date.now()
 const now = new Date().toISOString()
-const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, footwearRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, brands: {}, created_slugs: [], errors: [] }
+const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, footwearRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, detailsFilled: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, brands: {}, created_slugs: [], errors: [] }
 const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
 
 try {
@@ -310,7 +333,7 @@ try {
   }
   const brands = await sbAll('brands?select=id,slug,name')
   const brandBySlug = new Map(brands.map((b) => [b.slug, b]))
-  const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active&order=id')
+  const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active,material,sole_type,closure_type,fit,article_code&order=id')
   const slugs = new Set(products.map((p) => p.slug))
   const productById = new Map(products.map((p) => [p.id, p]))
   const importedByRef = new Map(products.filter((p) => p.source === SOURCE).map((p) => [p.source_ref, p]))
@@ -346,6 +369,7 @@ try {
     // 3) Decidir o que fazer com cada artigo
     const toCreate = []
     const offerUpserts = []
+    const detailPatches = []
     const seenOfferKeys = new Set()
     for (const g of groups.values()) {
       report.groups++
@@ -361,6 +385,11 @@ try {
         if (!prod || !prod.source) { report.matchedManual++; continue } // ténis criado à mão: não mexer
         report.matchedImported++
         if (MODE === 'test') continue
+        // Detalhes que ainda faltam neste ténis (só preenche o que está vazio)
+        const spec = parseSpecs(g.first.specifications)
+        const patch = {}
+        for (const [k, v] of [['material', spec.material], ['sole_type', spec.sole_type], ['closure_type', spec.closure_type], ['fit', spec.fit], ['article_code', g.id]]) if (v && !prod[k]) patch[k] = v
+        if (Object.keys(patch).length) detailPatches.push({ id: productId, patch })
         for (const r of gRows) {
           const key = `${productId}|${r.size}`
           if (seenOfferKeys.has(key)) continue
@@ -404,6 +433,7 @@ try {
       const p = c.g.first
       const model = modelName(p.product_name)
       const color = translateColor(p.colour)
+      const spec = parseSpecs(p.specifications)
       const base = slugify(`adidas ${model} ${color || ''} ${c.gender === 'crianca' ? 'crianca' : ''}`).slice(0, 80).replace(/-+$/, '')
       let slug = base
       for (let n = 2; slugs.has(slug); n++) slug = `${base}-${n}`
@@ -423,6 +453,11 @@ try {
         // sempre escondido ao criar: só fica visível depois de a foto estar
         // tratada (passo 7)
         is_active: false,
+        material: spec.material,
+        sole_type: spec.sole_type,
+        closure_type: spec.closure_type,
+        fit: spec.fit,
+        article_code: c.g.id,
         source: SOURCE,
         source_ref: c.g.id,
         created_at: now,
@@ -458,6 +493,11 @@ try {
 
     // 6) Atualizar preço e stock dos ténis já importados (só no modo full)
     if (MODE === 'full') {
+      // Detalhes (material, sola, fecho, ajuste, código do artigo) dos ténis já importados a que ainda faltam
+      for (let i = 0; i < detailPatches.length; i += 8) {
+        await Promise.all(detailPatches.slice(i, i + 8).map((d) => sb('products?id=eq.' + d.id, { method: 'PATCH', body: d.patch, prefer: 'return=minimal' })))
+      }
+      report.detailsFilled = detailPatches.length
       const existingByKey = new Map(storeOffers.map((o) => [`${o.product_id}|${o.size}`, o]))
       const changedPrice = offerUpserts.filter((u) => {
         const old = existingByKey.get(`${u.product_id}|${u.size}`)
