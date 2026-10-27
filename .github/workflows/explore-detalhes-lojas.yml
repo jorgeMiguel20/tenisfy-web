@@ -1,0 +1,30 @@
+# .github/workflows/explore-detalhes-lojas.yml
+#
+# Só leitura: vê que detalhes (material, sola, fecho...) os ficheiros da
+# 4 Elementos e da About You trazem para os ténis. Não mexe no site nem na
+# base de dados. Corre à mão em "Run workflow" no separador Actions.
+name: Explorar detalhes das lojas
+
+on:
+  workflow_dispatch:
+    inputs:
+      store:
+        description: '4elementos ou aboutyou'
+        required: true
+        default: '4elementos'
+
+jobs:
+  explorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORE: ${{ inputs.store }}
+      AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
+      TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Explorar os detalhes
+        run: node scripts/explore-detalhes-lojas.mjs
