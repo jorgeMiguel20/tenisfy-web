@@ -557,12 +557,21 @@ export function PriceFilterGroup({
 }
 
 export default function ProductGrid({
-  products,
+  products: initialProducts,
+  moreUrl,
+  totalCount,
   belowSearch,
   heading,
   hideBrandFilter = false,
 }: {
   products: ProductWithPrice[]
+  // Carregamento em duas fases (só o catálogo): "products" traz só os
+  // primeiros ténis, para a página abrir logo; "moreUrl" é o endereço de
+  // onde chega o catálogo completo, em segundo plano, logo a seguir. Sem
+  // "moreUrl", "products" já é o catálogo todo (marcas, etc.).
+  moreUrl?: string
+  // Nº total de ténis, mostrado enquanto o resto ainda está a chegar.
+  totalCount?: number
   belowSearch?: React.ReactNode
   // Título próprio no topo (usado nas páginas de marca: nome da marca e
   // total de ténis). Sem isto aparece "Catálogo" ou "Resultados para…".
@@ -571,6 +580,36 @@ export default function ProductGrid({
   hideBrandFilter?: boolean
 }) {
   const searchParams = useSearchParams()
+
+  // Catálogo completo, a chegar em segundo plano (ver "moreUrl" acima). Se
+  // falhar, tenta mais 2 vezes; se falhar sempre, a grelha fica com os
+  // ténis que já tem (nunca fica uma página vazia).
+  const [fullList, setFullList] = useState<ProductWithPrice[] | null>(null)
+  const [fullListFailed, setFullListFailed] = useState(false)
+  useEffect(() => {
+    if (!moreUrl) return
+    let cancelled = false
+    async function load(attempt: number) {
+      try {
+        const res = await fetch(moreUrl as string)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const list = (await res.json()) as ProductWithPrice[]
+        if (!Array.isArray(list) || list.length === 0) throw new Error('lista vazia')
+        if (!cancelled) setFullList(list)
+      } catch {
+        if (cancelled) return
+        if (attempt < 3) setTimeout(() => load(attempt + 1), 3000 * attempt)
+        else setFullListFailed(true)
+      }
+    }
+    load(1)
+    return () => {
+      cancelled = true
+    }
+  }, [moreUrl])
+  const products = fullList ?? initialProducts
+  // true enquanto o resto do catálogo ainda não chegou.
+  const loadingFull = Boolean(moreUrl) && fullList === null && !fullListFailed
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
@@ -830,9 +869,22 @@ export default function ProductGrid({
   // Carregamento contínuo: quantos cartões estão desenhados. Volta aos
   // primeiros 48 sempre que o resultado muda (filtro, pesquisa, ordenação).
   const [visibleCount, setVisibleCount] = useState(GRID_PAGE_SIZE)
-  const [visibleFor, setVisibleFor] = useState(filteredProducts)
-  if (visibleFor !== filteredProducts) {
-    setVisibleFor(filteredProducts)
+  // (Compara o que está escolhido, e não a lista em si: quando o resto do
+  // catálogo chega em segundo plano a lista cresce, mas a grelha não deve
+  // voltar ao início.)
+  const resultKey = JSON.stringify([
+    selectedBrands,
+    selectedGenders,
+    selectedCategories,
+    selectedSizes,
+    selectedColors,
+    search,
+    sortOrder,
+    isPriceFilterActive ? effectiveSelectedPriceRange : null,
+  ])
+  const [visibleFor, setVisibleFor] = useState(resultKey)
+  if (visibleFor !== resultKey) {
+    setVisibleFor(resultKey)
     setVisibleCount(GRID_PAGE_SIZE)
   }
   const visibleProducts = filteredProducts.slice(0, visibleCount)
@@ -931,6 +983,16 @@ export default function ProductGrid({
   ])
 
   const hasActiveFilters = activeChips.length > 0
+  // Enquanto o resto do catálogo chega, com filtros/pesquisa ativos não se
+  // mostram resultados incompletos: aparece "A carregar..." (dura segundos).
+  const showLoadingPlaceholder = loadingFull && hasActiveFilters
+  // Nº de ténis mostrado: o total do catálogo enquanto o resto chega (sem
+  // filtros); null = ainda não se sabe (filtros ativos a carregar).
+  const shownCount: number | null = loadingFull
+    ? hasActiveFilters
+      ? null
+      : (totalCount ?? filteredProducts.length)
+    : filteredProducts.length
   // O número em "Filtros (N)" só conta filtros a sério - a pesquisa tem a sua
   // própria etiqueta e o seu título.
   const filterCount = activeChips.filter((chip) => chip.key !== 'search').length
@@ -1135,9 +1197,11 @@ export default function ProductGrid({
               Resultados para <span className="text-[#123F3A]">“{search.trim()}”</span>
             </h1>
             <p className="mb-8 mt-3 text-sm text-[#5C6770]">
-              {filteredProducts.length === 0
-                ? 'Nenhum ténis encontrado'
-                : `${filteredProducts.length} ténis encontrado${filteredProducts.length !== 1 ? 's' : ''}`}
+              {shownCount === null
+                ? 'A pesquisar...'
+                : shownCount === 0
+                  ? 'Nenhum ténis encontrado'
+                  : `${shownCount} ténis encontrado${shownCount !== 1 ? 's' : ''}`}
             </p>
           </>
         ) : (
@@ -1186,7 +1250,7 @@ export default function ProductGrid({
 
         <div className="ml-auto hidden sm:flex items-center gap-3 shrink-0">
           <p className="text-sm text-[#5C6770] hidden sm:block">
-            {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}
+            {shownCount ?? '...'} produto{shownCount !== 1 ? 's' : ''}
           </p>
           <SortDropdown
             options={SORT_OPTIONS}
@@ -1202,7 +1266,11 @@ export default function ProductGrid({
           alterar nada visualmente. */}
       <h2 className="sr-only">Produtos</h2>
 
-      {filteredProducts.length === 0 ? (
+      {showLoadingPlaceholder ? (
+        <p className="py-16 text-center text-[#5C6770]" aria-busy="true">
+          A carregar produtos...
+        </p>
+      ) : filteredProducts.length === 0 ? (
         <p className="py-16 text-center text-[#5C6770]">Nenhum produto encontrado.</p>
       ) : (
         // Linhas finas a separar os cards (em vez do espaço/gap anterior):
@@ -1229,7 +1297,7 @@ export default function ProductGrid({
         </div>
       )}
 
-      {hasMore && <div ref={loadMoreRef} aria-hidden="true" className="h-px w-full" />}
+      {hasMore && !showLoadingPlaceholder && <div ref={loadMoreRef} aria-hidden="true" className="h-px w-full" />}
 
       {compareLimitWarning && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-red-50 text-red-700 text-sm font-medium px-4 py-2 rounded-none border border-red-200">
