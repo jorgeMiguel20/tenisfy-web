@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
   // Não anunciar que o site é feito com Next.js.
   poweredByHeader: false,
 
+  // O catálogo tem milhares de ténis e a página /catalogo demora mais de 60
+  // segundos (o limite normal) a ser gerada durante o build. Damos 5 minutos.
+  staticPageGenerationTimeout: 300,
+
   // Fotos que não estão na pasta public do site: as fotos principais dos
   // ténis importados (tratadas e guardadas no Supabase Storage) e as fotos
   // extra que vêm diretamente da About You. Estas fotos são mostradas sem
