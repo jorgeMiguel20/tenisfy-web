@@ -482,7 +482,7 @@ try {
       is_active: false,
       source: SOURCE,
       source_ref: c.g.id,
-      ...Object.fromEntries(Object.entries(c.g.specs).filter(([, v]) => v)),
+      material: c.g.specs.material, sole_type: c.g.specs.sole_type, closure_type: c.g.specs.closure_type,
       created_at: now,
       updated_at: now,
     })
