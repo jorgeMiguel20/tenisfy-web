@@ -6,6 +6,8 @@ import RecentDropsGrid from '@/components/RecentDropsGrid'
 import CatalogoBackBar from '@/components/CatalogoBackBar'
 import BackToTopButton from '@/components/BackToTopButton'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
+import { getCatalogGridFromCache } from '@/lib/catalogGridCache'
+import { relevanceOrder } from '@/lib/relevanceOrder'
 import { slimForGrid } from '@/lib/slimForGrid'
 import type { ProductWithPrice } from '@/lib/types'
 
@@ -23,46 +25,43 @@ export const metadata: Metadata = {
 // lidos no browser pelo ProductGrid, por isso a cache serve para todos.
 export const revalidate = 3600
 
-// Ordem "Relevância": primeiro os ténis escolhidos à mão (pela ordem de
-// sempre), depois os importados das lojas afiliadas - os que estão em mais
-// lojas primeiro (são os que mais vale a pena comparar), depois os que
-// estão com desconto, depois os mais recentes.
-function relevanceOrder(products: ProductWithPrice[]): ProductWithPrice[] {
-  const curated = products.filter((p) => !(p as { source?: string | null }).source)
-  const imported = products.filter((p) => (p as { source?: string | null }).source)
-  const withStock = (p: ProductWithPrice) => (p.lowest_price != null ? 1 : 0)
-  imported.sort(
-    (a, b) =>
-      withStock(b) - withStock(a) ||
-      (b.store_count ?? 0) - (a.store_count ?? 0) ||
-      (b.priceDrop ? 1 : 0) - (a.priceDrop ? 1 : 0) ||
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
-  return [...curated, ...imported]
-}
-
 export default async function CatalogoPage() {
-  const { products: productsWithPrice, error } = await getProductsWithPrice()
+  // Caminho normal: lê o "resumo do catálogo" (uma linha por ténis, já
+  // calculada e ordenada por "Relevância" - ver lib/catalogGridCache.ts e
+  // scripts/refresh-catalog.mjs). Demora segundos, em vez dos minutos que
+  // levava a calcular tudo a partir das ofertas de cada tamanho.
+  let gridProducts: ProductWithPrice[]
+  let recentDrops: ProductWithPrice[]
+  const cached = await getCatalogGridFromCache()
+  if (cached) {
+    gridProducts = cached.map((row) => row.slim)
+    // "Descidas de preço recentes" (fundo da página): só os ténis escolhidos
+    // à mão e no máximo 8, como até agora - com milhares de ténis
+    // importados a secção ficaria enorme.
+    recentDrops = cached
+      .filter((row) => row.is_curated && row.slim.priceDrop)
+      .sort((a, b) => b.slim.priceDrop!.amount - a.slim.priceDrop!.amount)
+      .slice(0, 8)
+      .map((row) => row.slim)
+  } else {
+    // Plano B (resumo vazio ou com erro): calcula tudo como antes.
+    const { products: productsWithPrice, error } = await getProductsWithPrice()
 
-  // Se a base de dados falhar, não se guarda uma página de erro: o site
-  // continua a mostrar a última versão boa do catálogo (cache de 1 hora) e
-  // tenta outra vez mais tarde. Antes, a mensagem "Erro ao carregar
-  // produtos" ficava guardada e aparecia a toda a gente durante 1 hora.
-  if (error) {
-    throw new Error(`Catálogo: erro ao carregar produtos (${error})`)
+    // Se a base de dados falhar, não se guarda uma página de erro: o site
+    // continua a mostrar a última versão boa do catálogo (cache de 1 hora) e
+    // tenta outra vez mais tarde. Antes, a mensagem "Erro ao carregar
+    // produtos" ficava guardada e aparecia a toda a gente durante 1 hora.
+    if (error) {
+      throw new Error(`Catálogo: erro ao carregar produtos (${error})`)
+    }
+
+    gridProducts = relevanceOrder(productsWithPrice).map(slimForGrid)
+    recentDrops = productsWithPrice
+      .filter((p) => p.priceDrop && !(p as { source?: string | null }).source)
+      .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
+      .slice(0, 8)
+      .map(slimForGrid)
   }
-
-  const gridProducts = relevanceOrder(productsWithPrice).map(slimForGrid)
-
-  // "Descidas de preço recentes" (fundo da página): só os ténis escolhidos à
-  // mão e no máximo 8, como até agora - com milhares de ténis importados a
-  // secção ficaria enorme.
-  const recentDrops = productsWithPrice
-    .filter((p) => p.priceDrop && !(p as { source?: string | null }).source)
-    .sort((a, b) => b.priceDrop!.amount - a.priceDrop!.amount)
-    .slice(0, 8)
-    .map(slimForGrid)
-
 
   return (
     // Edge-to-edge na grelha (tal como no Lacoste) - os cards mantêm-se a
