@@ -251,6 +251,24 @@ export function normSize(s) {
   return v
 }
 
+// Detalhes do ténis (material, fecho, sola) a partir do texto técnico da
+// About You: "Design: ...; Tipos de fecho: Atacadores; Material: Couro; ...".
+// Só se guarda o que a loja diz de forma clara; o que falta fica vazio.
+function parseSpecs(p) {
+  const values = { material: [], fecho: [], sola: [] }
+  for (const part of String(p.techSpecs || p.description || '').split(/;\s*/)) {
+    const i = part.indexOf(':')
+    if (i <= 0 || i > 40) continue
+    const key = part.slice(0, i).trim().toLowerCase()
+    const value = part.slice(i + 1).trim()
+    if (!value) continue
+    const target = key === 'material' ? values.material : key === 'tipos de fecho' || key === 'tipo de fecho' ? values.fecho : key === 'tipo de sola' ? values.sola : null
+    if (target && !target.some((v) => v.toLowerCase() === value.toLowerCase())) target.push(value)
+  }
+  const join = (list) => list.map((v, i) => (i === 0 ? v : v.charAt(0).toLowerCase() + v.slice(1))).join(', ')
+  return { material: join(values.material) || null, closure_type: join(values.fecho) || null, sole_type: join(values.sola) || null }
+}
+
 function directUrl(productUrl) {
   if (!productUrl) return null
   const m = productUrl.match(/url\((.+)\)$/)
@@ -286,7 +304,7 @@ async function download() {
 // ------------------------------------------------------------------ Main
 const t0 = Date.now()
 const now = new Date().toISOString()
-const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, created_slugs: [], errors: [] }
+const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedManual: 0, matchedImported: 0, skippedNoPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, detailsFilled: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, created_slugs: [], errors: [] }
 const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
 
 try {
@@ -295,7 +313,7 @@ try {
   if (!store) throw new Error('Loja about-you não encontrada')
   const brands = await sbAll('brands?select=id,slug,name')
   const brandBySlug = new Map(brands.map((b) => [b.slug, b]))
-  const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active&order=id')
+  const products = await sbAll('products?select=id,slug,source,source_ref,image_url,is_active,material,sole_type,closure_type&order=id')
   const slugs = new Set(products.map((p) => p.slug))
   const productById = new Map(products.map((p) => [p.id, p]))
   const importedByRef = new Map(products.filter((p) => p.source === SOURCE).map((p) => [p.source_ref, p]))
@@ -323,7 +341,7 @@ try {
     report.sneakerRows++
     const gid = field(p, 'item_grouping_id') || p.groupingId
     let g = groups.get(gid)
-    if (!g) { g = { id: gid, first: p, paths: new Set(), rows: [] }; groups.set(gid, g) }
+    if (!g) { g = { id: gid, first: p, paths: new Set(), rows: [], specs: parseSpecs(p) }; groups.set(gid, g) }
     for (const c of paths) g.paths.add(c)
     const offer = p.offers?.[0]
     const price = Number(offer?.priceHistory?.[0]?.price?.value)
@@ -342,6 +360,7 @@ try {
   // 3) Decidir o que fazer com cada artigo
   const toCreate = []
   const offerUpserts = [] // para ténis já importados
+  const detailPatches = [] // detalhes que faltam nos ténis já importados
   const seenOfferKeys = new Set()
   for (const g of groups.values()) {
     const paths = [...g.paths]
@@ -367,6 +386,10 @@ try {
       if (!prod || !prod.source) { report.matchedManual++; continue }
       report.matchedImported++
       if (MODE === 'test') continue
+      // Detalhes que ainda faltam neste ténis (só preenche o que está vazio)
+      const patch = {}
+      for (const k of ['material', 'sole_type', 'closure_type']) if (g.specs[k] && !prod[k]) patch[k] = g.specs[k]
+      if (Object.keys(patch).length) detailPatches.push({ id: productId, patch })
       for (const r of rows) {
         const key = `${productId}|${r.size}`
         if (seenOfferKeys.has(key)) continue
@@ -459,6 +482,7 @@ try {
       is_active: false,
       source: SOURCE,
       source_ref: c.g.id,
+      ...Object.fromEntries(Object.entries(c.g.specs).filter(([, v]) => v)),
       created_at: now,
       updated_at: now,
     })
@@ -513,6 +537,12 @@ try {
       await sb(`product_offers?id=in.(${gone.slice(i, i + 200).join(',')})`, { method: 'PATCH', body: { in_stock: false, last_checked_at: now }, prefer: 'return=minimal' })
     }
     report.markedOutOfStock = gone.length
+
+    // Detalhes que faltavam nos ténis já importados (material, fecho, sola)
+    for (let i = 0; i < detailPatches.length; i += 8) {
+      await Promise.all(detailPatches.slice(i, i + 8).map((d) => sb('products?id=eq.' + d.id, { method: 'PATCH', body: d.patch, prefer: 'return=minimal' })))
+    }
+    report.detailsFilled = detailPatches.length
   }
   } // fim de "if (MODE !== 'photos')"
 
