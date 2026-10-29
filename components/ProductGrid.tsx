@@ -1269,7 +1269,7 @@ export default function ProductGrid({
         </div>
 
         {/* Seletor de vista de grelha (3/4/5 colunas) centrado ao meio da barra - pedido do Jorge. Usa position absolute (em vez de flex-1) para ficar sempre no centro exato da barra, independente da largura dos filtros ativos a esquerda ou do texto/dropdown a direita. */}
-        <div className="hidden xl:block absolute left-1/2 -translate-x-1/2">
+        <div className="hidden xl:block absolute left-1/2 top-[15px] -translate-x-1/2">
           <DesktopGridViewToggle value={desktopCols} onChange={setDesktopCols} />
         </div>
 
