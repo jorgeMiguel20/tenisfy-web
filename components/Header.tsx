@@ -18,6 +18,20 @@ const NAV_LINKS: { label: string; value: GenderGroupValue }[] = [
   { label: 'Crianças', value: 'crianca' },
 ]
 
+// Menu "Desporto": cada linha abre o catálogo já filtrado por uma categoria
+// (?categoria=..., lido pelo ProductGrid). "Todos os sapatos desportivos"
+// junta todas as categorias de desporto numa só lista.
+const SPORT_LINKS: { label: string; categoria: string }[] = [
+  { label: 'Sapatilhas de corrida', categoria: 'running' },
+  { label: 'Sapatos de trail running', categoria: 'trail' },
+  { label: 'Sapatos de treino', categoria: 'treino' },
+  { label: 'Chuteiras de futebol', categoria: 'futebol' },
+  { label: 'Sapatos de caminhada', categoria: 'caminhada' },
+  { label: 'Sapatos indoor', categoria: 'indoor' },
+]
+const SPORT_ALL_HREF = '/catalogo?categoria=running,trail,treino,futebol,caminhada,indoor,desporto'
+const sportHref = (categoria: string) => `/catalogo?categoria=${categoria}`
+
 // Links do menu no desktop (Marcas, Homem, Mulher, Crianças, Promoções).
 // Ao passar o rato, o texto passa de cinzento a #17232B e aparece por baixo
 // uma linha de 2px que "cresce" da esquerda para a direita (pedido do
@@ -45,7 +59,7 @@ function NavUnderline({ active }: { active: boolean }) {
 // - "/catalogo" sem género -> "catalogo" ("Ver catálogo" no telemóvel);
 // - "/promocoes" -> "promocoes";
 // - qualquer outra página -> nenhuma secção marcada.
-type ActiveSection = GenderGroupValue | 'marcas' | 'catalogo' | 'promocoes' | null
+type ActiveSection = GenderGroupValue | 'marcas' | 'catalogo' | 'promocoes' | 'desporto' | null
 
 function useActiveSection(): ActiveSection {
   const pathname = usePathname()
@@ -54,6 +68,8 @@ function useActiveSection(): ActiveSection {
   if (pathname === '/marcas' || pathname.startsWith('/marcas/')) return 'marcas'
   if (pathname !== '/catalogo') return null
   const genero = searchParams.get('genero')
+  // "/catalogo?categoria=..." (menu Desporto) -> "desporto".
+  if (!genero && searchParams.get('categoria')) return 'desporto'
   const match = NAV_LINKS.find((link) => link.value === genero)
   if (match) return match.value
   return genero ? null : 'catalogo'
@@ -90,6 +106,57 @@ function DesktopNav({ active }: { active: ActiveSection }) {
           <NavUnderline active={active === link.value} />
         </Link>
       ))}
+      {/* Menu Desporto: abre ao passar o rato ou com o teclado (Tab). A
+          caixa começa logo a seguir ao link (pt-6 em vez de margem) para
+          o menu não fechar quando o rato desce até ela. */}
+      <div className="group/desporto relative">
+        <Link
+          href={SPORT_ALL_HREF}
+          prefetch={false}
+          aria-haspopup="true"
+          aria-current={active === 'desporto' ? 'page' : undefined}
+          className={linkClass(active === 'desporto')}
+        >
+          Desporto
+          <svg
+            aria-hidden="true"
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="ml-1 transition-transform duration-200 group-hover/desporto:rotate-180 group-focus-within/desporto:rotate-180"
+          >
+            <path d="M2 4.5l4 4 4-4" />
+          </svg>
+          <NavUnderline active={active === 'desporto'} />
+        </Link>
+        <div className="invisible absolute left-[-16px] top-full z-50 pt-6 opacity-0 transition-[opacity,visibility] duration-150 group-hover/desporto:visible group-hover/desporto:opacity-100 group-focus-within/desporto:visible group-focus-within/desporto:opacity-100">
+          <div className="min-w-[270px] border border-[#17232B]/10 bg-white px-[22px] pb-4 pt-[18px] shadow-[0_14px_34px_rgba(23,35,43,0.14)]">
+            <p className="mb-2.5 text-[15px] font-bold text-[#17232B]">Calçado desportivo</p>
+            {SPORT_LINKS.map((link) => (
+              <Link
+                key={link.categoria}
+                href={sportHref(link.categoria)}
+                prefetch={false}
+                className="block py-[7px] text-sm text-[#17232B] hover:text-[#123F3A] hover:underline"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              href={SPORT_ALL_HREF}
+              prefetch={false}
+              className="mt-2.5 block border-t border-[#17232B]/10 pt-3 text-sm font-medium text-[#17232B] underline hover:text-[#123F3A]"
+            >
+              Todos os sapatos desportivos
+            </Link>
+          </div>
+        </div>
+      </div>
       {/* Página própria (antes era um salto para a secção "Maior poupança
           agora" da homepage - quando essa secção estava vazia, o link
           levava só ao topo da homepage e parecia não fazer nada). */}
@@ -112,6 +179,9 @@ function DesktopNavWithActive() {
 // Menu do telemóvel (dentro do hamburger): a secção atual fica a verde e
 // a meio-negrito.
 function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: () => void }) {
+  // "Desporto" abre uma lista por baixo (como no menu de referência); já
+  // vem aberta quando a pessoa está numa categoria de desporto.
+  const [sportOpen, setSportOpen] = useState(active === 'desporto')
   const linkClass = (isActive: boolean) =>
     `py-2.5 text-sm transition-colors hover:text-[#123F3A] ${
       isActive ? 'font-semibold text-[#123F3A]' : 'font-medium text-[#17232B]'
@@ -150,6 +220,52 @@ function MobileNav({ active, onNavigate }: { active: ActiveSection; onNavigate: 
       >
         Marcas
       </Link>
+      <button
+        type="button"
+        onClick={() => setSportOpen((v) => !v)}
+        aria-expanded={sportOpen}
+        className={`flex items-center justify-between text-left ${linkClass(active === 'desporto')}`}
+      >
+        Desporto
+        <svg
+          aria-hidden="true"
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform duration-200 ${sportOpen ? 'rotate-180' : ''}`}
+        >
+          <path d="M2 4.5l4 4 4-4" />
+        </svg>
+      </button>
+      {sportOpen && (
+        <div className="mb-1 ml-0.5 flex flex-col border-l-2 border-[#17232B]/10 pl-3.5">
+          <p className="mb-1 mt-1.5 text-[13px] font-bold text-[#17232B]">Calçado desportivo</p>
+          {SPORT_LINKS.map((link) => (
+            <Link
+              key={link.categoria}
+              href={sportHref(link.categoria)}
+              prefetch={false}
+              onClick={onNavigate}
+              className="py-2.5 text-sm text-[#17232B] transition-colors hover:text-[#123F3A]"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            href={SPORT_ALL_HREF}
+            prefetch={false}
+            onClick={onNavigate}
+            className="py-2.5 text-sm font-medium text-[#17232B] underline transition-colors hover:text-[#123F3A]"
+          >
+            Todos os sapatos desportivos
+          </Link>
+        </div>
+      )}
       <Link
         href="/promocoes"
         onClick={onNavigate}

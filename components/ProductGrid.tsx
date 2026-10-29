@@ -661,6 +661,23 @@ export default function ProductGrid({
     }
   }
 
+  // Sincroniza selectedCategories com o parâmetro ?categoria= da URL (links
+  // do menu Desporto, ex: "Sapatilhas de corrida" -> ?categoria=running;
+  // "Todos os sapatos desportivos" junta várias, separadas por vírgula).
+  // Mesmo padrão de sincronização que ?genero= acima.
+  const categoryParam = searchParams.get('categoria')
+  const [syncedCategoryParam, setSyncedCategoryParam] = useState<string | null>(null)
+  if (categoryParam !== syncedCategoryParam) {
+    setSyncedCategoryParam(categoryParam)
+    if (categoryParam) {
+      const wanted = categoryParam
+        .split(',')
+        .map((c) => c.trim().toLowerCase())
+        .filter((c) => /^[a-z-]+$/.test(c))
+      if (wanted.length > 0) setSelectedCategories(wanted)
+    }
+  }
+
   // Sincroniza search com o parâmetro ?q= da URL: usado pela pesquisa do
   // hero da homepage (formulário GET simples, sem JS) e pelos chips de
   // sugestão - mesmo padrão de sincronização que ?genero= acima.
