@@ -1248,17 +1248,25 @@ export default function ProductGrid({
           Filtros{filterCount > 0 ? ` (${filterCount})` : ''}
         </button>
 
-        {renderActiveChips()}
+        {/* Etiquetas dos filtros ativos + "Limpar tudo". No telemóvel/tablet
+            (display: contents) ficam na mesma linha que o botão Filtros, como
+            sempre. No desktop (xl) passam para uma segunda linha por baixo
+            da barra: o seletor de colunas está centrado (position absolute)
+            e, com muitos filtros (ex: menu Desporto, 7 etiquetas), as
+            etiquetas chegavam ao meio e ficavam tapadas por ele. */}
+        <div className="contents empty:hidden xl:flex xl:basis-full xl:flex-wrap xl:items-center xl:gap-2 xl:order-last">
+          {renderActiveChips()}
 
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="text-sm font-medium text-[#5C6770] hover:text-[#17232B] underline decoration-[#5C6770]/40 underline-offset-4 transition-colors shrink-0"
-          >
-            Limpar tudo
-          </button>
-        )}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm font-medium text-[#5C6770] hover:text-[#17232B] underline decoration-[#5C6770]/40 underline-offset-4 transition-colors shrink-0"
+            >
+              Limpar tudo
+            </button>
+          )}
+        </div>
 
         {/* Seletor de vista de grelha (3/4/5 colunas) centrado ao meio da barra - pedido do Jorge. Usa position absolute (em vez de flex-1) para ficar sempre no centro exato da barra, independente da largura dos filtros ativos a esquerda ou do texto/dropdown a direita. */}
         <div className="hidden xl:block absolute left-1/2 -translate-x-1/2">
