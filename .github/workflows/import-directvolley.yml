@@ -39,6 +39,10 @@ on:
         required: false
         default: false
         type: boolean
+      categories:
+        description: 'full: categorias a importar, separadas por vírgulas (vazio = todas)'
+        required: false
+        default: 'running,treino,futebol,indoor'
       embed_minutes:
         description: 'embeddings/full: minutos máximos para preparar a pesquisa por foto'
         required: false
@@ -77,6 +81,7 @@ jobs:
           MODE: ${{ env.RUN_MODE }}
           LIMIT: ${{ inputs.limit || '50' }}
           ACTIVATE_NEW: ${{ inputs.activate_new }}
+          CATEGORIES: ${{ inputs.categories }}
         run: node /tmp/imp/import-directvolley.mjs
       # Pesquisa por foto: o mesmo modelo que o site usa no browser. Pára ao
       # fim do tempo indicado e continua na vez seguinte com os que faltarem.
