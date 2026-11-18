@@ -449,14 +449,35 @@ async function main() {
         const base = slugify(`${brand?.name ?? p.brand_name} ${model} ${color || ''} ${c.gender === 'crianca' ? 'crianca' : ''}`).slice(0, 80).replace(/-+$/, '')
         return { c, p, brand, model, color, base }
       }).filter((x) => x.brand)
-      const takenSlugs = new Set((await sbIn('products', 'slug', candidates.map((x) => x.base), 'slug', 100)).map((r) => r.slug))
+      // Endereços (slugs) sem repetir os que já existem na base de dados nem
+      // os deste lote. Os sufixos (-2, -3...) também podem já existir, por
+      // isso confirma-se a seguir e, se houver choque, passa-se ao seguinte.
+      const usedSlugs = new Set((await sbIn('products', 'slug', candidates.map((x) => x.base), 'slug', 100)).map((r) => r.slug))
+      const slugOf = new Map()
+      for (const x of candidates) {
+        let slug = x.base
+        for (let n = 2; usedSlugs.has(slug); n++) slug = x.base + '-' + n
+        usedSlugs.add(slug)
+        slugOf.set(x, slug)
+      }
+      for (let round = 0; round < 20; round++) {
+        const suffixed = [...slugOf.entries()].filter(([x, s]) => s !== x.base)
+        if (!suffixed.length) break
+        const found = new Set((await sbIn('products', 'slug', suffixed.map(([, s]) => s), 'slug', 100)).map((r) => r.slug))
+        const clash = suffixed.filter(([, s]) => found.has(s))
+        if (!clash.length) break
+        for (const [x] of clash) {
+          let slug = x.base
+          for (let n = 2; usedSlugs.has(slug); n++) slug = x.base + '-' + n
+          usedSlugs.add(slug)
+          slugOf.set(x, slug)
+        }
+      }
       const newProducts = []
       const pending = []
       for (const x of candidates) {
-        const { c, p, brand, model, color, base } = x
-        let slug = base
-        for (let n = 2; takenSlugs.has(slug); n++) slug = `${base}-${n}`
-        takenSlugs.add(slug)
+        const { c, p, brand, model, color } = x
+        const slug = slugOf.get(x)
         const photo = (p.merchant_image_url || '').startsWith('https://') ? p.merchant_image_url : null
         if (!photo) { report.errors.push(`sem foto: ${c.g.id}`); continue }
         newProducts.push({
