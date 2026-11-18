@@ -51,7 +51,11 @@ const report = {
   currency: {}, inStock: {}, shipping: {}, withEan: 0, withImage: 0, withUrl: 0,
   priceMin: null, priceMax: null, priceBuckets: {},
   nameWords: {}, samplesRaw: [], samples: [], keys: null,
+  availability: {}, condition: {}, withGtin: 0, gtinLens: {}, tipos: {},
+  calcado: { linhas: 0, emStock: 0, artigos: 0, marcas: {}, tipos: {}, tamanhos: {}, precos: {}, genero: {}, exemplos: [] },
 }
+const FOOT_RE = /sneaker|trainer|zapatill|sandal|clog|boot|bota|shoe|slipper|loafer|mocas|flip.?flop|chancla|sabot|zueco|running|sapat|chinelo|tenis/i
+const footGroups = new Set()
 const ids = new Set()
 try {
   const res = await download()
@@ -72,7 +76,8 @@ try {
     inc(report.sizes, p.size)
     for (const o of p.offers || []) {
       inc(report.currency, o.priceHistory?.[0]?.price?.currency)
-      inc(report.inStock, o.inStock)
+      inc(report.availability, o.availability)
+      inc(report.condition, o.condition)
       inc(report.shipping, o.shippingCost)
       const price = Number(o.priceHistory?.[0]?.price?.value)
       if (Number.isFinite(price)) {
@@ -83,6 +88,28 @@ try {
       if (o.productUrl) report.withUrl++
     }
     if (p.identifiers?.ean) report.withEan++
+    const gtin = field(p, 'g:gtin')
+    if (gtin) { report.withGtin++; inc(report.gtinLens, String(gtin).length) }
+    const nm = String(p.name || '')
+    const semTamanho = nm.replace(/,\s*[0-9.,\/ ]+$/, '').trim()
+    const tipo = (semTamanho.includes(' - ') ? semTamanho.split(' - ').pop() : semTamanho.split(' ').slice(-1)[0]).trim()
+    inc(report.tipos, tipo)
+    if (FOOT_RE.test(nm) || FOOT_RE.test(tipo)) {
+      const c = report.calcado
+      const av = p.offers?.[0]?.availability
+      const pr = Number(p.offers?.[0]?.priceHistory?.[0]?.price?.value)
+      c.linhas++
+      const gid = field(p, 'g:item_group_id')
+      const novo = !footGroups.has(gid)
+      footGroups.add(gid)
+      if (/^in stock/i.test(String(av))) c.emStock++
+      if (novo) { c.artigos++; inc(c.marcas, p.brand) }
+      inc(c.tipos, tipo)
+      inc(c.tamanhos, field(p, 'g:size'))
+      inc(c.genero, field(p, 'g:gender') || field(p, 'gender'))
+      if (Number.isFinite(pr)) inc(c.precos, pr < 30 ? '<30' : pr < 60 ? '30-60' : pr < 100 ? '60-100' : pr < 150 ? '100-150' : '>=150')
+      if (novo && c.exemplos.length < 40 && Math.random() < 0.15) c.exemplos.push({ name: nm, brand: p.brand, tipo, gid, mpn: field(p, 'g:mpn'), gtin, size: field(p, 'g:size'), price: pr, av, url: String(p.offers?.[0]?.sourceProductId || '') })
+    }
     if (p.productImage?.url) report.withImage++
     for (const w of String(p.name || '').toLowerCase().split(/[^a-zà-ú0-9]+/)) if (w.length > 2) inc(report.nameWords, w)
     ids.add(field(p, 'item_grouping_id') || p.groupingId || p.name)
@@ -101,6 +128,11 @@ report.categories = top(report.categories, 200)
 report.brands = top(report.brands, 200)
 report.sizes = top(report.sizes, 100)
 report.nameWords = top(report.nameWords, 120)
+report.tipos = top(report.tipos, 120)
+report.calcado.marcas = top(report.calcado.marcas, 120)
+report.calcado.tipos = top(report.calcado.tipos, 60)
+report.calcado.tamanhos = top(report.calcado.tamanhos, 60)
+report.categories = { amostra: Object.keys(report.categories).slice(0, 5) }
 console.log(`Total ${report.total}, artigos ${report.groups}, ${report.seconds}s`)
 console.log(JSON.stringify({ ...report, samplesRaw: undefined }, null, 1).slice(0, 12000))
 console.log('--- amostra bruta ---')
