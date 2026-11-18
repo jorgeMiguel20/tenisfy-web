@@ -1,0 +1,27 @@
+# .github/workflows/explore-ulanka.yml
+#
+# Explorar o ficheiro de produtos da Ulanka (Tradedoubler, feed 258453):
+# só LÊ e conta o que lá está (categorias, marcas, tamanhos, preços, portes).
+# Não muda nada no site nem no catálogo. Corre à mão em "Run workflow" no
+# separador Actions do GitHub. As chaves vêm dos "secrets" do repositório -
+# nunca ficam escritas aqui.
+name: Explorar Ulanka
+
+on:
+  workflow_dispatch:
+
+jobs:
+  explorar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Explorar o ficheiro da Ulanka
+        run: node scripts/explore-ulanka.mjs
