@@ -121,6 +121,11 @@ export async function generateMetadata({
     // Endereço oficial desta página para o Google (sem parâmetros).
     alternates: { canonical: `/produto/${slug}` },
 
+    // Sem nenhuma loja com stock a página mostra "Sem ofertas": não vale a pena
+    // o Google indexá-la. Quando voltar a haver stock, volta a ser indexada
+    // sozinha (a página é refeita de 24 em 24 horas).
+    ...(storeCount === 0 ? { robots: { index: false, follow: true } } : {}),
+
     openGraph: {
 
       title,
