@@ -53,6 +53,12 @@ const MODE = process.env.MODE || 'test'
 const LIMIT = Number(process.env.LIMIT || 50)
 const ACTIVATE_NEW = process.env.ACTIVATE_NEW === 'true'
 const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 4000)
+// Importação por fases: lista de categorias do Parjusto a importar (separadas
+// por vírgulas, ex. "running,treino,futebol,indoor"). Vazia = todas. A lista
+// tem de ser sempre a soma das fases já feitas, porque o que não aparece nela
+// não é tocado (e, no modo full, os tamanhos que já não vêm no ficheiro ficam
+// esgotados).
+const CATEGORIES = process.env.CATEGORIES ? new Set(process.env.CATEGORIES.split(',').map((c) => c.trim()).filter(Boolean)) : null
 const SOURCE = 'direct-volley'
 const STORE_SLUG = 'direct-volley'
 const MIN_PRICE = 10 // abaixo disto num sapato é quase de certeza um erro do ficheiro
@@ -379,6 +385,7 @@ async function main() {
         const gRows = priced.filter((r) => r.price >= MIN_PRICE)
         if (priced.length === 0) { report.skippedNoPrice++; continue }
         if (gRows.length === 0) { report.skippedLowPrice++; continue }
+        if (CATEGORIES && !CATEGORIES.has(mapCategory(g.first.merchant_category))) { report.skippedCategory = (report.skippedCategory || 0) + 1; continue }
 
         let productId = ownByRef.get(g.id)?.id
         if (!productId) {
