@@ -34,7 +34,7 @@ type StoreRow = {
 }
 
 async function getGuideData() {
-  const { products } = await getProductsWithPrice()
+  const { products } = await getProductsWithPrice({ slugs: [PRODUCT_SLUG] })
   const product = products.find((p) => p.slug === PRODUCT_SLUG)
   if (!product) return { product: null, stores: [] as StoreRow[], history: null }
 
