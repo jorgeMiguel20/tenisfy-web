@@ -64,7 +64,7 @@ function summarize(product: ProductWithPrice | undefined, slug: string, fallback
 }
 
 async function getGuideData() {
-  const { products } = await getProductsWithPrice()
+  const { products } = await getProductsWithPrice({ slugs: [SAMBA_SLUG, GAZELLE_SLUG] })
   const samba = summarize(products.find((p) => p.slug === SAMBA_SLUG), SAMBA_SLUG, 'adidas Samba OG')
   const gazelle = summarize(products.find((p) => p.slug === GAZELLE_SLUG), GAZELLE_SLUG, 'adidas Gazelle')
   return { samba, gazelle }
