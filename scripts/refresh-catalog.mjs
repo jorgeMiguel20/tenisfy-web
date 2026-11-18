@@ -22,7 +22,7 @@ if (!url || !key) { console.error('Falta NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SE
 const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
 
 const t0 = Date.now()
-const { products, error } = await getProductsWithPrice()
+const { products, error } = await getProductsWithPrice({ lean: true })
 if (error) { console.error('Erro ao ler o catálogo: ' + error); process.exit(1) }
 console.log(`Ténis lidos: ${products.length} (${Math.round((Date.now() - t0) / 1000)} s)`)
 
