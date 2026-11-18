@@ -15,7 +15,14 @@
 //   - onlyCurated: só os ténis escolhidos à mão (os que não vieram da
 //     importação automática). A homepage, /marcas e /promocoes usam esta
 //     opção para ficarem exatamente como estavam;
-//   - brandId: só os ténis de uma marca (páginas /marcas/<marca>).
+//   - brandId: só os ténis de uma marca (páginas /marcas/<marca>);
+//   - slugs: só os ténis com estes endereços (ex.: os guias, que precisam de
+//     1 ou 2 ténis e antes liam o catálogo inteiro de cada vez);
+//   - lean: leitura "magra" para o resumo do catálogo (scripts/refresh-catalog.mjs):
+//     só as colunas e as ofertas EM STOCK que o resumo usa, e as lojas lidas
+//     uma única vez em vez de repetidas em cada oferta. O resultado (preço
+//     mais baixo, lojas, tamanhos, poupança, descida de preço) é igual ao da
+//     leitura completa - só passa muito menos dados da base de dados.
 import { supabase } from '@/lib/supabase'
 import { productSelect } from '@/lib/productColumns'
 import { fetchAll } from '@/lib/fetchAll'
@@ -26,7 +33,13 @@ import type { ProductWithPrice } from './types'
 export type GetProductsOptions = {
   onlyCurated?: boolean
   brandId?: string
+  slugs?: string[]
+  lean?: boolean
 }
+
+// Colunas que o resumo do catálogo usa (ver lib/slimForGrid.ts e
+// lib/relevanceOrder.ts) - sem descrição, material, etc.
+const LEAN_PRODUCT_COLUMNS = 'id, brand_id, model_name, slug, category, gender, image_url, image_urls, is_active, created_at, color, base_colors, source'
 
 const SHOW_HIDDEN_IMPORTS = process.env.VERCEL_ENV === 'preview'
 
@@ -45,20 +58,42 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
   // mais pequenos (150), porque com mais de 10 000 ténis cada bocado de 400
   // com todas as ofertas chegava a passar o limite de 3 segundos da base de
   // dados e o build do site falhava. Marcas e listas curtas mantêm 400.
-  const pageSize = options.onlyCurated || options.brandId ? 400 : 150
+  const pageSize = options.onlyCurated || options.brandId || options.slugs ? 400 : options.lean ? 300 : 150
+
+  // Leitura magra: as lojas (poucas) lêem-se uma só vez e juntam-se às
+  // ofertas aqui, em vez de a base de dados as repetir em cada oferta.
+  const storeById = new Map<string, any>()
+  if (options.lean) {
+    const { data: storeRows, error: storesError } = await fetchAll<any>((from, to) =>
+      supabase.from('stores').select('id, name, base_url, shipping_base_fee, shipping_free_threshold, affiliate_url_template').order('id').range(from, to)
+    )
+    if (storesError) return { products: [], error: storesError }
+    for (const store of storeRows) storeById.set(store.id, store)
+  }
+
   const { data: rawProducts, error } = await fetchAll<any>((from, to) => {
     let query = supabase
       .from('products')
-      .select(productSelect(`
+      .select(
+        options.lean
+          ? (`${LEAN_PRODUCT_COLUMNS}, brands (id, name, slug), product_offers (id, price, in_stock, store_id, size)` as '*')
+          : productSelect(`
         brands (*),
         product_offers (id, price, in_stock, store_id, size, last_checked_at, affiliate_url, discontinued_at, stores (name, base_url, shipping_base_fee, shipping_free_threshold, affiliate_url_template))
-      `))
+      `)
+      )
+    if (options.lean) {
+      // Só ofertas em stock e não descontinuadas: são as únicas que contam
+      // para o preço, as lojas, os tamanhos e a poupança.
+      query = query.eq('product_offers.in_stock', true).is('product_offers.discontinued_at', null)
+    }
     // Nas versões de pré-visualização do site (Vercel "Preview", nunca no
     // site real) mostram-se também os ténis importados que ainda estão
     // escondidos - para o Jorge os ver no catálogo antes de os aprovar.
     query = SHOW_HIDDEN_IMPORTS ? query.or('is_active.eq.true,source.not.is.null') : query.eq('is_active', true)
     if (options.onlyCurated) query = query.is('source', null)
     if (options.brandId) query = query.eq('brand_id', options.brandId)
+    if (options.slugs) query = query.in('slug', options.slugs)
     return query.order('created_at', { ascending: true }).order('id', { ascending: true }).range(from, to)
     // Bocados de 400 ténis (com as ofertas de cada um): com milhares de
     // ténis, bocados de 1000 chegavam a passar o limite de 3 segundos da
@@ -74,7 +109,9 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
   // nenhum do site, não só na página do produto.
   const products = rawProducts.map((p) => ({
     ...p,
-    product_offers: ((p.product_offers ?? []) as any[]).filter((o) => !o.discontinued_at),
+    product_offers: ((p.product_offers ?? []) as any[])
+      .filter((o) => !o.discontinued_at)
+      .map((o) => (options.lean ? { ...o, stores: storeById.get(o.store_id) ?? null } : o)),
   }))
 
   // Melhor preço por dia de cada ténis (ofertas em stock), para detetar
@@ -91,7 +128,7 @@ export async function getProductsWithPrice(options: GetProductsOptions = {}): Pr
   const inStockOffers = products.flatMap((p) =>
     ((p.product_offers ?? []) as any[]).filter((o) => o.in_stock).map((o) => ({ offerId: o.id as string, productId: p.id as string }))
   )
-  if (options.brandId && inStockOffers.length <= MAX_OFFERS_FOR_TARGETED_HISTORY) {
+  if ((options.brandId || options.slugs) && inStockOffers.length <= MAX_OFFERS_FOR_TARGETED_HISTORY) {
     const productByOffer = new Map(inStockOffers.map((o) => [o.offerId, o.productId]))
     const since = new Date()
     since.setDate(since.getDate() - (PRICE_DROP_WINDOW_DAYS + 1))
