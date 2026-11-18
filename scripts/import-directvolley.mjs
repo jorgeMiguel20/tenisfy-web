@@ -204,26 +204,43 @@ function fixCaps(m) {
   return m.split(' ').map((w) => (/^[A-ZÀ-Ý]{4,}$/.test(w) ? w.charAt(0) + w.slice(1).toLowerCase() : w)).join(' ')
 }
 
-// O nome da loja vem traduzido à máquina: "Sapatilhas de running para
-// crianças adidas Tensaur Sport 2.0", "Sapatilhas indoor para mulher adidas
-// Crazyflight 6 Mid", "Sapatos de sapateado adidas Adilette 2.0" (chinelos!).
-// Fica só o nome do modelo ("Tensaur Sport 2.0"), como nos outros ténis do
-// Parjusto: o tipo de calçado já está na categoria.
-const LEADING_GENERIC = /^(sapatilhas|sapatilha|sapatos de sapateado|sapatos|ténis|tenis|chinelos|chinelas|chinelo|sandálias|sandália|chuteiras|botas|botins|mocassins|sabrinas|galochas|pantufas)\b(\s+(de|para|do|da)\s+(running|corrida|basquetebol|basquete|voleibol|andebol|ténis|tenis|padel|badminton|badmínton|squash|treino|futebol|futsal|ténis de mesa|ping[- ]pong|ginástica|halterofilismo|musculação|trail|caminhada)\b)?(\s+indoor)?(\s+(de|para)\s+(crianças|criança|mulher|mulheres|homem|homens|senhora|senhoras|rapaz|rapazes|rapariga|raparigas|bebé|bebés|júnior|junior|adulto|adultos))?\s+/iu
-const AUDIENCE_ANYWHERE = /\s+(de|para)\s+(crianças|criança|mulher|mulheres|homem|homens|senhora|senhoras|rapaz|rapazes|rapariga|raparigas|bebé|bebés|júnior|junior)\b/giu
+// O nome da loja vem traduzido à máquina e com palavras a mais: "Sapatilhas
+// de running para crianças adidas Tensaur Sport 2.0", "Calçado mulher Viper
+// 5", "Tênis feminino Workout Lo", "criança sandal glitter", "padel
+// Sapatilhas T.Point", "fitness basse Alyso", "Sapatos de sapateado adidas
+// Adilette 2.0" (chinelos!). Fica só o nome do modelo ("Tensaur Sport 2.0"),
+// como nos outros ténis do Parjusto: o tipo de calçado, o desporto e o
+// género já estão na ficha. Tira, ao princípio do nome, as palavras de tipo
+// de calçado, desporto e público; tira o nome da marca; e tira o público
+// (criança, mulher...) onde quer que apareça.
+const GENERIC_WORDS = new Set(['sapatilhas', 'sapatilha', 'sapatos', 'sapato', 'sapateado', 'ténis', 'tenis', 'tênis', 'calçado', 'calcado', 'chinelos', 'chinelo', 'chinelas', 'sandálias', 'sandalias', 'chuteiras', 'botas', 'botins', 'mocassins', 'sabrinas', 'galochas', 'pantufas', 'indoor', 'treinadora', 'treinadoras', 'fitness', 'basse', 'padel', 'running', 'corrida', 'basquetebol', 'basquete', 'voleibol', 'andebol', 'squash', 'badminton', 'badmínton', 'futsal', 'treino', 'de', 'para', 'do', 'da', 'e', 'em'])
+const AUDIENCE_WORDS = new Set(['criança', 'crianças', 'crianca', 'criancas', 'mulher', 'mulheres', 'feminino', 'femininos', 'feminina', 'femininas', 'homem', 'homens', 'masculino', 'masculinos', 'masculina', 'senhora', 'senhoras', 'rapaz', 'rapazes', 'rapariga', 'raparigas', 'bebé', 'bebés', 'júnior', 'junior', 'adulto', 'adultos', 'femme', 'homme', 'enfant'])
+const isNoise = (w) => GENERIC_WORDS.has(w.toLowerCase()) || AUDIENCE_WORDS.has(w.toLowerCase())
+
+function stripLeading(words) {
+  const out = [...words]
+  while (out.length > 1 && isNoise(out[0])) out.shift()
+  return out
+}
+
+function titleCaseIfAllLower(s) {
+  return s === s.toLowerCase() ? s.replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()) : s
+}
 
 export function modelName(productName, brandName) {
-  let n = String(productName || '').replace(/\s+/g, ' ').trim()
-  for (let i = 0; i < 3; i++) {
-    const next = n.replace(LEADING_GENERIC, '').trim()
-    if (next === n || next.length < 2) break
-    n = next
-  }
-  n = n.replace(AUDIENCE_ANYWHERE, ' ')
-  const brandWords = String(brandName || '').split(/[\s]+/).filter((w) => w.length > 1)
-  for (const w of brandWords) n = n.replace(new RegExp(`(^|\\s)${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`, 'i'), ' ')
-  n = n.replace(/\s+/g, ' ').trim()
-  return fixCaps(n) || 'Sapatilhas'
+  const original = String(productName || '').replace(/\s+/g, ' ').trim()
+  let words = stripLeading(original.split(' ').filter(Boolean))
+  const brandWords = String(brandName || '').split(/\s+/).filter((w) => w.length > 1).map((w) => w.toLowerCase())
+  const noBrand = words.filter((w) => !brandWords.includes(w.toLowerCase()))
+  if (noBrand.length) words = noBrand
+  words = stripLeading(words)
+  const noAudience = words.filter((w) => !AUDIENCE_WORDS.has(w.toLowerCase()))
+  if (noAudience.length) words = noAudience
+  let n = words.join(' ').trim()
+  // Só sobrou uma palavra genérica (ex.: "Sapatilhas", "Chinelos")? Usa o
+  // nome da loja sem a marca, para o ténis ter ao menos um nome próprio.
+  if (!n || (words.length === 1 && isNoise(words[0]))) n = original.split(' ').filter((w) => !brandWords.includes(w.toLowerCase())).join(' ').trim() || original
+  return fixCaps(titleCaseIfAllLower(n)) || 'Sapatilhas'
 }
 
 // ---------------------------------------------------------- Ficheiro CSV
