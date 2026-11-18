@@ -32,6 +32,32 @@ for (let attempt = 1; attempt <= 3; attempt++) {
 }
 if (!res.ok) { console.error('Não consegui descarregar o ficheiro'); process.exit(1) }
 
+
+// --- Resumo só do calçado (para decidir as regras do importador) ---
+const FOOT_RE = /chaussure|sneaker|crampon|sandale|tong|botte|claquette|pantoufle|mocassin|espadrille|soulier|chausson/i
+const tipos = {}
+const foot = { rows: 0, cats: {}, brands: {}, sizes: {}, groups: new Set(), eans: new Set(), prices: [], delivery: {}, genders: {}, ages: {}, imgHosts: {}, withOld: 0, samples: [] }
+function collectCalcado(r) {
+  const seg = String(r.merchant_category || '').split(' > ')
+  const tipo = seg[1] || '(vazio)'
+  tipos[tipo] = (tipos[tipo] || 0) + 1
+  if (!FOOT_RE.test(tipo)) return
+  foot.rows++
+  const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
+  inc(foot.cats, r.merchant_category)
+  inc(foot.brands, r.brand_name)
+  inc(foot.sizes, r.custom_1 || '(vazio)')
+  inc(foot.delivery, r.delivery_cost)
+  inc(foot.genders, r.custom_2)
+  inc(foot.ages, r.custom_3 || '(vazio)')
+  try { inc(foot.imgHosts, new URL(r.merchant_image_url).host) } catch { inc(foot.imgHosts, '(invalida)') }
+  foot.groups.add(r.parent_product_id || r.merchant_product_id)
+  if (r.ean) foot.eans.add(r.ean)
+  const p = Number(r.search_price); if (p) foot.prices.push(p)
+  if (r.rrp_price && Number(r.rrp_price) > p) foot.withOld++
+  if (foot.samples.length < 10 && foot.rows % 1500 === 1) foot.samples.push(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, String(v).slice(0, 160)])))
+}
+
 const FIELDS = ['merchant_category', 'category_name', 'Fashion:suitable_for', 'in_stock', 'brand_name', 'Fashion:size', 'colour', 'custom_1', 'custom_2', 'custom_3', 'custom_4', 'custom_5', 'custom_6']
 const counts = Object.fromEntries(FIELDS.map((f) => [f, {}]))
 const filled = {}
@@ -45,6 +71,7 @@ for await (const r of streamCsvRows(res)) {
   for (const h of header) if (r[h] && r[h] !== '0') filled[h] = (filled[h] || 0) + 1
   for (const f of FIELDS) { const k = r[f] || '(vazio)'; counts[f][k] = (counts[f][k] || 0) + 1 }
   groups.add(r.parent_product_id || r.merchant_product_id)
+  collectCalcado(r)
   if (rows % 9000 === 1 && samples.length < 8) {
     const s = { ...r }
     for (const k of Object.keys(s)) s[k] = String(s[k]).slice(0, 200)
@@ -55,3 +82,15 @@ const top = (o, n) => Object.fromEntries(Object.entries(o).sort((a, b) => b[1] -
 console.log(JSON.stringify({ feed: FEED_ID, rows, distinctGroups: groups.size, header, filled }, null, 1))
 for (const f of FIELDS) console.log(`CONTAGEM ${f}:`, JSON.stringify(top(counts[f], f === 'Fashion:size' ? 70 : 40)))
 for (const s of samples) console.log('EXEMPLO', JSON.stringify(s))
+
+const topN = (o, n) => Object.fromEntries(Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n))
+foot.prices.sort((a, b) => a - b)
+const q = (f) => foot.prices[Math.floor(foot.prices.length * f)]
+console.log('TIPOS (segundo nível da categoria):', JSON.stringify(topN(tipos, 80)))
+console.log('CALCADO resumo:', JSON.stringify({ linhas: foot.rows, produtosDistintos: foot.groups.size, eansDistintos: foot.eans.size, comPrecoAntigoMaior: foot.withOld, preco: { min: foot.prices[0], p25: q(0.25), mediana: q(0.5), p75: q(0.75), max: foot.prices[foot.prices.length - 1] } }))
+console.log('CALCADO categorias:', JSON.stringify(topN(foot.cats, 120)))
+console.log('CALCADO marcas:', JSON.stringify(topN(foot.brands, 80)))
+console.log('CALCADO tamanhos:', JSON.stringify(topN(foot.sizes, 60)))
+console.log('CALCADO portes:', JSON.stringify(topN(foot.delivery, 10)), 'generos:', JSON.stringify(foot.genders), 'idades:', JSON.stringify(foot.ages))
+console.log('CALCADO imagens (servidores):', JSON.stringify(topN(foot.imgHosts, 10)))
+for (const s of foot.samples) console.log('CALCADO EXEMPLO', JSON.stringify(s))
