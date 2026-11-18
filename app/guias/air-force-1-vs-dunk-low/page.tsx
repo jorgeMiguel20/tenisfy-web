@@ -64,7 +64,7 @@ function summarize(product: ProductWithPrice | undefined, slug: string, fallback
 }
 
 async function getGuideData() {
-  const { products } = await getProductsWithPrice()
+  const { products } = await getProductsWithPrice({ slugs: [AF1_SLUG, DUNK_SLUG] })
   const af1 = summarize(products.find((p) => p.slug === AF1_SLUG), AF1_SLUG, "Nike Air Force 1 '07")
   const dunk = summarize(products.find((p) => p.slug === DUNK_SLUG), DUNK_SLUG, 'Nike Dunk Low')
   return { af1, dunk }
