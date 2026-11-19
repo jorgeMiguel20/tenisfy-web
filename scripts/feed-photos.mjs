@@ -21,6 +21,9 @@ const SIDE = 800
 const MAX_W = 0.85
 const MAX_H = 0.58
 const TOLERANCE = 14
+// modo estrito: o fundo também se espalha onde a cor muda devagar (degradé)
+const GRADIENT_STEP = 3
+const GRADIENT_MAX = 40
 
 // Pede à loja a foto num tamanho razoável (as do ficheiro da About You vêm a
 // 2000px).
@@ -51,25 +54,66 @@ export async function normalizePhoto(input, opts = {}) {
   const ref = [0, 1, 2].map((j) => corners.reduce((s, k) => s + p[k + j], 0) / 4)
   const dist = (k) => Math.max(Math.abs(p[k] - ref[0]), Math.abs(p[k + 1] - ref[1]), Math.abs(p[k + 2] - ref[2]))
 
+  // Modo estrito (Direct-Volley, Ulanka): as fotos da loja têm muitas vezes
+  // fundo em degradé (mais claro ao centro) e, às vezes, são um pormenor
+  // ampliado ou um corte do ténis. Aqui o fundo também se espalha por zonas
+  // onde a cor muda devagar (degradé), pequenas manchas soltas são limpas, e
+  // se o ténis atravessa uma borda da foto está cortado e não serve.
+  const strict = !!opts.strict
   const bg = new Uint8Array(n)
   const queue = new Int32Array(n)
   let head = 0
   let tail = 0
-  const push = (i) => {
-    if (bg[i] === 0 && dist(i * ch) <= TOLERANCE) {
+  const stepDist = (a, b) => Math.max(Math.abs(p[a] - p[b]), Math.abs(p[a + 1] - p[b + 1]), Math.abs(p[a + 2] - p[b + 2]))
+  const push = (i, from) => {
+    if (bg[i] !== 0) return
+    const k = i * ch
+    const d = dist(k)
+    if (d <= TOLERANCE || (strict && from >= 0 && d <= GRADIENT_MAX && stepDist(k, from * ch) <= GRADIENT_STEP)) {
       bg[i] = 1
       queue[tail++] = i
     }
   }
-  for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x) }
-  for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1) }
+  for (let x = 0; x < w; x++) { push(x, -1); push((h - 1) * w + x, -1) }
+  for (let y = 0; y < h; y++) { push(y * w, -1); push(y * w + w - 1, -1) }
   while (head < tail) {
     const i = queue[head++]
     const x = i % w
-    if (x > 0) push(i - 1)
-    if (x < w - 1) push(i + 1)
-    if (i >= w) push(i - w)
-    if (i < n - w) push(i + w)
+    if (x > 0) push(i - 1, i)
+    if (x < w - 1) push(i + 1, i)
+    if (i >= w) push(i - w, i)
+    if (i < n - w) push(i + w, i)
+  }
+  const bgCount = tail
+
+  if (strict) {
+    // manchas soltas (ruído, reflexos) deixam de contar como ténis
+    const label = new Int32Array(n)
+    const sizes = [0]
+    for (let i = 0; i < n; i++) {
+      if (bg[i] || label[i]) continue
+      const id = sizes.length
+      let size = 0
+      let qh = 0
+      let qt = 0
+      label[i] = id
+      queue[qt++] = i
+      while (qh < qt) {
+        const j = queue[qh++]
+        size++
+        const x = j % w
+        if (x > 0 && !bg[j - 1] && !label[j - 1]) { label[j - 1] = id; queue[qt++] = j - 1 }
+        if (x < w - 1 && !bg[j + 1] && !label[j + 1]) { label[j + 1] = id; queue[qt++] = j + 1 }
+        if (j >= w && !bg[j - w] && !label[j - w]) { label[j - w] = id; queue[qt++] = j - w }
+        if (j < n - w && !bg[j + w] && !label[j + w]) { label[j + w] = id; queue[qt++] = j + w }
+      }
+      sizes.push(size)
+    }
+    const minSize = Math.max(150, Math.round(n * 0.003))
+    for (let i = 0; i < n; i++) if (!bg[i] && sizes[label[i]] < minSize) bg[i] = 1
+    // o ténis atravessa uma borda da foto? (uma ponta que só toca não conta)
+    const run = (idx, len) => { let c = 0; for (let t = 0; t < len; t++) if (!bg[idx(t)]) c++; return c > Math.max(6, len * 0.02) }
+    if (run((t) => t, w) || run((t) => (h - 1) * w + t, w) || run((t) => t * w, h) || run((t) => t * w + w - 1, h)) throw new Error('ténis cortado na foto')
   }
 
   let x0 = w, y0 = h, x1 = -1, y1 = -1
@@ -98,15 +142,10 @@ export async function normalizePhoto(input, opts = {}) {
   if (x1 < 0) throw new Error('foto sem ténis (só fundo)')
   const bw = x1 - x0 + 1
   const bh = y1 - y0 + 1
-  // Modo estrito (Direct-Volley, Ulanka): a foto da loja pode ser um pormenor
-  // ampliado ou um corte do ténis. Se o ténis encosta a uma borda da foto,
-  // está cortado; e um ténis de lado é mais largo do que alto (de frente,
-  // de cima ou só um pormenor não servem como foto principal).
-  if (opts.strict) {
-    if (x0 <= 1 || x1 >= w - 2 || y0 <= 1 || y1 >= h - 2) throw new Error('ténis cortado na foto')
-    if (bw / bh < 1.05) throw new Error('ténis não está de lado')
-  }
-  const bgShare = tail / n
+  // Um ténis de lado é mais largo do que alto (de frente, de cima ou só um
+  // pormenor não servem como foto principal).
+  if (strict && bw / bh < 1.05) throw new Error('ténis não está de lado')
+  const bgShare = bgCount / n
   // Se quase nada for fundo, o fundo não era uniforme (foto de ambiente):
   // não serve como foto principal.
   if (bgShare < 0.2) throw new Error('fundo não uniforme')
