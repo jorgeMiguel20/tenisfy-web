@@ -130,6 +130,8 @@ const field = (p, name) => {
 }
 
 // Marca própria da loja: não entra.
+// Ligação de afiliado da Tradedoubler (programa 398192, site 3501899).
+const AFFILIATE_TEMPLATE = 'https://clk.tradedoubler.com/click?p=398192&a=3501899&url={url}'
 const OWN_BRANDS = /^(ulanka|ulk)$/i
 // É ténis: o nome diz "sneakers", "trainers", "zapatillas"...
 const SNEAKER_RE = /sneaker|trainer|zapatilla|runner|running|baskets?\b|tenis|tênis/i
@@ -265,6 +267,21 @@ export function modelName(nameBase, brandName) {
   return phrase ? 'Sapatilha ' + phrase : 'Sapatilha'
 }
 
+// Se o nome da loja não traz o modelo ("Zapatillas blancas de running ASICS"),
+// o modelo costuma estar no endereço da página ("...-asics-gel-1130"): usa-se
+// o mesmo tratamento sobre as palavras do endereço.
+function slugWords(u) {
+  try { return (new URL(u).pathname.split('/').filter(Boolean).pop() || '').replace(/[-_]+/g, ' ') } catch { return '' }
+}
+const isDescriptive = (m) => /^Sapatilha( |$)/.test(m)
+export function bestModelName(name, brand, rows) {
+  const m = modelName(splitName(name).base, brand)
+  if (!isDescriptive(m)) return m
+  const u = (rows || []).find((r) => r.url)?.url
+  const alt = u ? modelName(slugWords(u), brand) : m
+  return isDescriptive(alt) ? m : alt
+}
+
 // O endereço de compra vem dentro do link da Tradedoubler: url(<endereço>).
 // Fica só o da loja, sem os parâmetros de campanha (utm_*).
 export function directUrl(productUrl) {
@@ -353,6 +370,13 @@ async function main() {
       store = (await sb('stores', { method: 'POST', body: { slug: STORE_SLUG, name: 'Ulanka', base_url: 'https://ulanka.com' }, prefer: 'return=representation' }))[0]
       console.log('Loja Ulanka criada')
     }
+    // Links de afiliado (Tradedoubler): AFFILIATE_LINKS=on liga, off desliga,
+    // vazio não mexe.
+    if (store && (process.env.AFFILIATE_LINKS === 'on' || process.env.AFFILIATE_LINKS === 'off')) {
+      const template = process.env.AFFILIATE_LINKS === 'on' ? AFFILIATE_TEMPLATE : null
+      await sb('stores?id=eq.' + store.id, { method: 'PATCH', body: { affiliate_url_template: template }, prefer: 'return=minimal' })
+      console.log('Links de afiliado da Ulanka: ' + (template ? 'LIGADOS' : 'desligados'))
+    }
     const brands = await sbAll('brands?select=id,slug,name')
     const brandBySlug = new Map(brands.map((b) => [b.slug, b]))
 
@@ -431,7 +455,7 @@ async function main() {
           const own = ownByRef.get(g.id)
           if (MODE === 'full' && own && !own.is_active) {
             const q = g.first
-            const want = { model_name: modelName(splitName(q.name).base, q.brand), color: colorFromName(q.name), category: mapCategory(q.name), gender: mapGender(q.name, q.description, field(q, 'g:age_group'), gRows.map((r) => r.size)) }
+            const want = { model_name: bestModelName(q.name, q.brand, g.rows), color: colorFromName(q.name), category: mapCategory(q.name), gender: mapGender(q.name, q.description, field(q, 'g:age_group'), gRows.map((r) => r.size)) }
             const patch = {}
             for (const k of Object.keys(want)) if (own[k] !== want[k]) patch[k] = want[k]
             if (Object.keys(patch).length) {
@@ -509,7 +533,7 @@ async function main() {
       const candidates = createList.map((c) => {
         const p = c.g.first
         const brand = brandBySlug.get(brandOf(p.brand))
-        const model = modelName(splitName(p.name).base, p.brand)
+        const model = bestModelName(p.name, p.brand, c.rows)
         const color = colorFromName(p.name)
         const base = slugify((brand?.name ?? p.brand) + ' ' + model + ' ' + (color || '') + ' ' + (c.gender === 'crianca' ? 'crianca' : '')).slice(0, 80).replace(/-+$/, '')
         if (/[ñáéíóú]|\b(de|con|para|sin|del|y)\b/i.test(model) && report.nameCheck.length < 40) report.nameCheck.push(model + ' <- ' + String(p.name).slice(0, 80))
