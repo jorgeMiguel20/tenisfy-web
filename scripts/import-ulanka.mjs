@@ -179,7 +179,7 @@ export function mapGender(name, description, ageGroup, sizes) {
 // Cor: só quando o nome a diz (o ficheiro não tem campo de cor).
 const COLOR_WORDS = [
   [/\b(black|negr[oa]s?|noir)\b/i, 'Preto'], [/\b(white|blanc[oa]s?)\b/i, 'Branco'], [/\b(grey|gray|gris(?:es)?)\b/i, 'Cinzento'],
-  [/\b(blue|azul(?:es)?|navy|marino)\b/i, 'Azul'], [/\b(red|roj[oa]s?|burdeos|granate)\b/i, 'Vermelho'], [/\b(green|verdes?|kaki|khaki)\b/i, 'Verde'],
+  [/\b(blue|azul(?:es)?|navy|marino)\b/i, 'Azul'], [/\b(red|roj[oa]s?|burdeos|granate)\b/i, 'Vermelho'], [/\b(green|verdes?|kaki|khaki|caqui|lima)\b/i, 'Verde'],
   [/\b(yellow|amarill[oa]s?|mostaza)\b/i, 'Amarelo'], [/\b(orange|naranjas?)\b/i, 'Laranja'], [/\b(pink|rosas?|fucsia)\b/i, 'Rosa'],
   [/\b(purple|morad[oa]s?|violeta|lila)\b/i, 'Roxo'], [/\b(brown|marr[oó]n(?:es)?|camel|tostad[oa]s?|chocolate)\b/i, 'Castanho'],
   [/\b(beige|cream|crema|crudo|sand|arena|nude)\b/i, 'Bege'],
@@ -211,7 +211,7 @@ function fixCaps(m) {
 }
 
 function titleCaseIfAllLower(s) {
-  return s === s.toLowerCase() ? s.replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()) : s
+  return s === s.toLowerCase() ? s.replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(Xl|Og|Gs|Gt)\b/g, (w) => w.toUpperCase()) : s
 }
 
 // O nome da loja vem em inglês e em espanhol ("Zapatillas Deportivas
@@ -229,6 +229,7 @@ const PT_WORDS = {
   plataforma: 'plataforma', cordones: 'atacadores', anchos: 'largos', cierre: 'fecho', cierres: 'fechos', cremallera: 'fecho', cremalleras: 'fechos',
   laterales: 'laterais', lateral: 'lateral', bordado: 'bordado', ajuste: 'ajuste', 'rápido': 'rápido', rapido: 'rápido',
   'ecológicas': 'ecológica', 'ecológica': 'ecológica', ecologicas: 'ecológica', ecologica: 'ecológica', perforados: 'perfurada', perforadas: 'perfurada', perforado: 'perfurada',
+  'caña': 'cano', cana: 'cano', baja: 'baixo', bajas: 'baixo', media: 'médio', alta: 'alto', detalles: 'detalhes', detalle: 'detalhe', retro: 'retro', chunky: 'chunky',
   plateadas: 'prateada', plateado: 'prateado', plateados: 'prateado', doradas: 'dourada', dorado: 'dourado', dorados: 'dourado',
 }
 const isColorWord = (w) => COLOR_WORDS.some(([re]) => re.test(w))
@@ -248,6 +249,7 @@ export function modelName(nameBase, brandName) {
     if (REMOVE_WORDS.has(lc)) continue
     if (isColorWord(t)) continue
     if (lc === 'em' || lc === 'sintética') { desc.push(lc); continue }
+    if (lc === 'suede' && brandWords.includes('puma')) { nameLike.push(t); desc.push(t); continue }
     if (lc === 'pele' || PT_WORDS[lc]) {
       const w = lc === 'pele' ? 'pele' : PT_WORDS[lc]
       if (MATERIALS.has(w) && desc.length && !['em', 'de', 'do', 'com', 'sem'].includes(desc[desc.length - 1])) desc.push('em')
@@ -276,10 +278,12 @@ function slugWords(u) {
 const isDescriptive = (m) => /^Sapatilha( |$)/.test(m)
 export function bestModelName(name, brand, rows) {
   const m = modelName(splitName(name).base, brand)
-  if (!isDescriptive(m)) return m
+  const bad = (x) => isDescriptive(x) || /^\d{1,2}$/.test(x)
+  if (!bad(m)) return m
   const u = (rows || []).find((r) => r.url)?.url
   const alt = u ? modelName(slugWords(u), brand) : m
-  return isDescriptive(alt) ? m : alt
+  if (!bad(alt)) return alt
+  return isDescriptive(m) ? m : isDescriptive(alt) ? alt : 'Sapatilha'
 }
 
 // O endereço de compra vem dentro do link da Tradedoubler: url(<endereço>).
