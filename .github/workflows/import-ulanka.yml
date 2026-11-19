@@ -1,11 +1,13 @@
 # .github/workflows/import-ulanka.yml
 #
 # Importação dos ténis desportivos e de lifestyle da Ulanka (ficheiro de
-# produtos da Tradedoubler, feed 258453). Corre SÓ À MÃO em "Run workflow" no
-# separador Actions do GitHub (sem horário): o Jorge aprova primeiro o lote de
-# teste. Depois de aprovado, junta-se o horário diário (depois das importações
-# da manhã) e a atualização do resumo do catálogo das 08:50 trata do resto. As
-# chaves vêm dos "secrets" do repositório - nunca ficam escritas aqui.
+# produtos da Tradedoubler, feed 258453). Corre sozinho todos os dias às
+# 07:43 (hora UTC), nos servidores do GitHub, no modo "full", com os ténis
+# novos a ficarem logo visíveis - pedido do Jorge em 2026-11-19. Corre depois
+# da Direct-Volley (07:13) e antes da atualização do resumo do catálogo
+# (08:50). Também se pode correr à mão em "Run workflow" no separador Actions
+# do GitHub. As chaves vêm dos "secrets" do repositório - nunca ficam
+# escritas aqui.
 #
 # Modos:
 #   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão (não
@@ -14,19 +16,23 @@
 #             "activate_new" ligado, os ténis com foto tratada e stock
 #             ficam visíveis no site
 #   photos  - só trata as fotos que faltam (não lê o ficheiro da loja)
+#   embeddings - só prepara a pesquisa por foto dos ténis importados que
+#             ainda não estão preparados (o modo full também o faz no fim)
 #   review  - não altera nada: guarda uma folha com as fotos dos ténis
 #             escondidos (endereço no fim do registo), para o Jorge ver
 name: Importar Ulanka
 
 on:
+  schedule:
+    - cron: '43 7 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'test, full, photos ou review'
+        description: 'test, full, photos, embeddings ou review'
         required: true
         default: test
         type: choice
-        options: [test, full, photos, review]
+        options: [test, full, photos, embeddings, review]
       limit:
         description: 'test: quantos ténis novos criar'
         required: false
@@ -36,12 +42,23 @@ on:
         required: false
         default: false
         type: boolean
+      embed_minutes:
+        description: 'embeddings/full: minutos máximos para preparar a pesquisa por foto'
+        required: false
+        default: '20'
 
 jobs:
   importar:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
+      # Quando corre sozinho (schedule) não há escolhas: modo full, ténis
+      # novos visíveis.
+      RUN_MODE: ${{ inputs.mode || 'full' }}
+      # Links de afiliado da Ulanka (Tradedoubler): "on" liga, "off" desliga,
+      # vazio não mexe (ver scripts/import-ulanka.mjs). Ligados em
+      # 2026-11-19, com o aviso de afiliados já no site.
+      AFFILIATE_LINKS: 'on'
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       TRADEDOUBLER_TOKEN: ${{ secrets.TRADEDOUBLER_TOKEN }}
@@ -53,6 +70,7 @@ jobs:
       # O tratamento das fotos usa a biblioteca "sharp", instalada numa
       # pasta à parte para não instalar o site inteiro.
       - name: Preparar o importador
+        if: env.RUN_MODE != 'embeddings'
         run: |
           mkdir -p /tmp/imp
           cp scripts/feed-stream.mjs scripts/feed-photos.mjs scripts/import-ulanka.mjs /tmp/imp/
@@ -60,8 +78,22 @@ jobs:
           npm init -y > /dev/null
           npm install --no-audit --no-fund sharp@0.34.5
       - name: Importar ténis da Ulanka
+        if: env.RUN_MODE != 'embeddings'
         env:
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ env.RUN_MODE }}
           LIMIT: ${{ inputs.limit || '50' }}
-          ACTIVATE_NEW: ${{ inputs.activate_new }}
+          ACTIVATE_NEW: ${{ github.event_name == 'schedule' || inputs.activate_new }}
         run: node /tmp/imp/import-ulanka.mjs
+      # Pesquisa por foto: o mesmo modelo que o site usa no browser. Pára ao
+      # fim do tempo indicado e continua no dia seguinte com os que faltarem.
+      - name: Preparar a pesquisa por foto
+        if: env.RUN_MODE == 'full' || env.RUN_MODE == 'embeddings'
+        env:
+          EMBED_MAX_MINUTES: ${{ inputs.embed_minutes || '20' }}
+        run: |
+          mkdir -p /tmp/emb
+          cp scripts/feed-embeddings.mjs /tmp/emb/
+          cd /tmp/emb
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund @huggingface/transformers@4.2.0
+          node /tmp/emb/feed-embeddings.mjs

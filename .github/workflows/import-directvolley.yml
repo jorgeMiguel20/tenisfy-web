@@ -1,12 +1,13 @@
 # .github/workflows/import-directvolley.yml
 #
 # Importação do calçado da Direct-Volley PT (ficheiro de produtos da Awin,
-# feed 95032). Por agora corre SÓ À MÃO em "Run workflow" no separador
-# Actions do GitHub (sem horário): o Jorge aprova primeiro o lote de teste.
-# Depois de aprovado, junta-se o horário diário (depois das importações da
-# manhã: 03:13, 04:43 e 06:43 UTC) e a atualização do resumo do catálogo
-# das 08:50 trata do resto. As chaves vêm dos "secrets" do repositório -
-# nunca ficam escritas aqui.
+# feed 95032). Corre sozinho todos os dias às 07:13 (hora UTC), nos
+# servidores do GitHub, no modo "full", com os ténis novos a ficarem logo
+# visíveis - pedido do Jorge em 2026-11-19. Corre depois das importações da
+# manhã (03:13, 04:43 e 06:43) e antes da atualização do resumo do catálogo
+# das 08:50. Não entram chinelos nem sandálias. Também se pode correr à mão em
+# "Run workflow" no separador Actions do GitHub. As chaves vêm dos "secrets"
+# do repositório - nunca ficam escritas aqui.
 #
 # Modos:
 #   test    - cria até "limit" ténis novos ESCONDIDOS, para revisão (não
@@ -22,6 +23,8 @@
 name: Importar Direct-Volley
 
 on:
+  schedule:
+    - cron: '13 7 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -42,7 +45,7 @@ on:
       categories:
         description: 'full: categorias a importar, separadas por vírgulas (vazio = todas)'
         required: false
-        default: 'running,treino,futebol,indoor'
+        default: 'running,treino,futebol,indoor,desporto,lifestyle'
       embed_minutes:
         description: 'embeddings/full: minutos máximos para preparar a pesquisa por foto'
         required: false
@@ -53,10 +56,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      RUN_MODE: ${{ inputs.mode }}
-      # Links de afiliado da Direct-Volley: vazio = não mexe (continuam
-      # desligados até o Jorge aprovar; ver scripts/import-directvolley.mjs).
-      AFFILIATE_LINKS: ''
+      # Quando corre sozinho (schedule) não há escolhas: modo full, ténis
+      # novos visíveis.
+      RUN_MODE: ${{ inputs.mode || 'full' }}
+      # Links de afiliado da Direct-Volley (Awin): "on" liga, "off" desliga,
+      # vazio não mexe (ver scripts/import-directvolley.mjs). Ligados em
+      # 2026-11-19, com o aviso de afiliados já no site.
+      AFFILIATE_LINKS: 'on'
       SUPABASE_URL: https://byuxqagyeideqeurplho.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
@@ -80,8 +86,8 @@ jobs:
         env:
           MODE: ${{ env.RUN_MODE }}
           LIMIT: ${{ inputs.limit || '50' }}
-          ACTIVATE_NEW: ${{ inputs.activate_new }}
-          CATEGORIES: ${{ inputs.categories }}
+          ACTIVATE_NEW: ${{ github.event_name == 'schedule' || inputs.activate_new }}
+          CATEGORIES: ${{ inputs.categories || 'running,treino,futebol,indoor,desporto,lifestyle' }}
         run: node /tmp/imp/import-directvolley.mjs
       # Pesquisa por foto: o mesmo modelo que o site usa no browser. Pára ao
       # fim do tempo indicado e continua na vez seguinte com os que faltarem.
