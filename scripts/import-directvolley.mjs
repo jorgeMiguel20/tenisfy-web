@@ -52,6 +52,8 @@ const FEED_ID = process.env.AWIN_FEED_ID || '95032'
 const MODE = process.env.MODE || 'test'
 const LIMIT = Number(process.env.LIMIT || 50)
 const ACTIVATE_NEW = process.env.ACTIVATE_NEW === 'true'
+// artigos que passaram o filtro da loja mas não são ténis (meias de compressão, nome sem modelo...): nunca ficam visíveis
+const NOT_SHOE_NAME = /terapia|compress[ãa]o|caneleira|^sal[ãa]o$/i
 const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 4000)
 // Importação por fases: lista de categorias do Parjusto a importar (separadas
 // por vírgulas, ex. "running,treino,futebol,indoor"). Vazia = todas. A lista
@@ -223,7 +225,7 @@ function fixCaps(m) {
 // género já estão na ficha. Tira, ao princípio do nome, as palavras de tipo
 // de calçado, desporto e público; tira o nome da marca; e tira o público
 // (criança, mulher...) onde quer que apareça.
-const GENERIC_WORDS = new Set(['sapatilhas', 'sapatilha', 'sapatos', 'sapato', 'sapateado', 'ténis', 'tenis', 'tênis', 'calçado', 'calcado', 'chinelos', 'chinelo', 'chinelas', 'sandálias', 'sandalias', 'chuteiras', 'botas', 'botins', 'mocassins', 'sabrinas', 'galochas', 'pantufas', 'indoor', 'treinadora', 'treinadoras', 'fitness', 'basse', 'padel', 'running', 'corrida', 'basquetebol', 'basquete', 'voleibol', 'andebol', 'squash', 'badminton', 'badmínton', 'futsal', 'treino', 'de', 'para', 'do', 'da', 'e', 'em'])
+const GENERIC_WORDS = new Set(['sapatilhas', 'sapatilha', 'sapatos', 'sapato', 'sapateado', 'ténis', 'tenis', 'tênis', 'calçado', 'calcado', 'chinelos', 'chinelo', 'chinelas', 'sandálias', 'sandalias', 'chuteiras', 'botas', 'botins', 'mocassins', 'sabrinas', 'galochas', 'pantufas', 'indoor', 'treinadora', 'treinadoras', 'fitness', 'basse', 'padel', 'running', 'corrida', 'basquetebol', 'basquete', 'voleibol', 'andebol', 'squash', 'badminton', 'badmínton', 'futsal', 'treino', 'de', 'para', 'do', 'da', 'e', 'em', 'salão', 'salao', 'interior', 'infantil', 'halterofilismo', 'halterofilia', 'netball', 'atletismo', 'menina', 'menino', 'meninas', 'meninos', 'baixos', 'baixas', 'largas', 'sintéticas', 'caneleiras', 'meia-altura', 'mid', 'cano', 'médio', 'com', 'palmilha', 'estampa', 'gráfica', 'andar', 'por', 'dentro'])
 const AUDIENCE_WORDS = new Set(['criança', 'crianças', 'crianca', 'criancas', 'mulher', 'mulheres', 'feminino', 'femininos', 'feminina', 'femininas', 'homem', 'homens', 'masculino', 'masculinos', 'masculina', 'senhora', 'senhoras', 'rapaz', 'rapazes', 'rapariga', 'raparigas', 'bebé', 'bebés', 'júnior', 'junior', 'adulto', 'adultos', 'femme', 'homme', 'enfant'])
 const isNoise = (w) => GENERIC_WORDS.has(w.toLowerCase()) || AUDIENCE_WORDS.has(w.toLowerCase())
 
@@ -250,7 +252,8 @@ export function modelName(productName, brandName) {
   // Só sobrou uma palavra genérica (ex.: "Sapatilhas", "Chinelos")? Usa o
   // nome da loja sem a marca, para o ténis ter ao menos um nome próprio.
   if (!n || (words.length === 1 && isNoise(words[0]))) n = original.split(' ').filter((w) => !brandWords.includes(w.toLowerCase())).join(' ').trim() || original
-  return fixCaps(titleCaseIfAllLower(n)) || 'Sapatilhas'
+  n = fixCaps(titleCaseIfAllLower(n))
+  return (n ? n.charAt(0).toUpperCase() + n.slice(1) : '') || 'Sapatilhas'
 }
 
 // ---------------------------------------------------------- Ficheiro CSV
@@ -588,13 +591,13 @@ async function main() {
     // tratada e pelo menos um tamanho em stock (em qualquer loja); fica
     // escondido o que ficou sem stock nenhum.
     if (ACTIVATE_NEW && MODE !== 'test') {
-      const imported = await sbAll(`products?source=eq.${SOURCE}&select=id,is_active,category,image_url,product_offers(in_stock,discontinued_at)&order=id`)
+      const imported = await sbAll(`products?source=eq.${SOURCE}&select=id,is_active,category,model_name,image_url,product_offers(in_stock,discontinued_at)&order=id`)
       const toOn = []
       const toOff = []
       for (const p of imported) {
         const hasStock = (p.product_offers ?? []).some((o) => o.in_stock && !o.discontinued_at)
         const photoOk = String(p.image_url || '').includes('/product-photos/')
-        if (!p.is_active && hasStock && photoOk && p.category !== 'sandalias') toOn.push(p.id)
+        if (!p.is_active && hasStock && photoOk && p.category !== 'sandalias' && !NOT_SHOE_NAME.test(p.model_name || '')) toOn.push(p.id)
         if (p.is_active && !hasStock) toOff.push(p.id)
       }
       for (const [ids, value] of [[toOn, true], [toOff, false]]) {
