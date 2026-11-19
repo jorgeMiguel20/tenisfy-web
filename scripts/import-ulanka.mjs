@@ -54,6 +54,8 @@ const FEED_ID = process.env.TD_FEED_ID || '258453'
 const MODE = process.env.MODE || 'test'
 const LIMIT = Number(process.env.LIMIT || 50)
 const ACTIVATE_NEW = process.env.ACTIVATE_NEW === 'true'
+// fichas que já existiam antes de o filtro as excluir (botas...): nunca ficam visíveis
+const NOT_SHOE_NAME = /abotinad|bot[ií]n|botines/i
 const PHOTO_LIMIT = Number(process.env.PHOTO_LIMIT || 2000)
 const SOURCE = 'ulanka'
 const STORE_SLUG = 'ulanka'
@@ -677,13 +679,13 @@ async function main() {
     // e pelo menos um tamanho em stock (em qualquer loja); fica escondido o
     // que ficou sem stock nenhum.
     if (ACTIVATE_NEW && MODE !== 'test') {
-      const imported = await sbAll('products?source=eq.' + SOURCE + '&select=id,is_active,image_url,product_offers(in_stock,discontinued_at)&order=id')
+      const imported = await sbAll('products?source=eq.' + SOURCE + '&select=id,is_active,model_name,image_url,product_offers(in_stock,discontinued_at)&order=id')
       const toOn = []
       const toOff = []
       for (const p of imported) {
         const hasStock = (p.product_offers ?? []).some((o) => o.in_stock && !o.discontinued_at)
         const photoOk = String(p.image_url || '').includes('/product-photos/')
-        if (!p.is_active && hasStock && photoOk) toOn.push(p.id)
+        if (!p.is_active && hasStock && photoOk && !NOT_SHOE_NAME.test(p.model_name || '')) toOn.push(p.id)
         if (p.is_active && !hasStock) toOff.push(p.id)
       }
       for (const [ids, value] of [[toOn, true], [toOff, false]]) {
