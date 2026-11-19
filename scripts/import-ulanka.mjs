@@ -45,7 +45,7 @@
 // ténis escondidos em product-photos/_review/). Resumo de cada execução:
 // tabela import_runs.
 import { streamProducts } from './feed-stream.mjs'
-import { processAndUpload, uploadPhoto } from './feed-photos.mjs'
+import { processAndUploadBest, uploadPhoto } from './feed-photos.mjs'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -134,7 +134,7 @@ const OWN_BRANDS = /^(ulanka|ulk)$/i
 // É ténis: o nome diz "sneakers", "trainers", "zapatillas"...
 const SNEAKER_RE = /sneaker|trainer|zapatilla|runner|running|baskets?\b|tenis|tênis/i
 // Não é ténis, mesmo que o nome tenha uma das palavras acima.
-const NOT_SNEAKER_RE = /clog|sandal|\bboots?\b|bota|loafer|mocas|slipper|pantufa|flip.?flop|sabot|zueco|espadrille|slide|ballerina|heel|wedge|oxford|derby|moccasin|sock|shoelace|\blaces\b|charm|jibbitz|insole|plantilla|candle|sunglass|\bbag\b|jacket|jeans|sweater|shirt|hoodie|\bcap\b|beanie/i
+const NOT_SNEAKER_RE = /clog|sandal|\bboots?\b|bota|loafer|mocas|slipper|pantufa|flip.?flop|sabot|zueco|espadrille|slide|ballerina|heel|wedge|abotinad|bot[ií]n|botines|chancl|alpargata|chinela|\bmules?\b|oxford|derby|moccasin|sock|shoelace|\blaces\b|charm|jibbitz|insole|plantilla|candle|sunglass|\bbag\b|jacket|jeans|sweater|shirt|hoodie|\bcap\b|beanie/i
 
 // "Marca Modelo - Tipo, 40" -> { base: "Marca Modelo", type: "Tipo" }
 function splitName(name) {
@@ -176,10 +176,11 @@ export function mapGender(name, description, ageGroup, sizes) {
 
 // Cor: só quando o nome a diz (o ficheiro não tem campo de cor).
 const COLOR_WORDS = [
-  [/\b(black|negro|noir)\b/i, 'Preto'], [/\b(white|blanco)\b/i, 'Branco'], [/\b(grey|gray|gris)\b/i, 'Cinzento'],
-  [/\b(blue|azul|navy)\b/i, 'Azul'], [/\b(red|rojo)\b/i, 'Vermelho'], [/\b(green|verde)\b/i, 'Verde'],
-  [/\b(yellow|amarillo)\b/i, 'Amarelo'], [/\b(orange|naranja)\b/i, 'Laranja'], [/\b(pink|rosa)\b/i, 'Rosa'],
-  [/\b(purple|morado)\b/i, 'Roxo'], [/\b(brown|marr[oó]n)\b/i, 'Castanho'], [/\b(beige|cream|sand)\b/i, 'Bege'],
+  [/\b(black|negr[oa]s?|noir)\b/i, 'Preto'], [/\b(white|blanc[oa]s?)\b/i, 'Branco'], [/\b(grey|gray|gris(?:es)?)\b/i, 'Cinzento'],
+  [/\b(blue|azul(?:es)?|navy|marino)\b/i, 'Azul'], [/\b(red|roj[oa]s?|burdeos|granate)\b/i, 'Vermelho'], [/\b(green|verdes?|kaki|khaki)\b/i, 'Verde'],
+  [/\b(yellow|amarill[oa]s?|mostaza)\b/i, 'Amarelo'], [/\b(orange|naranjas?)\b/i, 'Laranja'], [/\b(pink|rosas?|fucsia)\b/i, 'Rosa'],
+  [/\b(purple|morad[oa]s?|violeta|lila)\b/i, 'Roxo'], [/\b(brown|marr[oó]n(?:es)?|camel|tostad[oa]s?|chocolate)\b/i, 'Castanho'],
+  [/\b(beige|cream|crema|crudo|sand|arena|nude)\b/i, 'Bege'],
 ]
 export function colorFromName(name) {
   for (const [re, pt] of COLOR_WORDS) if (re.test(name)) return pt
@@ -211,22 +212,57 @@ function titleCaseIfAllLower(s) {
   return s === s.toLowerCase() ? s.replace(/(^|[\s-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()) : s
 }
 
-// "Converse Chuck Taylor All Star Sneakers" -> "Chuck Taylor All Star";
-// "Puma Palermo" -> "Palermo". Tira a marca e as palavras de tipo de
-// calçado e de público do princípio e do fim do nome.
-const GENERIC_WORDS = new Set(['sneakers', 'sneaker', 'trainers', 'trainer', 'zapatillas', 'zapatilla', 'shoes', 'shoe', 'running', 'runner', 'runners', 'de', 'for', 'para', 'the', 'and', 'women', "women's", 'womens', 'woman', 'men', "men's", 'mens', 'man', 'kids', 'kid', 'junior', 'unisex'])
-const isGeneric = (w) => GENERIC_WORDS.has(w.toLowerCase())
+// O nome da loja vem em inglês e em espanhol ("Zapatillas Deportivas
+// GEL-1130 Blanca", "Casual De Piel Marrones", "Club C men's white"). Fica só
+// o nome do modelo ("GEL-1130", "Club C"); tira a marca, o tipo de calçado, o
+// público e as cores (a cor tem campo próprio). Quando o nome é só uma
+// descrição, sem nome de modelo, traduz-se para português ("Sapatilha casual
+// em pele").
+const REMOVE_WORDS = new Set(['sneakers', 'sneaker', 'trainers', 'trainer', 'zapatillas', 'zapatilla', 'shoes', 'shoe', 'running', 'runner', 'runners', 'deportivas', 'deportiva', 'tenis', 'women', "women's", 'womens', 'woman', 'men', "men's", 'mens', 'man', 'mujer', 'mujeres', 'hombre', 'hombres', 'niño', 'niños', 'niña', 'niñas', 'kids', 'kid', 'junior', 'unisex', 'infantil', 'infantiles', 'ladies', 'for', 'the', '-'])
+const FUNCTION_WORDS = new Set(['de', 'del', 'con', 'y', 'e', 'en', 'para', 'and', 'sin', 'a', 'la', 'el', 'los', 'las'])
+const FN_PT = { de: 'de', del: 'do', con: 'com', y: 'e', e: 'e', en: 'em', para: 'para', and: 'e', sin: 'sem', a: 'a', la: 'a', el: 'o', los: 'os', las: 'as' }
+const MATERIALS = new Set(['pele', 'camurça', 'lona', 'tecido'])
+const PT_WORDS = {
+  casual: 'casual', piel: 'pele', cuero: 'pele', leather: 'pele', ante: 'camurça', suede: 'camurça', lona: 'lona', canvas: 'lona', tela: 'tecido',
+  plataforma: 'plataforma', cordones: 'atacadores', anchos: 'largos', cierre: 'fecho', cierres: 'fechos', cremallera: 'fecho', cremalleras: 'fechos',
+  laterales: 'laterais', lateral: 'lateral', bordado: 'bordado', ajuste: 'ajuste', 'rápido': 'rápido', rapido: 'rápido',
+  'ecológicas': 'ecológica', 'ecológica': 'ecológica', ecologicas: 'ecológica', ecologica: 'ecológica', perforados: 'perfurada', perforadas: 'perfurada', perforado: 'perfurada',
+  plateadas: 'prateada', plateado: 'prateado', plateados: 'prateado', doradas: 'dourada', dorado: 'dourado', dorados: 'dourado',
+}
+const isColorWord = (w) => COLOR_WORDS.some(([re]) => re.test(w))
 
 export function modelName(nameBase, brandName) {
-  const original = String(nameBase || '').replace(/\s+/g, ' ').trim()
+  let s = String(nameBase || '').replace(/’/g, "'").replace(/\s+/g, ' ').trim()
   const brandWords = String(brandName || '').split(/\s+/).filter((w) => w.length > 1).map((w) => w.toLowerCase())
-  let words = original.split(' ').filter(Boolean)
-  const noBrand = words.filter((w) => !brandWords.includes(w.toLowerCase()))
-  if (noBrand.length) words = noBrand
-  while (words.length > 1 && isGeneric(words[0])) words.shift()
-  while (words.length > 1 && isGeneric(words[words.length - 1])) words.pop()
-  const n = words.join(' ').trim()
-  return fixCaps(titleCaseIfAllLower(n)) || 'Sapatilhas'
+  s = s.replace(/\b(faux|vegan) leather\b/gi, 'pele sintética').replace(/\b(piel|cuero) sint[ée]tica\b/gi, 'pele sintética').replace(/\bde (piel|cuero)\b/gi, 'em pele')
+  const nameLike = []
+  const desc = []
+  let sawSport = false
+  for (const raw of s.split(' ').filter(Boolean)) {
+    const t = raw.replace(/^[,;:()]+|[,;:()]+$/g, '')
+    const lc = t.toLowerCase()
+    if (!t || brandWords.includes(lc)) continue
+    if (lc === 'deportivas' || lc === 'deportiva') sawSport = true
+    if (REMOVE_WORDS.has(lc)) continue
+    if (isColorWord(t)) continue
+    if (lc === 'em' || lc === 'sintética') { desc.push(lc); continue }
+    if (lc === 'pele' || PT_WORDS[lc]) {
+      const w = lc === 'pele' ? 'pele' : PT_WORDS[lc]
+      if (MATERIALS.has(w) && desc.length && !['em', 'de', 'do', 'com', 'sem'].includes(desc[desc.length - 1])) desc.push('em')
+      desc.push(w)
+      continue
+    }
+    if (FUNCTION_WORDS.has(lc)) { desc.push(FN_PT[lc]); continue }
+    nameLike.push(t)
+    desc.push(t)
+  }
+  if (nameLike.length) return fixCaps(titleCaseIfAllLower(nameLike.join(' ').trim()))
+  while (desc.length && ['de', 'do', 'com', 'e', 'em', 'para', 'sem', 'a', 'o', 'as', 'os'].includes(desc[desc.length - 1])) desc.pop()
+  while (desc.length && ['e', 'com', 'para', 'sem'].includes(desc[0])) desc.shift()
+  let phrase = desc.join(' ').replace(/\bpele sintética\b/g, 'pele sintética').replace(/\bem em\b/g, 'em')
+  if (/^(pele|camurça|lona|tecido)\b/.test(phrase)) phrase = 'em ' + phrase
+  if (!phrase && sawSport) phrase = 'desportiva'
+  return phrase ? 'Sapatilha ' + phrase : 'Sapatilha'
 }
 
 // O endereço de compra vem dentro do link da Tradedoubler: url(<endereço>).
@@ -305,7 +341,7 @@ async function main() {
 
   const t0 = Date.now()
   const now = new Date().toISOString()
-  const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, excludedOwnBrand: 0, badSize: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedExisting: 0, matchedOwn: 0, offersOnExisting: 0, skippedNoPrice: 0, skippedLowPrice: 0, withValidGtin: 0, mpnMatchesInfo: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, brands: {}, matchedBySource: {}, created_slugs: [], errors: [] }
+  const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, sneakerRows: 0, excludedOwnBrand: 0, badSize: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedExisting: 0, matchedOwn: 0, offersOnExisting: 0, skippedNoPrice: 0, skippedLowPrice: 0, withValidGtin: 0, mpnMatchesInfo: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], nameCheck: [], newBrands: [], categories: {}, genders: {}, brands: {}, matchedBySource: {}, created_slugs: [], errors: [] }
   const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
   const redact = (s) => String(s).split(TD_TOKEN || '###').join('***')
 
@@ -355,7 +391,7 @@ async function main() {
       report.withValidGtin = allEans.length
       const gtinRows = await sbIn('product_gtins', 'ean', allEans, 'ean,product_id', 200)
       const productByEan = new Map(gtinRows.map((r) => [r.ean, r.product_id]))
-      const ownProducts = await sbAll('products?source=eq.' + SOURCE + '&select=id,slug,source_ref')
+      const ownProducts = await sbAll('products?source=eq.' + SOURCE + '&select=id,slug,source_ref,is_active,model_name,color,category,gender')
       const ownByRef = new Map(ownProducts.map((p) => [p.source_ref, p]))
       const matchedIds = [...new Set(gtinRows.map((r) => r.product_id))]
       const matchedProducts = await sbIn('products', 'id', matchedIds, 'id,source,is_active', 100)
@@ -368,6 +404,7 @@ async function main() {
       const storeOffers = store ? await sbAll('product_offers?store_id=eq.' + store.id + '&select=id,product_id,size,price,in_stock') : []
 
       const toCreate = []
+      const refresh = []
       const offerUpserts = []
       const gtinUpserts = []
       const seenOfferKeys = new Set()
@@ -389,6 +426,19 @@ async function main() {
           if (prod?.source === SOURCE || ownByRef.has(g.id)) report.matchedOwn++
           else { report.matchedExisting++; inc(report.matchedBySource, prod?.source || 'manual') }
           if (MODE === 'test') continue
+          // Ténis desta loja ainda escondidos: acerta nome, cor, categoria e
+          // género com as regras atuais (os visíveis não se mexem).
+          const own = ownByRef.get(g.id)
+          if (MODE === 'full' && own && !own.is_active) {
+            const q = g.first
+            const want = { model_name: modelName(splitName(q.name).base, q.brand), color: colorFromName(q.name), category: mapCategory(q.name), gender: mapGender(q.name, q.description, field(q, 'g:age_group'), gRows.map((r) => r.size)) }
+            const patch = {}
+            for (const k of Object.keys(want)) if (own[k] !== want[k]) patch[k] = want[k]
+            if (Object.keys(patch).length) {
+              if ('color' in patch) patch.base_colors = patch.color ? [patch.color] : []
+              refresh.push({ id: own.id, patch })
+            }
+          }
           for (const r of gRows) {
             const key = productId + '|' + r.size
             if (seenOfferKeys.has(key)) continue
@@ -432,6 +482,12 @@ async function main() {
         }
       }
 
+      // 4b) Acertar os escondidos já existentes
+      for (const x of refresh) {
+        await sb('products?id=eq.' + x.id, { method: 'PATCH', body: { ...x.patch, updated_at: now }, prefer: 'return=minimal' })
+      }
+      report.refreshed = refresh.length
+
       // 5) Marcas novas
       const newBrandRows = []
       const brandOf = (name) => slugify(String(name).trim())
@@ -456,6 +512,7 @@ async function main() {
         const model = modelName(splitName(p.name).base, p.brand)
         const color = colorFromName(p.name)
         const base = slugify((brand?.name ?? p.brand) + ' ' + model + ' ' + (color || '') + ' ' + (c.gender === 'crianca' ? 'crianca' : '')).slice(0, 80).replace(/-+$/, '')
+        if (/[ñáéíóú]|\b(de|con|para|sin|del|y)\b/i.test(model) && report.nameCheck.length < 40) report.nameCheck.push(model + ' <- ' + String(p.name).slice(0, 80))
         return { c, p, brand, model, color, base }
       }).filter((x) => x.brand)
       // Endereços (slugs) sem repetir os que já existem na base de dados nem
@@ -573,8 +630,9 @@ async function main() {
         while (next < todo.length) {
           const p = todo[next++]
           try {
-            const url = await processAndUpload({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, sourceUrl: p.image_url, path: 'ulanka/' + p.slug + '.webp' })
-            const gallery = [p.image_url, ...(p.image_urls ?? [])].filter((u, i, all) => u && all.indexOf(u) === i).slice(0, 6)
+            const cands = [p.image_url, ...(p.image_urls ?? [])].filter((u, i, all) => u && all.indexOf(u) === i)
+            const { url } = await processAndUploadBest({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, sourceUrls: cands, path: 'ulanka/' + p.slug + '.webp' })
+            const gallery = cands.slice(0, 6)
             await sb('products?id=eq.' + p.id, { method: 'PATCH', body: { image_url: url, image_urls: gallery, updated_at: new Date().toISOString() }, prefer: 'return=minimal' })
             report.photosDone++
           } catch (e) {

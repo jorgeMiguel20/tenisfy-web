@@ -40,7 +40,7 @@ export function sourcePhotoUrl(url) {
   }
 }
 
-export async function normalizePhoto(input) {
+export async function normalizePhoto(input, opts = {}) {
   const { data: p, info } = await sharp(input).flatten({ background: '#ffffff' }).removeAlpha().raw().toBuffer({ resolveWithObject: true })
   const w = info.width
   const h = info.height
@@ -98,6 +98,14 @@ export async function normalizePhoto(input) {
   if (x1 < 0) throw new Error('foto sem ténis (só fundo)')
   const bw = x1 - x0 + 1
   const bh = y1 - y0 + 1
+  // Modo estrito (Direct-Volley, Ulanka): a foto da loja pode ser um pormenor
+  // ampliado ou um corte do ténis. Se o ténis encosta a uma borda da foto,
+  // está cortado; e um ténis de lado é mais largo do que alto (de frente,
+  // de cima ou só um pormenor não servem como foto principal).
+  if (opts.strict) {
+    if (x0 <= 1 || x1 >= w - 2 || y0 <= 1 || y1 >= h - 2) throw new Error('ténis cortado na foto')
+    if (bw / bh < 1.05) throw new Error('ténis não está de lado')
+  }
   const bgShare = tail / n
   // Se quase nada for fundo, o fundo não era uniforme (foto de ambiente):
   // não serve como foto principal.
@@ -135,4 +143,24 @@ export async function processAndUpload({ supabaseUrl, key, sourceUrl, path }) {
   const input = Buffer.from(await res.arrayBuffer())
   const buffer = await normalizePhoto(input)
   return uploadPhoto({ supabaseUrl, key, path, buffer })
+}
+
+// Experimenta as fotos da lista por ordem (a principal da loja e as da
+// galeria) e fica com a primeira em que o ténis aparece inteiro e de lado.
+// Devolve { url, used } (used = a foto original escolhida).
+export async function processAndUploadBest({ supabaseUrl, key, sourceUrls, path }) {
+  const errors = []
+  for (const sourceUrl of sourceUrls.slice(0, 6)) {
+    try {
+      const res = await fetch(sourcePhotoUrl(sourceUrl))
+      if (!res.ok) throw new Error('download HTTP ' + res.status)
+      const input = Buffer.from(await res.arrayBuffer())
+      const buffer = await normalizePhoto(input, { strict: true })
+      const url = await uploadPhoto({ supabaseUrl, key, path, buffer })
+      return { url, used: sourceUrl }
+    } catch (e) {
+      errors.push(String(e?.message || e).slice(0, 60))
+    }
+  }
+  throw new Error('nenhuma foto serve: ' + errors.join(' / '))
 }

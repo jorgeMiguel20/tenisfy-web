@@ -42,7 +42,7 @@
 // (só as fotos) e review (não altera nada: guarda uma folha com as fotos dos
 // ténis escondidos em product-photos/_review/). Resumo de cada execução:
 // tabela import_runs.
-import { processAndUpload } from './feed-photos.mjs'
+import { processAndUploadBest } from './feed-photos.mjs'
 import { streamCsvRows } from './awin-csv.mjs'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -142,6 +142,10 @@ export function parseCategory(merchantCategory) {
 // Tipos de calçado que NÃO entram (não são desportivos ou nem são sapatos).
 const EXCLUDED_TYPE = /^(sac à chaussures|surchaussures|bottes d'hiver|bottes de pluie|bottes|chaussons|pantoufles)$/i
 const FOOTWEAR_TYPE = /chaussure|sneaker|crampon|sandale|tong|claquette|botte|chausson|soulier/i
+
+// Chinelos, sandálias e afins: o Jorge não os quer no Parjusto. Além do tipo
+// da loja, vê-se o nome (alguns chinelos vêm classificados como sapatos).
+const SANDAL_NAME = /chinelo|chinela|sand[áa]lia|sandal|claquette|\btongs?\b|flip.?flop|\bslides?\b|adilette|pantufa|slipper|havaiana|chancla/i
 
 export function isWantedFootwear(merchantCategory) {
   const { type } = parseCategory(merchantCategory)
@@ -385,6 +389,7 @@ async function main() {
         const gRows = priced.filter((r) => r.price >= MIN_PRICE)
         if (priced.length === 0) { report.skippedNoPrice++; continue }
         if (gRows.length === 0) { report.skippedLowPrice++; continue }
+        if (mapCategory(g.first.merchant_category) === 'sandalias' || SANDAL_NAME.test(g.first.product_name || '')) { report.skippedSandals = (report.skippedSandals || 0) + 1; continue }
         if (CATEGORIES && !CATEGORIES.has(mapCategory(g.first.merchant_category))) { report.skippedCategory = (report.skippedCategory || 0) + 1; continue }
 
         let productId = ownByRef.get(g.id)?.id
@@ -564,8 +569,9 @@ async function main() {
         while (next < todo.length) {
           const p = todo[next++]
           try {
-            const url = await processAndUpload({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, sourceUrl: p.image_url, path: `direct-volley/${p.slug}.webp` })
-            const gallery = [p.image_url, ...(p.image_urls ?? [])].filter((u, i, all) => u && all.indexOf(u) === i).slice(0, 6)
+            const cands = [p.image_url, ...(p.image_urls ?? [])].filter((u, i, all) => u && all.indexOf(u) === i)
+            const { url } = await processAndUploadBest({ supabaseUrl: SUPABASE_URL, key: SUPABASE_KEY, sourceUrls: cands, path: `direct-volley/${p.slug}.webp` })
+            const gallery = cands.slice(0, 6)
             await sb(`products?id=eq.${p.id}`, { method: 'PATCH', body: { image_url: url, image_urls: gallery, updated_at: new Date().toISOString() }, prefer: 'return=minimal' })
             report.photosDone++
           } catch (e) {
@@ -582,13 +588,13 @@ async function main() {
     // tratada e pelo menos um tamanho em stock (em qualquer loja); fica
     // escondido o que ficou sem stock nenhum.
     if (ACTIVATE_NEW && MODE !== 'test') {
-      const imported = await sbAll(`products?source=eq.${SOURCE}&select=id,is_active,image_url,product_offers(in_stock,discontinued_at)&order=id`)
+      const imported = await sbAll(`products?source=eq.${SOURCE}&select=id,is_active,category,image_url,product_offers(in_stock,discontinued_at)&order=id`)
       const toOn = []
       const toOff = []
       for (const p of imported) {
         const hasStock = (p.product_offers ?? []).some((o) => o.in_stock && !o.discontinued_at)
         const photoOk = String(p.image_url || '').includes('/product-photos/')
-        if (!p.is_active && hasStock && photoOk) toOn.push(p.id)
+        if (!p.is_active && hasStock && photoOk && p.category !== 'sandalias') toOn.push(p.id)
         if (p.is_active && !hasStock) toOff.push(p.id)
       }
       for (const [ids, value] of [[toOn, true], [toOff, false]]) {
