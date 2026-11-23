@@ -27,10 +27,13 @@ type Brand = { id: string; name: string; slug: string }
 // escolhidos à mão. As centenas de marcas que chegam com a importação
 // automática ficam prontas na primeira visita (e depois guardadas 1 hora,
 // como as outras) - assim a publicação continua rápida.
+// Nenhuma página de marca é preparada na publicação: desde que a adidas passou
+// de 6 000 ténis, ler os dados dela durante a publicação ultrapassava o limite
+// de 3 segundos da base de dados e a publicação do site falhava (nada novo
+// ficava no ar). Todas as marcas ficam prontas na primeira visita e depois
+// guardadas (ver revalidate).
 export async function generateStaticParams() {
-  const { data } = await supabase.from('brands').select('slug, products!inner (id)').is('products.source', null)
-  const slugs = new Set(((data ?? []) as { slug: string }[]).map((brand) => brand.slug))
-  return Array.from(slugs).map((slug) => ({ slug }))
+  return []
 }
 
 // cache(): o título da página (generateMetadata) e a página em si usam os
