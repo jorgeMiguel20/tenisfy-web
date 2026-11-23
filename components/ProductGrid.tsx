@@ -591,10 +591,19 @@ export default function ProductGrid({
     let cancelled = false
     async function load(attempt: number) {
       try {
-        const res = await fetch(moreUrl as string)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const list = (await res.json()) as ProductWithPrice[]
-        if (!Array.isArray(list) || list.length === 0) throw new Error('lista vazia')
+        // A lista vem em pacotes (moreUrl/1, moreUrl/2, ... moreUrl/6); os
+        // pacotes para lá do fim do catálogo vêm vazios, o que é normal.
+        const parts = await Promise.all(
+          [1, 2, 3, 4, 5, 6].map(async (n) => {
+            const res = await fetch(`${moreUrl}/${n}`)
+            if (!res.ok) throw new Error(`HTTP ${res.status} (pacote ${n})`)
+            const part = (await res.json()) as ProductWithPrice[]
+            if (!Array.isArray(part)) throw new Error(`pacote ${n} inválido`)
+            return part
+          })
+        )
+        const list = parts.flat()
+        if (list.length === 0) throw new Error('lista vazia')
         if (!cancelled) setFullList(list)
       } catch {
         if (cancelled) return

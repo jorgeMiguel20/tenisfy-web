@@ -179,6 +179,19 @@ export default function ProductCard({ product, isSelected = false, onToggleCompa
               alt={index === photoIndex ? product.model_name : ''}
               loading="lazy"
               decoding="async"
+              onError={(e) => {
+                // O Supabase recusa por vezes imagens quando há muitos pedidos
+                // seguidos (erro 429): tenta de novo, até 3 vezes, com pausa.
+                const img = e.currentTarget
+                const tries = Number(img.dataset.tries ?? '0')
+                if (tries >= 3) return
+                img.dataset.tries = String(tries + 1)
+                const base = img.dataset.base ?? img.src
+                img.dataset.base = base
+                setTimeout(() => {
+                  img.src = base + (base.includes('?') ? '&' : '?') + 'r=' + (tries + 1)
+                }, 1500 * (tries + 1) + Math.random() * 1000)
+              }}
               className="absolute inset-0 h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
           </div>
