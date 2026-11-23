@@ -29,3 +29,21 @@ export async function getCatalogGridFromCache(options: { brandId?: string } = {}
   if (error || data.length === 0) return null
   return data
 }
+
+// Um "pacote" do resumo: as linhas from..from+count-1, pela mesma ordem de
+// Relevância (sort_rank é único). Devolve null só se der erro; um pacote sem
+// linhas (para lá do fim do catálogo) devolve [].
+// Nota: count não pode ser múltiplo de 1000 (o último bocado tem de vir
+// incompleto para o fetchAll parar).
+export async function getCatalogGridPartFromCache(from: number, count: number): Promise<CachedGridRow[] | null> {
+  const last = from + count - 1
+  const { data, error } = await fetchAll<CachedGridRow>((start, end) =>
+    supabase
+      .from('catalog_grid_cache')
+      .select('slim, is_curated')
+      .order('sort_rank', { ascending: true })
+      .range(from + start, Math.min(from + end, last))
+  , 1000)
+  if (error) return null
+  return data
+}
