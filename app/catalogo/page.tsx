@@ -6,7 +6,7 @@ import RecentDropsGrid from '@/components/RecentDropsGrid'
 import CatalogoBackBar from '@/components/CatalogoBackBar'
 import BackToTopButton from '@/components/BackToTopButton'
 import { getProductsWithPrice } from '@/lib/getProductsWithPrice'
-import { getCatalogGridFromCache } from '@/lib/catalogGridCache'
+import { getCatalogGridPartFromCache, getCatalogGridCount } from '@/lib/catalogGridCache'
 import { relevanceOrder } from '@/lib/relevanceOrder'
 import { slimForGrid } from '@/lib/slimForGrid'
 import type { ProductWithPrice } from '@/lib/types'
@@ -37,9 +37,19 @@ export default async function CatalogoPage() {
   let gridProducts: ProductWithPrice[]
   let recentDrops: ProductWithPrice[]
   let loadRestInBackground = false
-  const cached = await getCatalogGridFromCache()
+  let totalProducts = 0
+  // Só lê as primeiras linhas do resumo (as que vão no HTML) e a contagem total.
+  // Ler as ~15 000 linhas de uma vez excedia o limite de tempo da base de dados
+  // e fazia a regeneração da página falhar. Os 48 ténis escolhidos à mão estão
+  // sempre no início do resumo, por isso as "Descidas de preço" não mudam.
+  const [cachedHead, cachedTotal] = await Promise.all([
+    getCatalogGridPartFromCache(0, FIRST_BATCH),
+    getCatalogGridCount(),
+  ])
+  const cached = cachedHead && cachedHead.length > 0 && cachedTotal ? cachedHead : null
   if (cached) {
     loadRestInBackground = true
+    totalProducts = cachedTotal as number
     gridProducts = cached.map((row) => row.slim)
     // "Descidas de preço recentes" (fundo da página): só os ténis escolhidos
     // à mão e no máximo 8, como até agora - com milhares de ténis
@@ -92,7 +102,7 @@ export default async function CatalogoPage() {
         {loadRestInBackground ? (
           <ProductGrid
             products={gridProducts.slice(0, FIRST_BATCH)}
-            totalCount={gridProducts.length}
+            totalCount={totalProducts}
             moreUrl="/api/catalogo-grelha"
           />
         ) : (
