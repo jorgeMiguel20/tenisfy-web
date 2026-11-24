@@ -47,3 +47,14 @@ export async function getCatalogGridPartFromCache(from: number, count: number): 
   if (error) return null
   return data
 }
+
+
+// Número total de ténis no resumo (uma contagem simples, não lê as linhas).
+// A página /catalogo usa-o para mostrar o total sem ter de carregar tudo.
+export async function getCatalogGridCount(): Promise<number | null> {
+  const { count, error } = await supabase
+    .from('catalog_grid_cache')
+    .select('product_id', { count: 'exact', head: true })
+  if (error || count == null) return null
+  return count
+}
