@@ -118,19 +118,38 @@ export async function GET(request: NextRequest) {
   const allResults: ScraperResult[] = []
   const summary: Record<string, StoreSummary> = {}
 
-  for (const [storeName, storeTargets] of byStore) {
-    const scraper = SCRAPERS[storeName]
-    if (!scraper) {
-      summary[storeName] = {
-        attempted: storeTargets.length,
-        resolved: 0,
-        note: 'Scraper ainda nao implementado para esta loja.',
+  // As lojas são verificadas ao mesmo tempo (cada uma tem o seu próprio
+  // site), em vez de uma a seguir à outra: assim a tarefa cabe nos 60
+  // segundos que a Vercel permite. Se uma loja falhar, as outras continuam.
+  const perStore = await Promise.all(
+    Array.from(byStore.entries()).map(async ([storeName, storeTargets]) => {
+      const scraper = SCRAPERS[storeName]
+      if (!scraper) {
+        const note: StoreSummary = {
+          attempted: storeTargets.length,
+          resolved: 0,
+          note: 'Scraper ainda nao implementado para esta loja.',
+        }
+        return { storeName, results: [] as ScraperResult[], summary: note }
       }
-      continue
-    }
-    const results = await scraper(storeTargets)
-    allResults.push(...results)
-    summary[storeName] = { attempted: storeTargets.length, resolved: results.length }
+      try {
+        const results = await scraper(storeTargets)
+        const done: StoreSummary = { attempted: storeTargets.length, resolved: results.length }
+        return { storeName, results, summary: done }
+      } catch (err) {
+        console.error('Falha ao verificar a loja ' + storeName + ':', err)
+        const failed: StoreSummary = {
+          attempted: storeTargets.length,
+          resolved: 0,
+          note: 'Falhou a verificação desta loja.',
+        }
+        return { storeName, results: [] as ScraperResult[], summary: failed }
+      }
+    })
+  )
+  for (const store of perStore) {
+    allResults.push(...store.results)
+    summary[store.storeName] = store.summary
   }
 
   if (allResults.length === 0) {
