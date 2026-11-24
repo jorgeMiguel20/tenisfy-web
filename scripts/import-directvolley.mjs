@@ -252,6 +252,10 @@ export function modelName(productName, brandName) {
   // Só sobrou uma palavra genérica (ex.: "Sapatilhas", "Chinelos")? Usa o
   // nome da loja sem a marca, para o ténis ter ao menos um nome próprio.
   if (!n || (words.length === 1 && isNoise(words[0]))) n = original.split(' ').filter((w) => !brandWords.includes(w.toLowerCase())).join(' ').trim() || original
+  // "Corte para Express 2", "Gancho e argola para Advantage Court Two": a loja
+  // põe uma descrição antes de "para"; o modelo é o que vem depois.
+  const mPara = n.match(/^\S+(?: \S+){0,3} [Pp]ara ([A-Z0-9]\S*(?: \S+)*)$/)
+  if (mPara && !/^(de|do|da|dos|das|o|a|os|as|crian|homem|mulher|menin|interior|exterior)\b/i.test(mPara[1])) n = mPara[1]
   n = fixCaps(titleCaseIfAllLower(n))
   return (n ? n.charAt(0).toUpperCase() + n.slice(1) : '') || 'Sapatilhas'
 }
