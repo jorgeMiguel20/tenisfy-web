@@ -12,12 +12,13 @@ import type { ProductWithPrice } from './types'
 // vez com o nome (só) e com a marca (só), e por isso "adidas samba" só
 // encontrava 4 dos 103 Samba e "adidas climacool" não encontrava nenhum.
 //
+// A cor também conta ("nike zoom vomero 5 fog" encontra o Vomero 5 na cor Fog).
 // Sem acentos nem maiúsculas ("ténis" = "tenis"). Palavras ainda por acabar
 // também servem ("nik" encontra Nike). Se nada for encontrado, tenta de novo
 // aceitando pequenos erros de escrita nas palavras com 4 ou mais letras
 // ("nikke" encontra Nike).
 
-type Searchable = Pick<ProductWithPrice, 'model_name'> & { brands?: { name: string } | null }
+type Searchable = Pick<ProductWithPrice, 'model_name'> & { color?: string | null; brands?: { name: string } | null }
 
 export function normalizeSearchText(value: string): string {
   return value
@@ -35,7 +36,7 @@ const textCache = new WeakMap<object, string>()
 function textOf(product: Searchable): string {
   let text = textCache.get(product)
   if (text === undefined) {
-    text = normalizeSearchText(`${product.brands?.name ?? ''} ${product.model_name}`)
+    text = normalizeSearchText(`${product.brands?.name ?? ''} ${product.model_name} ${product.color ?? ''}`)
     textCache.set(product, text)
   }
   return text
