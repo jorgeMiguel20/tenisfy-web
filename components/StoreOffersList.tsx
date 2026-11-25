@@ -65,6 +65,10 @@ function getShippingDisplay(offer: StoreOfferForDisplay): ShippingDisplay | null
 // produto todo (ver pedido do Jorge). Calculado a partir da oferta em stock
 // mais antiga dessa loja (lastCheckedAt), o mesmo critério "pior caso" já
 // usado no resto da página para o preço mostrado ser sempre honesto.
+// Passada esta idade (em dias) o texto "Verificado há X dias" deixa de aparecer
+// (pedido do Jorge): o resto da linha, como os portes, continua igual.
+const MAX_VERIFIED_DAYS = 7
+
 function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
   if (!lastCheckedAt) return null
 
@@ -85,6 +89,7 @@ function formatVerifiedLabel(lastCheckedAt: string | null): string | null {
   }
 
   const days = Math.round(diffHours / 24)
+  if (days > MAX_VERIFIED_DAYS) return null
   return `Verificado há ${days} ${days === 1 ? 'dia' : 'dias'}`
 }
 
