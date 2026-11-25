@@ -66,6 +66,27 @@ function isCronAuthorized(request: NextRequest): boolean {
 
 type StoreSummary = { attempted: number; resolved: number; note?: string }
 
+// Tempo total (ms) que a tarefa se permite gastar antes de enviar o que ja
+// tem. A Vercel corta tudo aos 60 s; sem este limite, uma unica loja lenta
+// fazia perder os resultados de todas as outras.
+const TOTAL_BUDGET_MS = 48_000
+
+function withDeadline<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Tempo esgotado a verificar ' + label)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
+  })
+}
+
 // Apaga alertas de preço cujo prazo de "Expiração" (1 ou 2 meses, escolhido
 // pelo utilizador ao criar o alerta - ver app/produto/[slug]/priceAlertActions.ts)
 // já passou. Reaproveita este cron diário em vez de criar um agendamento
@@ -84,6 +105,7 @@ async function deleteExpiredPriceAlerts(): Promise<void> {
 }
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Nao autorizado.' }, { status: 401 })
   }
@@ -133,7 +155,8 @@ export async function GET(request: NextRequest) {
         return { storeName, results: [] as ScraperResult[], summary: note }
       }
       try {
-        const results = await scraper(storeTargets)
+        const budget = Math.max(5_000, TOTAL_BUDGET_MS - (Date.now() - startedAt))
+const results = await withDeadline(scraper(storeTargets), budget, storeName)
         const done: StoreSummary = { attempted: storeTargets.length, resolved: results.length }
         return { storeName, results, summary: done }
       } catch (err) {
