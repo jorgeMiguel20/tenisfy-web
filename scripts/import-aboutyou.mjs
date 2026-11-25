@@ -319,7 +319,7 @@ try {
   const importedByRef = new Map(products.filter((p) => p.source === SOURCE).map((p) => [p.source_ref, p]))
   const gtinRows = await sbAll('product_gtins?select=ean,product_id,size')
   const productByEan = new Map(gtinRows.map((g) => [g.ean, g.product_id]))
-  const ayOffers = await sbAll(`product_offers?store_id=eq.${store.id}&select=id,product_id,size,price,in_stock,affiliate_url,discontinued_at`)
+  const ayOffers = await sbAll(`product_offers?store_id=eq.${store.id}&select=id,product_id,size,price,in_stock,affiliate_url,discontinued_at,last_checked_at`)
   const productByAyArticle = new Map()
   for (const o of ayOffers) {
     const a = ayArticleId(o.affiliate_url)
@@ -532,7 +532,14 @@ try {
 
     // tamanhos de ténis importados que já não estão no ficheiro -> esgotados
     const importedIds = new Set(products.filter((p) => p.source).map((p) => p.id))
-    const gone = ayOffers.filter((o) => importedIds.has(o.product_id) && o.in_stock && !seenOfferKeys.has(`${o.product_id}|${o.size}`)).map((o) => o.id)
+    // Um ténis que falta no ficheiro NÃO é logo dado como esgotado: o ficheiro da
+    // About You muda várias vezes por dia e as marcas entram e saem dele. Só passa
+    // a esgotado depois de GRACE_DAYS dias seguidos sem aparecer (last_checked_at é
+    // a data da última vez que o vimos no ficheiro). Se voltar a aparecer, o passo
+    // acima volta a pô-lo em stock sozinho.
+    const GRACE_DAYS = 7
+    const isPastGrace = (o) => !o.last_checked_at || Date.now() - new Date(o.last_checked_at).getTime() > GRACE_DAYS * 24 * 60 * 60 * 1000
+    const gone = ayOffers.filter((o) => importedIds.has(o.product_id) && o.in_stock && isPastGrace(o) && !seenOfferKeys.has(`${o.product_id}|${o.size}`)).map((o) => o.id)
     for (let i = 0; i < gone.length; i += 200) {
       await sb(`product_offers?id=in.(${gone.slice(i, i + 200).join(',')})`, { method: 'PATCH', body: { in_stock: false, last_checked_at: now }, prefer: 'return=minimal' })
     }
