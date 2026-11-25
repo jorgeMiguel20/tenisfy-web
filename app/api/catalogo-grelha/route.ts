@@ -1,18 +1,15 @@
 // app/api/catalogo-grelha/route.ts
 //
-// O catálogo completo (os dados que a grelha, os filtros e os cartões usam),
-// em JSON. A página /catalogo só traz os primeiros ténis no HTML, para abrir
-// logo; o resto chega daqui, em segundo plano (ver "moreUrl" em
-// components/ProductGrid.tsx).
+// Endereço antigo da lista completa do catálogo (um único ficheiro de ~15 MB).
+// Foi substituído pelos pacotes /api/catalogo-grelha/1 ... /6 (ver
+// app/api/catalogo-grelha/[part]/route.ts). Este endereço já não lê nada da
+// base de dados: encaminha para o 1.º pacote.
 //
-// Fica em cache 1 hora, como a própria página do catálogo, e é lido do
-// "resumo do catálogo" (com plano B, ver lib/catalogGridList.ts).
-import { getCatalogGridList } from '@/lib/catalogGridList'
-
-export const dynamic = 'force-static'
-export const revalidate = 3600
+// Porque é dinâmico e não estático: sendo estático, a compilação do site lia o
+// catálogo inteiro da base de dados e, com a base de dados ocupada, falhava com
+// "statement timeout" - o que já impediu versões do site de ir para o ar.
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const list = await getCatalogGridList()
-  return Response.json(list)
+  return new Response(null, { status: 308, headers: { Location: '/api/catalogo-grelha/1' } })
 }
