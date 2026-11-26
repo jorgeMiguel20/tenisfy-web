@@ -260,11 +260,35 @@ export function modelName(productName, brandName) {
   return (n ? n.charAt(0).toUpperCase() + n.slice(1) : '') || 'Sapatilhas'
 }
 
+// Detalhes do ténis a partir do texto da descrição da loja (o ficheiro da
+// Direct-Volley não traz material, sola nem fecho em campos próprios).
+// Só preenche o que o texto diz de forma explícita ("sola exterior de
+// borracha", "parte superior em couro", "com atacadores", "fixadores de
+// gancho e laço"); se o texto não diz, fica vazio - nada é inventado nem
+// deduzido da marca ou do modelo.
+export function parseDescription(text) {
+  const t = String(text || '').replace(/\s+/g, ' ')
+  const out = { material: null, sole_type: null, closure_type: null }
+  if (!t) return out
+  const MAT = 'couro sint[ée]tico|couro|pele sint[ée]tica|pele|camur[çc]a|malha|t[êe]xtil|mesh|lona|tecido|nylon|poli[ée]ster'
+  const mUp = t.match(new RegExp('(?:parte superior|cabedal|upper)\\s+(?:em|de|feit[oa] em|feit[oa] de)\\s+(' + MAT + ')\\b', 'i'))
+  if (mUp) out.material = 'Parte superior em ' + mUp[1].toLowerCase()
+  const mSole = t.match(/\bsola\s+(exterior\s+|intermédia\s+)?(?:em|de)\s+(borracha|EVA|espuma|TPU|poliuretano|PVC|gomas?)\b/i)
+  if (mSole) out.sole_type = 'Sola ' + (mSole[1] ? mSole[1].trim().toLowerCase() + ' ' : '') + 'de ' + mSole[2].toLowerCase().replace(/^eva$|^tpu$|^pvc$/, (x) => x.toUpperCase())
+  const noLaces = /sem atacadores|slip-?on/i.test(t)
+  const laces = /atacadores|cord[õo]es/i.test(t) && !noLaces
+  const velcro = /velcro|gancho e la[çc]o/i.test(t)
+  if (noLaces && !velcro) out.closure_type = 'Sem atacadores'
+  else if (laces && !velcro) out.closure_type = 'Com atacadores'
+  else if (velcro && !laces && !noLaces) out.closure_type = 'Com velcro'
+  return out
+}
+
 // ---------------------------------------------------------- Ficheiro CSV
 const COLUMNS = [
   'merchant_product_id', 'parent_product_id', 'product_name', 'brand_name', 'merchant_category', 'colour',
   'search_price', 'in_stock', 'merchant_deep_link', 'merchant_image_url', 'ean', 'mpn',
-  'custom_1', 'custom_2', 'custom_3', 'delivery_cost',
+  'custom_1', 'custom_2', 'custom_3', 'delivery_cost', 'description',
 ]
 
 async function openFeed() {
@@ -326,7 +350,7 @@ async function main() {
 
   const t0 = Date.now()
   const now = new Date().toISOString()
-  const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, footwearRows: 0, excludedRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedExisting: 0, matchedOwn: 0, offersOnExisting: 0, skippedNoPrice: 0, skippedLowPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, brands: {}, matchedBySource: {}, created_slugs: [], errors: [] }
+  const report = { mode: MODE, limit: LIMIT, activateNew: ACTIVATE_NEW, rows: 0, footwearRows: 0, excludedRows: 0, groups: 0, created: 0, createdOffers: 0, updatedOffers: 0, priceChanges: 0, markedOutOfStock: 0, matchedExisting: 0, matchedOwn: 0, offersOnExisting: 0, skippedNoPrice: 0, skippedLowPrice: 0, photosDone: 0, photosFailed: 0, activated: 0, deactivated: 0, detailsFilled: 0, photoErrors: [], newBrands: [], categories: {}, genders: {}, brands: {}, matchedBySource: {}, created_slugs: [], errors: [] }
   const inc = (o, k) => { o[k] = (o[k] || 0) + 1 }
 
   try {
@@ -376,8 +400,9 @@ async function main() {
       const allEans = [...new Set([...groups.values()].flatMap((g) => g.rows.map((r) => r.ean).filter(Boolean)))]
       const gtinRows = await sbIn('product_gtins', 'ean', allEans, 'ean,product_id', 200)
       const productByEan = new Map(gtinRows.map((r) => [r.ean, r.product_id]))
-      const ownProducts = await sbAll(`products?source=eq.${SOURCE}&select=id,slug,source_ref`)
+      const ownProducts = await sbAll(`products?source=eq.${SOURCE}&select=id,slug,source_ref,material,sole_type,closure_type`)
       const ownByRef = new Map(ownProducts.map((p) => [p.source_ref, p]))
+      const ownById = new Map(ownProducts.map((p) => [p.id, p]))
       const matchedIds = [...new Set(gtinRows.map((r) => r.product_id))]
       const matchedProducts = await sbIn('products', 'id', matchedIds, 'id,source,is_active', 100)
       const productById = new Map(matchedProducts.map((p) => [p.id, p]))
@@ -388,6 +413,7 @@ async function main() {
       // 4) Decidir o que fazer com cada modelo+cor
       const toCreate = []
       const offerUpserts = []
+      const detailPatches = []
       const gtinUpserts = []
       const seenOfferKeys = new Set()
       for (const g of groups.values()) {
@@ -407,7 +433,15 @@ async function main() {
         }
         if (productId) {
           const prod = productById.get(productId)
-          if (prod?.source === SOURCE) report.matchedOwn++
+          if (prod?.source === SOURCE) {
+            report.matchedOwn++
+            // Detalhes que ainda faltam (só preenche o que está vazio)
+            const own = ownById.get(productId)
+            const det = parseDescription(g.first.description)
+            const patch = {}
+            for (const k of ['material', 'sole_type', 'closure_type']) if (det[k] && own && !own[k]) patch[k] = det[k]
+            if (Object.keys(patch).length) detailPatches.push({ id: productId, patch })
+          }
           else { report.matchedExisting++; inc(report.matchedBySource, prod?.source || 'manual') }
           if (MODE === 'test') continue
           for (const r of gRows) {
@@ -505,6 +539,7 @@ async function main() {
           // sempre escondido ao criar: só fica visível depois de a foto estar tratada
           is_active: false,
           article_code: p.mpn || null,
+          ...parseDescription(p.description),
           source: SOURCE,
           source_ref: c.g.id,
           created_at: now,
@@ -542,6 +577,10 @@ async function main() {
       // 7) Preço e stock (só no modo full): ofertas em ténis que já existem
       // e nos ténis desta loja já importados antes
       if (MODE === 'full') {
+        for (let i = 0; i < detailPatches.length; i += 8) {
+          await Promise.all(detailPatches.slice(i, i + 8).map((d) => sb('products?id=eq.' + d.id, { method: 'PATCH', body: d.patch, prefer: 'return=minimal' })))
+        }
+        report.detailsFilled = detailPatches.length
         await sbInsertChunks('product_gtins', gtinUpserts, { onConflict: 'ean', ignore: true })
         const existingByKey = new Map(storeOffers.map((o) => [`${o.product_id}|${o.size}`, o]))
         const changedPrice = offerUpserts.filter((u) => {
